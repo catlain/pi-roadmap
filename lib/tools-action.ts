@@ -130,6 +130,19 @@ export function registerDoneTool(pi: ExtensionAPI) {
 							task.doneDate = new Date().toISOString().slice(0, 10);
 							if (params.note) task.note = params.note;
 							found = true;
+
+							// 级联更新 Story 状态
+							if (story.tasks.every((t) => t.status === "done")) {
+								story.status = "done";
+								story.doneDate = new Date().toISOString().slice(0, 10);
+
+								// 级联更新 Epic 状态
+								if (epic.stories.every((s) => s.status === "done")) {
+									epic.status = "done";
+									epic.doneDate = new Date().toISOString().slice(0, 10);
+								}
+							}
+
 							break;
 						}
 					}
