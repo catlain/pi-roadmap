@@ -11,5 +11,9 @@
   },
   "devDependencies": {
     "vitest": "^3.0.0"
+  },
+  "pi": {
+    "extensions": ["."],
+    "prompts": ["prompts"]
   }
 }
