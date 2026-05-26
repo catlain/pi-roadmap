@@ -24,6 +24,26 @@ export function formatTimestamps(item: {
 	return parts.length > 0 ? ` [${parts.join(", ")}]` : "";
 }
 
+/** 获取 Epic 下最近活动日期（所有 task 时间戳中最新者） */
+export function getLatestActivityDate(epic: Epic): string | undefined {
+	const dates: string[] = [];
+	for (const story of epic.stories) {
+		for (const task of story.tasks) {
+			if (task.doneDate) dates.push(task.doneDate);
+			if (task.doingDate) dates.push(task.doingDate);
+			if (task.createdDate) dates.push(task.createdDate);
+		}
+		if (story.doneDate) dates.push(story.doneDate);
+		if (story.doingDate) dates.push(story.doingDate);
+		if (story.createdDate) dates.push(story.createdDate);
+	}
+	if (epic.doneDate) dates.push(epic.doneDate);
+	if (epic.doingDate) dates.push(epic.doingDate);
+	if (epic.createdDate) dates.push(epic.createdDate);
+	if (dates.length === 0) return undefined;
+	return dates.sort().reverse()[0];
+}
+
 /** 格式化选项 */
 export interface FormatOptions {
 	epicId?: string;

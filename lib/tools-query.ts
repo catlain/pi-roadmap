@@ -13,8 +13,8 @@ import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR, ARCHIVE_DIR } from "./types";
 import { listRoadmapFiles, readRoadmap, getRoadmapFilePath } from "./store";
 import { getOverview, formatProgress } from "./parser";
-export { formatTimestamps, formatRoadmapDetail } from "./tools-query-format";
-import { formatRoadmapDetail } from "./tools-query-format";
+export { formatTimestamps, formatRoadmapDetail, getLatestActivityDate } from "./tools-query-format";
+import { formatRoadmapDetail, getLatestActivityDate } from "./tools-query-format";
 
 export function registerListTool(pi: ExtensionAPI) {
 	pi.registerTool({
