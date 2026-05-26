@@ -64,6 +64,10 @@ export function registerPlanTool(pi: ExtensionAPI) {
 			const { roadmapId, action } = params;
 			let { content } = params;
 
+			// 获取当前会话 ID
+			const ctx = _ctx as any;
+			const sessionId: string | undefined = ctx?.sessionManager?.getSessionFile?.()?.split('/').pop()?.replace(/\.jsonl$/, '') ?? undefined;
+
 			// 兼容 LLM 传字符串的情况
 			if (typeof content === "string") {
 				try { content = JSON.parse(content); } catch { /* fallback below */ }

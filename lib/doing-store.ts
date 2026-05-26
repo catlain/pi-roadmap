@@ -23,6 +23,8 @@ export interface DoingEntry {
 	taskTitle: string;
 	/** 开始时间 ISO */
 	startedAt: string;
+	/** 创建该条目的会话 ID（session 文件名，不含路径和扩展名） */
+	sessionId?: string;
 }
 
 /** 读取 doing 列表 */
@@ -67,6 +69,11 @@ export function clearDoing(roadmapId: string, taskId: string): void {
 /** 清除所有 doing 条目 */
 export function clearAllDoing(): void {
 	writeDoing([]);
+}
+
+/** 读取指定会话的 doing 条目 */
+export function readDoingBySession(sessionId: string): DoingEntry[] {
+	return readDoing().filter((e) => e.sessionId === sessionId);
 }
 
 /** 是否有 doing 条目 */
