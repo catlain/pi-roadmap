@@ -41,14 +41,19 @@ export function generateInjection(
 
 	for (const rm of active) {
 		const progress = calcProgress(rm);
+
+		// 跳过 100% 完成且没有进行中任务的 roadmap
+		if (progress.percent === 100 && progress.total > 0) continue;
+
 		const bar = showProgressBar ? ` ${formatProgress(progress.percent)}` : "";
 		lines.push(`## ${rm.meta.title} ${bar} ${progress.percent}%`);
 		lines.push("");
 
-		// 每个 epic 一行状态
+		// 每个 epic 一行状态（跳过已归档和已完成）
 		const allNextTasks = getNextTasks(rm, maxNextPerRoadmap);
 
 		for (const epic of rm.epics) {
+			if (epic.archived) continue;
 			if (epic.status === "done" || epic.status === "dropped") continue;
 			const nextForEpic = allNextTasks.filter((t) => t.epicId === epic.id);
 			const statusLabel = epic.status === "doing" ? "doing" : "todo";
