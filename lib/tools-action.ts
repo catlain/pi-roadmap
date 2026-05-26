@@ -116,7 +116,7 @@ export function registerDoneTool(pi: ExtensionAPI) {
 						if (task.id === params.taskId) {
 							task.status = "done";
 							task.doneDate = new Date().toISOString().slice(0, 10);
-						task.doneBySessionId = getSessionId(_ctx as any);
+						task.doneBySessionId = (_ctx as any).session?.getSessionId?.() ?? "unknown";
 						delete task.doingSessionId;
 							if (params.note) task.note = params.note;
 							found = true;
