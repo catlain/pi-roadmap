@@ -67,8 +67,8 @@ export function registerNextTool(pi: ExtensionAPI) {
 				for (const t of item.tasks) {
 					addDoing({
 						roadmapId: item.roadmap.meta.id,
-						taskId: t.task.id,
-						taskTitle: t.task.title,
+						taskId: t.id,
+						taskTitle: t.title,
 						startedAt: new Date().toISOString(),
 					});
 				}
