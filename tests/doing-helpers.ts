@@ -44,12 +44,16 @@ export function setupCleanDoing() {
 	fs.writeFileSync(DOING_FILE, "[]\n", "utf-8");
 }
 
-/** 在 afterEach 中调用：清空 doing.json + 清理测试 roadmap 文件 */
-export async function cleanupDoing(createdRoadmaps: string[]) {
-	const { clearAllDoing } = await import("../lib/doing-store");
-	clearAllDoing();
+/** 在 afterEach 中调用：用 fs 直接清空 doing.json + 清理测试 roadmap 文件 */
+export function cleanupDoing(createdRoadmaps: string[]) {
+	const dir = path.dirname(DOING_FILE);
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+	fs.writeFileSync(DOING_FILE, "[]\n", "utf-8");
 	for (const id of createdRoadmaps) {
 		const fp = path.join(ROADMAP_DIR, `${id}.roadmap.json`);
 		if (fs.existsSync(fp)) fs.unlinkSync(fp);
 	}
+	createdRoadmaps.length = 0;
 }

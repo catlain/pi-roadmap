@@ -30,15 +30,22 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 	registerNextTool(pi);
 	registerDoneTool(pi);
 
-	// ── agent_end：检查未同步的 doing 任务 ──
-	// 用 setTimeout 确保在 roadmap_done 等操作之后执行
+	// ── agent_end：检查未同步的 doing 任务（仅当前会话） ──
 	pi.on("agent_end", async (_event, _ctx) => {
+		// 获取当前会话 ID
+		const sessionFile = _ctx?.sessionManager?.getSessionFile?.() ?? "";
+		const currentSessionId = sessionFile.split("/").pop()?.replace(/\.jsonl$/, "") ?? "";
+
 		// 先 syncDoing：清理已 done/dropped/孤儿条目
 		const rmFiles = listRoadmapFiles();
 		const rms = rmFiles.map((f) => readRoadmap(f)).filter(Boolean) as NonNullable<ReturnType<typeof readRoadmap>>[];
 		syncDoing(rms);
 
-		const doingEntries = readDoing();
+		// 只提醒当前会话的 doing 条目
+		const allDoing = readDoing();
+		const doingEntries = currentSessionId
+			? allDoing.filter((e) => e.sessionId === currentSessionId)
+			: allDoing;
 		if (doingEntries.length === 0) return;
 
 		const taskList = doingEntries

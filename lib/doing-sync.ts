@@ -8,7 +8,7 @@ import type { RoadmapFile } from "./types";
 import { addDoing, clearDoing } from "./doing-store";
 
 /** 对比新旧 roadmap，根据 task status 变迁同步 doing.json */
-export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile): void {
+export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile, sessionId?: string): void {
 	// 构建旧 task 状态索引：taskId → status
 	const oldTasks = new Map<string, string>();
 	for (const epic of oldRm.epics) {
@@ -34,6 +34,7 @@ export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile): void {
 							taskId: task.id,
 							taskTitle: task.title,
 							startedAt: new Date().toISOString(),
+							sessionId,
 						});
 					}
 				} else if (oldStatus !== "doing" && newStatus === "doing") {
@@ -43,6 +44,7 @@ export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile): void {
 						taskId: task.id,
 						taskTitle: task.title,
 						startedAt: new Date().toISOString(),
+						sessionId,
 					});
 				} else if (oldStatus === "doing" && newStatus !== "doing") {
 					// doing → 非 doing：清除 doing
