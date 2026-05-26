@@ -16,20 +16,19 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-
-import { registerListTool, registerShowTool } from "./lib/tools-query";
-import { registerPlanTool } from "./lib/tools-plan";
-import { registerNextTool, registerDoneTool } from "./lib/tools-action";
+import { readDoing, syncDoing } from "./lib/doing-store";
+import { listRoadmapFiles, readRoadmap } from "./lib/store";
+import { registerDoneTool, registerNextTool } from "./lib/tools-action";
+import { registerArchiveTool, registerUpdateTool } from "./lib/tools-atomic";
 import {
-	registerCreateTool,
 	registerAddEpicTool,
 	registerAddStoryTool,
 	registerAddTaskTool,
+	registerCreateTool,
 } from "./lib/tools-atomic-create";
-import { registerUpdateTool, registerArchiveTool } from "./lib/tools-atomic";
-import { readDoing, syncDoing } from "./lib/doing-store";
 import { checkArchiveableEpics } from "./lib/tools-atomic-logic";
-import { listRoadmapFiles, readRoadmap } from "./lib/store";
+import { registerPlanTool } from "./lib/tools-plan";
+import { registerListTool, registerShowTool } from "./lib/tools-query";
 
 export default function roadmapExtension(pi: ExtensionAPI) {
 	// ── 注册所有工具 ──
@@ -51,11 +50,17 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 	pi.on("agent_end", async (_event, _ctx) => {
 		// 获取当前会话 ID
 		const sessionFile = _ctx?.sessionManager?.getSessionFile?.() ?? "";
-		const currentSessionId = sessionFile.split("/").pop()?.replace(/\.jsonl$/, "") ?? "";
+		const currentSessionId =
+			sessionFile
+				.split("/")
+				.pop()
+				?.replace(/\.jsonl$/, "") ?? "";
 
 		// 先 syncDoing：清理已 done/dropped/孤儿条目
 		const rmFiles = listRoadmapFiles();
-		const rms = rmFiles.map((f) => readRoadmap(f)).filter(Boolean) as NonNullable<ReturnType<typeof readRoadmap>>[];
+		const rms = rmFiles
+			.map((f) => readRoadmap(f))
+			.filter(Boolean) as NonNullable<ReturnType<typeof readRoadmap>>[];
 		syncDoing(rms);
 
 		// 只提醒当前会话的 doing 条目
@@ -77,13 +82,11 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 
 		// 仅 display 展示，不触发新 turn（防止 agent_end → sendMessage → AI 回复 → agent_end 循环）
 		try {
-			pi.sendMessage(
-				{
-					customType: "roadmap-doing-reminder",
-					content: reminder,
-					display: true,
-				},
-			);
+			pi.sendMessage({
+				customType: "roadmap-doing-reminder",
+				content: reminder,
+				display: true,
+			});
 		} catch {
 			// session 已关闭或替换，忽略
 		}
@@ -92,17 +95,14 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 		const archiveReminder = checkArchiveableEpics(rms);
 		if (archiveReminder) {
 			try {
-				pi.sendMessage(
-					{
-						customType: "roadmap-archive-reminder",
-						content: archiveReminder,
-						display: true,
-					},
-				);
+				pi.sendMessage({
+					customType: "roadmap-archive-reminder",
+					content: archiveReminder,
+					display: true,
+				});
 			} catch {
 				// session 已关闭或替换，忽略
 			}
 		}
 	});
 }
-

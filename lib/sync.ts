@@ -9,12 +9,12 @@
  */
 
 import * as fs from "node:fs";
-import * as path from "node:path";
 import { homedir } from "node:os";
-import type { RoadmapFile, Story, Task } from "./types";
-import { PROJECT_ROADMAP_FILE, PROJECT_ROADMAP_DIR } from "./types";
-import { validateRoadmap } from "./validator";
+import * as path from "node:path";
 import { findTask } from "./progress";
+import type { RoadmapFile, Story, Task } from "./types";
+import { PROJECT_ROADMAP_DIR, PROJECT_ROADMAP_FILE } from "./types";
+import { validateRoadmap } from "./validator";
 
 // ── 项目级数据结构 ──
 
@@ -64,7 +64,11 @@ export function writeProjectRoadmap(
 
 /** 读取项目级 roadmap */
 export function readProjectRoadmap(projectPath: string): ProjectRoadmap | null {
-	const filePath = path.join(projectPath, PROJECT_ROADMAP_DIR, PROJECT_ROADMAP_FILE);
+	const filePath = path.join(
+		projectPath,
+		PROJECT_ROADMAP_DIR,
+		PROJECT_ROADMAP_FILE,
+	);
 	if (!fs.existsSync(filePath)) return null;
 	try {
 		return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -108,7 +112,11 @@ export function markTaskDoneAndSyncBack(
 		// 更新 meta.updated
 		roadmap.meta.updated = new Date().toISOString().slice(0, 10);
 
-		fs.writeFileSync(filePath, JSON.stringify(roadmap, null, 2) + "\n", "utf-8");
+		fs.writeFileSync(
+			filePath,
+			JSON.stringify(roadmap, null, 2) + "\n",
+			"utf-8",
+		);
 		return true;
 	} catch {
 		return false;

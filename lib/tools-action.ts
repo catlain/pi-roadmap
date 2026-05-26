@@ -2,17 +2,21 @@
  * Roadmap 工具 — next（获取可推进任务）+ done（标记完成）
  */
 
+import { existsSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { existsSync } from "node:fs";
-
+import { clearDoing } from "./doing-store";
+import { getNextTasks } from "./progress";
+import {
+	getRoadmapFilePath,
+	listRoadmapFiles,
+	readRoadmap,
+	writeRoadmap,
+} from "./store";
+import { syncToProject, writeProjectRoadmap } from "./sync";
+import { markTaskDone as _markTaskDone } from "./tools-atomic-logic";
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
-import { listRoadmapFiles, readRoadmap, writeRoadmap, getRoadmapFilePath } from "./store";
-import { getNextTasks } from "./progress";
-import { syncToProject, writeProjectRoadmap } from "./sync";
-import { clearDoing } from "./doing-store";
-import { markTaskDone as _markTaskDone } from "./tools-atomic-logic";
 
 export function registerNextTool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -41,7 +45,15 @@ export function registerNextTool(pi: ExtensionAPI) {
 			if (params.roadmapId) {
 				const rm = readRoadmap(getRoadmapFilePath(params.roadmapId));
 				if (!rm) {
-					return { content: [{ type: "text" as const, text: `路线图 "${params.roadmapId}" 不存在。` }], details: {} };
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `路线图 "${params.roadmapId}" 不存在。`,
+							},
+						],
+						details: {},
+					};
 				}
 				roadmaps = [rm];
 			} else {
@@ -52,15 +64,24 @@ export function registerNextTool(pi: ExtensionAPI) {
 			}
 
 			if (roadmaps.length === 0) {
-				return { content: [{ type: "text" as const, text: "没有活跃的路线图。" }], details: {} };
+				return {
+					content: [{ type: "text" as const, text: "没有活跃的路线图。" }],
+					details: {},
+				};
 			}
 
 			const allNext = roadmaps
-				.map((rm: RoadmapFile) => ({ roadmap: rm, tasks: getNextTasks(rm, limit) }))
+				.map((rm: RoadmapFile) => ({
+					roadmap: rm,
+					tasks: getNextTasks(rm, limit),
+				}))
 				.filter((item) => item.tasks.length > 0);
 
 			if (allNext.length === 0) {
-				return { content: [{ type: "text" as const, text: "当前没有待推进的任务。" }], details: {} };
+				return {
+					content: [{ type: "text" as const, text: "当前没有待推进的任务。" }],
+					details: {},
+				};
 			}
 
 			const text = allNext
@@ -85,13 +106,12 @@ export function registerDoneTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_done",
 		label: "Roadmap Done",
-		description: "标记路线图中的某个任务为完成。自动填 doneDate、doneBySessionId，级联更新 Story/Epic 状态，同步到关联项目。",
+		description:
+			"标记路线图中的某个任务为完成。自动填 doneDate、doneBySessionId，级联更新 Story/Epic 状态，同步到关联项目。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			taskId: Type.String({ description: "任务 ID，如 E1.S1.T1" }),
-			note: Type.Optional(
-				Type.String({ description: "完成备注或产出链接" }),
-			),
+			note: Type.Optional(Type.String({ description: "完成备注或产出链接" })),
 		}),
 		async execute(
 			_toolCallId: string,
@@ -102,19 +122,47 @@ export function registerDoneTool(pi: ExtensionAPI) {
 		) {
 			const filePath = getRoadmapFilePath(params.roadmapId);
 			if (!existsSync(filePath)) {
-				return { content: [{ type: "text" as const, text: `路线图 "${params.roadmapId}" 不存在。` }], details: {} };
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: `路线图 "${params.roadmapId}" 不存在。`,
+						},
+					],
+					details: {},
+				};
 			}
 
 			const roadmap = readRoadmap(filePath);
 			if (!roadmap) {
-				return { content: [{ type: "text" as const, text: `路线图 "${params.roadmapId}" 读取失败。` }], details: {} };
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: `路线图 "${params.roadmapId}" 读取失败。`,
+						},
+					],
+					details: {},
+				};
 			}
 
-			const sessionId = (_ctx as any)?.sessionManager?.getSessionFile?.()?.split("/").pop()?.replace(/\.jsonl$/, "") ?? "unknown";
+			const sessionId =
+				(_ctx as any)?.sessionManager
+					?.getSessionFile?.()
+					?.split("/")
+					.pop()
+					?.replace(/\.jsonl$/, "") ?? "unknown";
 
-			const { result: doneResult, cascadeInfo } = _markTaskDone(roadmap, params.taskId, sessionId);
+			const { result: doneResult, cascadeInfo } = _markTaskDone(
+				roadmap,
+				params.taskId,
+				sessionId,
+			);
 			if (doneResult.includes("错误")) {
-				return { content: [{ type: "text" as const, text: doneResult }], details: {} };
+				return {
+					content: [{ type: "text" as const, text: doneResult }],
+					details: {},
+				};
 			}
 
 			// 补充 note
@@ -122,7 +170,10 @@ export function registerDoneTool(pi: ExtensionAPI) {
 				for (const epic of roadmap.epics) {
 					for (const story of epic.stories) {
 						const task = story.tasks.find((t) => t.id === params.taskId);
-						if (task) { task.note = params.note; break; }
+						if (task) {
+							task.note = params.note;
+							break;
+						}
 					}
 				}
 			}
@@ -149,7 +200,10 @@ export function registerDoneTool(pi: ExtensionAPI) {
 			if (synced.length > 0) {
 				result += `\n已同步到项目: ${synced.join(", ")}`;
 			}
-			return { content: [{ type: "text" as const, text: result }], details: {} };
+			return {
+				content: [{ type: "text" as const, text: result }],
+				details: {},
+			};
 		},
 	});
 }

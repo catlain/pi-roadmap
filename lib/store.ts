@@ -7,12 +7,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
-	GLOBAL_ROADMAP_DIR,
 	ARCHIVE_DIR,
 	FILE_SUFFIX,
+	GLOBAL_ROADMAP_DIR,
 	type RoadmapFile,
 } from "./types";
-import { validateRoadmap, repairRoadmap } from "./validator";
+import { repairRoadmap, validateRoadmap } from "./validator";
 
 // ── 路径工具 ──
 

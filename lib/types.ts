@@ -7,8 +7,8 @@
  *   - Task: 30分钟-2小时的最小执行单元
  */
 
-import * as path from "node:path";
 import { homedir } from "node:os";
+import * as path from "node:path";
 
 // ── 状态枚举 ──
 
@@ -139,7 +139,11 @@ export const PROJECT_ROADMAP_DIR = ".pi/roadmap";
 // ── 优先级工具 ──
 
 /** 优先级排序权重 */
-const PRIORITY_WEIGHT: Record<Priority, number> = { high: 0, medium: 1, low: 2 };
+const PRIORITY_WEIGHT: Record<Priority, number> = {
+	high: 0,
+	medium: 1,
+	low: 2,
+};
 
 /** 获取有效优先级：自身 > 父级 > medium */
 export function getEffectivePriority(

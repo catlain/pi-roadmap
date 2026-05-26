@@ -2,8 +2,8 @@
  * Roadmap 查询、过滤、汇总
  */
 
-import type { RoadmapFile, RoadmapStatus, Epic } from "./types";
-import { calcProgress, calcEpicProgress } from "./progress";
+import { calcEpicProgress, calcProgress } from "./progress";
+import type { Epic, RoadmapFile, RoadmapStatus } from "./types";
 
 // ── 过滤 ──
 
@@ -16,7 +16,10 @@ export function filterByStatus(
 }
 
 /** 按标签过滤 */
-export function filterByTag(roadmaps: RoadmapFile[], tag: string): RoadmapFile[] {
+export function filterByTag(
+	roadmaps: RoadmapFile[],
+	tag: string,
+): RoadmapFile[] {
 	return roadmaps.filter((r) => r.meta.tags.includes(tag));
 }
 

@@ -2,8 +2,8 @@
  * agent_end 行为测试
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { setupCleanDoing, cleanupDoing } from "./doing-helpers";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanupDoing, setupCleanDoing } from "./doing-helpers";
 
 const createdRoadmaps: string[] = [];
 beforeEach(() => setupCleanDoing());
@@ -12,7 +12,12 @@ afterEach(() => cleanupDoing(createdRoadmaps));
 describe("agent_end 行为", () => {
 	it("有 doing 条目时生成提醒文本", async () => {
 		const { addDoing, readDoing } = await import("../lib/doing-store");
-		addDoing({ roadmapId: "rm-1", taskId: "E1.S1.T1", taskTitle: "测试任务", startedAt: "2026-01-01" });
+		addDoing({
+			roadmapId: "rm-1",
+			taskId: "E1.S1.T1",
+			taskTitle: "测试任务",
+			startedAt: "2026-01-01",
+		});
 
 		const entries = readDoing();
 		expect(entries.length).toBeGreaterThan(0);

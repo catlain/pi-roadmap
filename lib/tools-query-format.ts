@@ -4,8 +4,8 @@
  * 纯函数，不依赖 typebox / ExtensionAPI，方便测试
  */
 
-import type { RoadmapFile, Epic, Story, Task } from "./types";
-import { getOverview, formatProgress } from "./parser";
+import { formatProgress, getOverview } from "./parser";
+import type { Epic, RoadmapFile, Story, Task } from "./types";
 
 /** 格式化时间戳摘要 */
 export function formatTimestamps(item: {
@@ -19,8 +19,10 @@ export function formatTimestamps(item: {
 	if (item.createdDate) parts.push(`created: ${item.createdDate}`);
 	if (item.doingDate) parts.push(`doing: ${item.doingDate}`);
 	if (item.doneDate) parts.push(`done: ${item.doneDate}`);
-	if (item.doingSessionId) parts.push(`session: ${item.doingSessionId.slice(0, 8)}`);
-	else if (item.doneBySessionId) parts.push(`by: ${item.doneBySessionId.slice(0, 8)}`);
+	if (item.doingSessionId)
+		parts.push(`session: ${item.doingSessionId.slice(0, 8)}`);
+	else if (item.doneBySessionId)
+		parts.push(`by: ${item.doneBySessionId.slice(0, 8)}`);
 	return parts.length > 0 ? ` [${parts.join(", ")}]` : "";
 }
 
@@ -52,7 +54,10 @@ export interface FormatOptions {
 }
 
 /** 格式化路线图详情文本 */
-export function formatRoadmapDetail(roadmap: RoadmapFile, opts: FormatOptions = {}): string {
+export function formatRoadmapDetail(
+	roadmap: RoadmapFile,
+	opts: FormatOptions = {},
+): string {
 	const { epicId, showCompleted = true, showArchived = false } = opts;
 	const overview = getOverview(roadmap);
 	const bar = formatProgress(overview.percent);
@@ -66,7 +71,10 @@ export function formatRoadmapDetail(roadmap: RoadmapFile, opts: FormatOptions = 
 
 		const isComplete = epic.status === "done" || epic.status === "dropped";
 		if (isComplete && !showCompleted) {
-			const taskCount = epic.stories.reduce((sum, s) => sum + s.tasks.length, 0);
+			const taskCount = epic.stories.reduce(
+				(sum, s) => sum + s.tasks.length,
+				0,
+			);
 			output += `✅ ${epic.id}: ${epic.title} [${taskCount} tasks]${formatTimestamps(epic)}\n`;
 			continue;
 		}
@@ -79,7 +87,8 @@ export function formatRoadmapDetail(roadmap: RoadmapFile, opts: FormatOptions = 
 		for (const story of epic.stories) {
 			if (story.archived && !showArchived) continue;
 
-			const storyComplete = story.status === "done" || story.status === "dropped";
+			const storyComplete =
+				story.status === "done" || story.status === "dropped";
 			if (storyComplete && !showCompleted) {
 				const taskCount = story.tasks.length;
 				output += `  ✅ ${story.id}: ${story.title} [${taskCount} tasks]${formatTimestamps(story)}\n`;
@@ -96,10 +105,15 @@ export function formatRoadmapDetail(roadmap: RoadmapFile, opts: FormatOptions = 
 				if (task.archived && !showArchived) continue;
 
 				const check =
-					task.status === "done" ? "✅" :
-					task.status === "doing" ? "🔄" :
-					task.status === "blocked" ? "🚫" :
-					task.status === "dropped" ? "❌" : "⬜";
+					task.status === "done"
+						? "✅"
+						: task.status === "doing"
+							? "🔄"
+							: task.status === "blocked"
+								? "🚫"
+								: task.status === "dropped"
+									? "❌"
+									: "⬜";
 				const note = task.note ? ` — ${task.note}` : "";
 				output += `  ${check} ${task.id}: ${task.title}${formatTimestamps(task)}${note}\n`;
 			}

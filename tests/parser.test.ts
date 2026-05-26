@@ -1,12 +1,12 @@
 /**
  * parser.ts 测试 — 查询、过滤、汇总
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
 	filterByStatus,
 	filterByTag,
-	getOverview,
 	formatProgress,
+	getOverview,
 } from "../lib/parser";
 import type { RoadmapFile } from "../lib/types";
 
@@ -64,9 +64,7 @@ const SAMPLE_ROADMAP: RoadmapFile = {
 					title: "Story B1",
 					description: "工作块 B1",
 					status: "todo",
-					tasks: [
-						{ id: "E2.S1.T1", title: "Task B1-1", status: "todo" },
-					],
+					tasks: [{ id: "E2.S1.T1", title: "Task B1-1", status: "todo" }],
 				},
 			],
 		},
@@ -75,7 +73,12 @@ const SAMPLE_ROADMAP: RoadmapFile = {
 
 const PAUSED_ROADMAP: RoadmapFile = {
 	...SAMPLE_ROADMAP,
-	meta: { ...SAMPLE_ROADMAP.meta, id: "paused-plan", status: "paused", tags: ["量化"] },
+	meta: {
+		...SAMPLE_ROADMAP.meta,
+		id: "paused-plan",
+		status: "paused",
+		tags: ["量化"],
+	},
 };
 
 // ── filterByStatus ──
@@ -129,7 +132,14 @@ describe("getOverview", () => {
 
 	it("空 roadmap 进度为 0", () => {
 		const empty: RoadmapFile = {
-			meta: { id: "empty", title: "空", status: "active", created: "2026-01-01", updated: "2026-01-01", tags: [] },
+			meta: {
+				id: "empty",
+				title: "空",
+				status: "active",
+				created: "2026-01-01",
+				updated: "2026-01-01",
+				tags: [],
+			},
 			epics: [],
 		};
 		const overview = getOverview(empty);

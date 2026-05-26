@@ -2,23 +2,30 @@
  * 测试 tools-atomic-logic.ts — 纯逻辑函数（无 pi API 依赖）
  */
 
-import { describe, it, expect } from "vitest";
-import { checkArchiveableEpics } from "../lib/tools-atomic-logic";
-import type { RoadmapFile } from "../lib/types";
+import { describe, expect, it } from "vitest";
 import {
-	createRoadmap,
 	addEpic,
 	addStory,
 	addTask,
-	archiveEpic,
 	archiveAllDone,
+	archiveEpic,
+	checkArchiveableEpics,
+	createRoadmap,
 	getArchivedEpics,
 	markTaskDone,
 } from "../lib/tools-atomic-logic";
+import type { RoadmapFile } from "../lib/types";
 
 function makeRoadmap(): RoadmapFile {
 	return {
-		meta: { id: "test", title: "Test", status: "active", created: "2025-01-01T00:00:00Z", updated: "2025-01-01T00:00:00Z", tags: [] },
+		meta: {
+			id: "test",
+			title: "Test",
+			status: "active",
+			created: "2025-01-01T00:00:00Z",
+			updated: "2025-01-01T00:00:00Z",
+			tags: [],
+		},
 		epics: [],
 	};
 }
@@ -26,25 +33,53 @@ function makeRoadmap(): RoadmapFile {
 function makeRoadmapWithDoneTasks(): RoadmapFile {
 	const rm = makeRoadmap();
 	rm.epics.push({
-		id: "E1", title: "Done Epic", description: "", status: "todo",
-		priority: "medium", project: "/test", createdDate: "2025-01-01", stories: [
+		id: "E1",
+		title: "Done Epic",
+		description: "",
+		status: "todo",
+		priority: "medium",
+		project: "/test",
+		createdDate: "2025-01-01",
+		stories: [
 			{
-				id: "E1.S1", title: "Done Story", description: "", status: "todo",
-				createdDate: "2025-01-01", tasks: [
-					{ id: "E1.S1.T1", title: "Done Task", status: "done", doneDate: "2025-01-02" },
-					{ id: "E1.S1.T2", title: "Done Task 2", status: "done", doneDate: "2025-01-02" },
+				id: "E1.S1",
+				title: "Done Story",
+				description: "",
+				status: "todo",
+				createdDate: "2025-01-01",
+				tasks: [
+					{
+						id: "E1.S1.T1",
+						title: "Done Task",
+						status: "done",
+						doneDate: "2025-01-02",
+					},
+					{
+						id: "E1.S1.T2",
+						title: "Done Task 2",
+						status: "done",
+						doneDate: "2025-01-02",
+					},
 				],
 			},
 		],
 	});
 	rm.epics.push({
-		id: "E2", title: "Active Epic", description: "", status: "doing",
-		priority: "high", project: "/test", createdDate: "2025-01-01", stories: [
+		id: "E2",
+		title: "Active Epic",
+		description: "",
+		status: "doing",
+		priority: "high",
+		project: "/test",
+		createdDate: "2025-01-01",
+		stories: [
 			{
-				id: "E2.S1", title: "Active Story", description: "", status: "todo",
-				createdDate: "2025-01-01", tasks: [
-					{ id: "E2.S1.T1", title: "Active Task", status: "todo" },
-				],
+				id: "E2.S1",
+				title: "Active Story",
+				description: "",
+				status: "todo",
+				createdDate: "2025-01-01",
+				tasks: [{ id: "E2.S1.T1", title: "Active Task", status: "todo" }],
 			},
 		],
 	});
@@ -74,7 +109,13 @@ describe("createRoadmap", () => {
 describe("addEpic", () => {
 	it("adds first epic with ID E1", () => {
 		const rm = makeRoadmap();
-		const { result, epicId } = addEpic(rm, "Build feature", "Description", "high", "/proj");
+		const { result, epicId } = addEpic(
+			rm,
+			"Build feature",
+			"Description",
+			"high",
+			"/proj",
+		);
 		expect(epicId).toBe("E1");
 		expect(result).toContain("E1");
 		expect(rm.epics).toHaveLength(1);
@@ -238,7 +279,11 @@ describe("markTaskDone", () => {
 		addStory(rm, "E1", "Story", "");
 		addTask(rm, "E1.S1", "Task 1", undefined);
 
-		const { result, doneTaskId, cascadeInfo } = markTaskDone(rm, "E1.S1.T1", "sess-123");
+		const { result, doneTaskId, cascadeInfo } = markTaskDone(
+			rm,
+			"E1.S1.T1",
+			"sess-123",
+		);
 		expect(doneTaskId).toBe("E1.S1.T1");
 		expect(result).toContain("已完成");
 		const task = rm.epics[0].stories[0].tasks[0];
@@ -285,14 +330,25 @@ describe("markTaskDone", () => {
 // ── checkArchiveableEpics ──
 describe("checkArchiveableEpics", () => {
 	const baseEpic2 = {
-		id: "E1", title: "Test Epic", description: "", status: "todo" as const,
-		priority: "medium" as const, project: "/test", stories: [] as any[],
+		id: "E1",
+		title: "Test Epic",
+		description: "",
+		status: "todo" as const,
+		priority: "medium" as const,
+		project: "/test",
+		stories: [] as any[],
 	};
 	const baseStory2 = {
-		id: "E1.S1", title: "Test Story", description: "", status: "todo" as const, tasks: [] as any[],
+		id: "E1.S1",
+		title: "Test Story",
+		description: "",
+		status: "todo" as const,
+		tasks: [] as any[],
 	};
 	const baseTask2 = {
-		id: "E1.S1.T1", title: "Test Task", status: "todo" as const,
+		id: "E1.S1.T1",
+		title: "Test Task",
+		status: "todo" as const,
 	};
 
 	it("无可归档项时返回 undefined", () => {
@@ -302,7 +358,13 @@ describe("checkArchiveableEpics", () => {
 					{
 						...baseEpic2,
 						status: "doing",
-						stories: [{ ...baseStory2, status: "doing", tasks: [{ ...baseTask2, status: "doing" }] }],
+						stories: [
+							{
+								...baseStory2,
+								status: "doing",
+								tasks: [{ ...baseTask2, status: "doing" }],
+							},
+						],
 					},
 				],
 			},
@@ -318,7 +380,13 @@ describe("checkArchiveableEpics", () => {
 						...baseEpic2,
 						id: "E1",
 						title: "已完成 Epic",
-						stories: [{ ...baseStory2, status: "done", tasks: [{ ...baseTask2, status: "done" }] }],
+						stories: [
+							{
+								...baseStory2,
+								status: "done",
+								tasks: [{ ...baseTask2, status: "done" }],
+							},
+						],
 					},
 				],
 			},
@@ -334,7 +402,13 @@ describe("checkArchiveableEpics", () => {
 					{
 						...baseEpic2,
 						archived: true,
-						stories: [{ ...baseStory2, status: "done", tasks: [{ ...baseTask2, status: "done" }] }],
+						stories: [
+							{
+								...baseStory2,
+								status: "done",
+								tasks: [{ ...baseTask2, status: "done" }],
+							},
+						],
 					},
 				],
 			},
@@ -349,8 +423,17 @@ describe("checkArchiveableEpics", () => {
 					{
 						...baseEpic2,
 						stories: [
-							{ ...baseStory2, status: "done", tasks: [{ ...baseTask2, status: "done" }] },
-							{ ...baseStory2, id: "E1.S2", status: "doing", tasks: [{ ...baseTask2, id: "E1.S2.T1", status: "doing" }] },
+							{
+								...baseStory2,
+								status: "done",
+								tasks: [{ ...baseTask2, status: "done" }],
+							},
+							{
+								...baseStory2,
+								id: "E1.S2",
+								status: "doing",
+								tasks: [{ ...baseTask2, id: "E1.S2.T1", status: "doing" }],
+							},
 						],
 					},
 				],

@@ -8,8 +8,8 @@
  */
 
 import * as fs from "node:fs";
-import * as path from "node:path";
 import { homedir } from "node:os";
+import * as path from "node:path";
 
 /** doing 标志文件路径 */
 const DOING_FILE = path.join(homedir(), ".pi", "roadmap", "doing.json");
@@ -44,14 +44,22 @@ function writeDoing(entries: DoingEntry[]): void {
 	if (!fs.existsSync(dir)) {
 		fs.mkdirSync(dir, { recursive: true });
 	}
-	fs.writeFileSync(DOING_FILE, JSON.stringify(entries, null, 2) + "\n", "utf-8");
+	fs.writeFileSync(
+		DOING_FILE,
+		JSON.stringify(entries, null, 2) + "\n",
+		"utf-8",
+	);
 }
 
 /** 添加一个 doing 条目（去重：同一 taskId 不重复添加） */
 export function addDoing(entry: DoingEntry): void {
 	const entries = readDoing();
 	// 去重
-	if (entries.some((e) => e.taskId === entry.taskId && e.roadmapId === entry.roadmapId)) {
+	if (
+		entries.some(
+			(e) => e.taskId === entry.taskId && e.roadmapId === entry.roadmapId,
+		)
+	) {
 		return;
 	}
 	entries.push(entry);
@@ -83,7 +91,12 @@ export function hasDoing(): boolean {
 
 /** 收集 roadmap 中所有 task 的有效状态 */
 function collectTaskStatuses(
-	rms: Array<{ meta: { id: string }; epics: Array<{ stories: Array<{ tasks: Array<{ id: string; status: string }> }> }> }>,
+	rms: Array<{
+		meta: { id: string };
+		epics: Array<{
+			stories: Array<{ tasks: Array<{ id: string; status: string }> }>;
+		}>;
+	}>,
 ): Map<string, Map<string, string>> {
 	const map = new Map<string, Map<string, string>>();
 	for (const rm of rms) {
@@ -102,7 +115,12 @@ function collectTaskStatuses(
 
 /** 同步 doing.json：根据 roadmap 实际状态清理无效条目（done/dropped/orphan） */
 export function syncDoing(
-	rms: Array<{ meta: { id: string }; epics: Array<{ stories: Array<{ tasks: Array<{ id: string; status: string }> }> }> }>,
+	rms: Array<{
+		meta: { id: string };
+		epics: Array<{
+			stories: Array<{ tasks: Array<{ id: string; status: string }> }>;
+		}>;
+	}>,
 ): void {
 	const entries = readDoing();
 	if (entries.length === 0) return;

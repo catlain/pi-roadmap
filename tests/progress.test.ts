@@ -2,34 +2,63 @@
  * 测试 progress.ts — 进度计算与任务提取
  */
 
-import { describe, it, expect } from "vitest";
-import type { RoadmapFile, Epic, Story, Task } from "../lib/types";
+import { describe, expect, it } from "vitest";
 import {
-	calcProgress,
 	calcEpicProgress,
+	calcProgress,
 	calcStoryProgress,
-	getNextTasks,
-	findTask,
-	findStory,
 	findEpic,
+	findStory,
+	findTask,
+	getNextTasks,
 	getStoriesForProject,
 } from "../lib/progress";
+import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
 
 function makeTask(overrides: Partial<Task> & { id: string }): Task {
 	return { title: `Task ${overrides.id}`, status: "todo", ...overrides };
 }
 
-function makeStory(overrides: Partial<Story> & { id: string }, tasks: Task[] = []): Story {
-	return { title: `Story ${overrides.id}`, description: "", status: "todo", createdDate: "2025-01-01", tasks, ...overrides };
+function makeStory(
+	overrides: Partial<Story> & { id: string },
+	tasks: Task[] = [],
+): Story {
+	return {
+		title: `Story ${overrides.id}`,
+		description: "",
+		status: "todo",
+		createdDate: "2025-01-01",
+		tasks,
+		...overrides,
+	};
 }
 
-function makeEpic(overrides: Partial<Epic> & { id: string }, stories: Story[] = []): Epic {
-	return { title: `Epic ${overrides.id}`, description: "", status: "todo", priority: "medium", project: "/test", createdDate: "2025-01-01", stories, ...overrides };
+function makeEpic(
+	overrides: Partial<Epic> & { id: string },
+	stories: Story[] = [],
+): Epic {
+	return {
+		title: `Epic ${overrides.id}`,
+		description: "",
+		status: "todo",
+		priority: "medium",
+		project: "/test",
+		createdDate: "2025-01-01",
+		stories,
+		...overrides,
+	};
 }
 
 function makeRoadmap(epics: Epic[] = []): RoadmapFile {
 	return {
-		meta: { id: "test", title: "Test", status: "active", created: "2025-01-01T00:00:00Z", updated: "2025-01-01T00:00:00Z", tags: [] },
+		meta: {
+			id: "test",
+			title: "Test",
+			status: "active",
+			created: "2025-01-01T00:00:00Z",
+			updated: "2025-01-01T00:00:00Z",
+			tags: [],
+		},
 		epics,
 	};
 }
@@ -38,7 +67,11 @@ function makeRoadmap(epics: Epic[] = []): RoadmapFile {
 
 describe("calcProgress", () => {
 	it("returns 0% for empty roadmap", () => {
-		expect(calcProgress(makeRoadmap())).toEqual({ total: 0, done: 0, percent: 0 });
+		expect(calcProgress(makeRoadmap())).toEqual({
+			total: 0,
+			done: 0,
+			percent: 0,
+		});
 	});
 
 	it("calculates correct progress", () => {
@@ -59,7 +92,11 @@ describe("calcProgress", () => {
 
 describe("calcEpicProgress", () => {
 	it("returns 0% for empty epic", () => {
-		expect(calcEpicProgress(makeEpic({ id: "E1" }))).toEqual({ total: 0, done: 0, percent: 0 });
+		expect(calcEpicProgress(makeEpic({ id: "E1" }))).toEqual({
+			total: 0,
+			done: 0,
+			percent: 0,
+		});
 	});
 
 	it("calculates epic progress", () => {
@@ -84,7 +121,11 @@ describe("calcStoryProgress", () => {
 			makeTask({ id: "E1.S1.T1", status: "done" }),
 			makeTask({ id: "E1.S1.T2", status: "done" }),
 		]);
-		expect(calcStoryProgress(story)).toEqual({ total: 2, done: 2, percent: 100 });
+		expect(calcStoryProgress(story)).toEqual({
+			total: 2,
+			done: 2,
+			percent: 100,
+		});
 	});
 });
 
@@ -112,11 +153,17 @@ describe("getNextTasks", () => {
 	it("skips done/dropped epics and stories", () => {
 		const rm = makeRoadmap([
 			makeEpic({ id: "E1", status: "done" }, [
-				makeStory({ id: "E1.S1" }, [makeTask({ id: "E1.S1.T1", status: "todo" })]),
+				makeStory({ id: "E1.S1" }, [
+					makeTask({ id: "E1.S1.T1", status: "todo" }),
+				]),
 			]),
 			makeEpic({ id: "E2" }, [
-				makeStory({ id: "E2.S1", status: "dropped" }, [makeTask({ id: "E2.S1.T1", status: "todo" })]),
-				makeStory({ id: "E2.S2" }, [makeTask({ id: "E2.S2.T1", status: "todo" })]),
+				makeStory({ id: "E2.S1", status: "dropped" }, [
+					makeTask({ id: "E2.S1.T1", status: "todo" }),
+				]),
+				makeStory({ id: "E2.S2" }, [
+					makeTask({ id: "E2.S2.T1", status: "todo" }),
+				]),
 			]),
 		]);
 		const next = getNextTasks(rm, 5);
@@ -182,7 +229,10 @@ describe("findEpic", () => {
 describe("getStoriesForProject", () => {
 	it("returns stories for matching project", () => {
 		const rm = makeRoadmap([
-			makeEpic({ id: "E1", project: "/proj-a" }, [makeStory({ id: "E1.S1" }), makeStory({ id: "E1.S2" })]),
+			makeEpic({ id: "E1", project: "/proj-a" }, [
+				makeStory({ id: "E1.S1" }),
+				makeStory({ id: "E1.S2" }),
+			]),
 			makeEpic({ id: "E2", project: "/proj-b" }, [makeStory({ id: "E2.S1" })]),
 		]);
 		const stories = getStoriesForProject(rm, "/proj-a");

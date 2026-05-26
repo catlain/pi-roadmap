@@ -2,8 +2,8 @@
  * Roadmap 进度计算与任务提取
  */
 
-import type { RoadmapFile, Epic, Story, Task, Priority } from "./types";
-import { getEffectivePriority, comparePriority } from "./types";
+import type { Epic, Priority, RoadmapFile, Story, Task } from "./types";
+import { comparePriority, getEffectivePriority } from "./types";
 
 // ── 进度计算 ──
 
@@ -25,7 +25,11 @@ export function calcProgress(roadmap: RoadmapFile): Progress {
 			}
 		}
 	}
-	return { total, done, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
+	return {
+		total,
+		done,
+		percent: total === 0 ? 0 : Math.round((done / total) * 100),
+	};
 }
 
 /** 计算 epic 进度 */
@@ -38,14 +42,22 @@ export function calcEpicProgress(epic: Epic): Progress {
 			if (task.status === "done") done++;
 		}
 	}
-	return { total, done, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
+	return {
+		total,
+		done,
+		percent: total === 0 ? 0 : Math.round((done / total) * 100),
+	};
 }
 
 /** 计算 story 进度 */
 export function calcStoryProgress(story: Story): Progress {
 	const total = story.tasks.length;
 	const done = story.tasks.filter((t) => t.status === "done").length;
-	return { total, done, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
+	return {
+		total,
+		done,
+		percent: total === 0 ? 0 : Math.round((done / total) * 100),
+	};
 }
 
 // ── Next 任务提取 ──
@@ -101,17 +113,17 @@ export function getNextTasks(roadmap: RoadmapFile, limit = 5): NextTask[] {
 	candidates.sort((a, b) => {
 		if (a.status === "doing" && b.status !== "doing") return -1;
 		if (a.status !== "doing" && b.status === "doing") return 1;
-		return comparePriority(
-			a.priority ?? "medium",
-			b.priority ?? "medium",
-		);
+		return comparePriority(a.priority ?? "medium", b.priority ?? "medium");
 	});
 
 	return candidates.slice(0, limit);
 }
 
 /** 获取所有活跃 roadmap 的 next 任务 */
-export function getAllNextTasks(roadmaps: RoadmapFile[], limit = 5): NextTask[] {
+export function getAllNextTasks(
+	roadmaps: RoadmapFile[],
+	limit = 5,
+): NextTask[] {
 	const all: NextTask[] = [];
 	for (const rm of roadmaps) {
 		if (rm.meta.status !== "active") continue;
@@ -169,7 +181,10 @@ export function findEpic(roadmap: RoadmapFile, epicId: string): Epic | null {
 }
 
 /** 获取属于指定项目的所有 story */
-export function getStoriesForProject(roadmap: RoadmapFile, projectPath: string): Story[] {
+export function getStoriesForProject(
+	roadmap: RoadmapFile,
+	projectPath: string,
+): Story[] {
 	const stories: Story[] = [];
 	for (const epic of roadmap.epics) {
 		if (epic.project === projectPath) {
