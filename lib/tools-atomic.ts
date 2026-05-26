@@ -9,6 +9,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { getRoadmapFilePath, readRoadmap } from "./store";
 import { getSessionId, atomicUpdate, updateItem, updateTask } from "./tools-atomic-utils";
+import { archiveEpic as _archiveEpic, archiveAllDone as _archiveAllDone, getArchivedEpics as _getArchivedEpics } from "./tools-atomic-logic";
 
 // ── roadmap_update ──
 
@@ -90,59 +91,20 @@ export function registerArchiveTool(pi: ExtensionAPI) {
 				const rm = readRoadmap(filePath);
 				if (!rm) return { content: [{ type: "text" as const, text: `读取失败。` }], details: {} };
 
-				const archivedEpics = rm.epics.filter((e) => e.archived);
-				if (archivedEpics.length === 0) {
+				const lines = _getArchivedEpics(rm);
+				if (lines.length === 0) {
 					return { content: [{ type: "text" as const, text: "没有已归档的 Epic。" }], details: {} };
 				}
-				const text = archivedEpics.map((e) => {
-					const taskCount = e.stories.reduce((s, st) => s + st.tasks.length, 0);
-					return `📦 ${e.id}: ${e.title} [${taskCount} tasks]${e.doneDate ? ` done: ${e.doneDate}` : ""}`;
-				}).join("\n");
-				return { content: [{ type: "text" as const, text: `已归档 Epic：\n${text}` }], details: {} };
+				return { content: [{ type: "text" as const, text: `已归档 Epic：\n${lines.join("\n")}` }], details: {} };
 			}
 
 			// 归档模式
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				const archived: string[] = [];
-
 				if (params.epic_id) {
-					const epic = rm.epics.find((e) => e.id === params.epic_id);
-					if (!epic) return `错误：Epic "${params.epic_id}" 不存在。`;
-					if (epic.status !== "done" && epic.status !== "dropped") {
-						return `⚠️ Epic ${epic.id} 状态为 "${epic.status}"，建议只归档已完成/已放弃的 Epic。`;
-					}
-					epic.archived = true;
-					for (const story of epic.stories) {
-						story.archived = true;
-						for (const task of story.tasks) {
-							task.archived = true;
-						}
-					}
-					archived.push(`${epic.id}: ${epic.title}`);
+					return _archiveEpic(rm, params.epic_id).result;
 				} else {
-					for (const epic of rm.epics) {
-						const allDone = epic.stories.every((s) =>
-							s.tasks.every((t) => t.status === "done" || t.status === "dropped"),
-						);
-						if (allDone && epic.stories.length > 0 && !epic.archived) {
-							epic.archived = true;
-							epic.status = epic.status === "dropped" ? "dropped" : "done";
-							if (!epic.doneDate) epic.doneDate = new Date().toISOString().slice(0, 10);
-							for (const story of epic.stories) {
-								story.archived = true;
-								for (const task of story.tasks) {
-									task.archived = true;
-								}
-							}
-							archived.push(`${epic.id}: ${epic.title}`);
-						}
-					}
+					return _archiveAllDone(rm).result;
 				}
-
-				if (archived.length === 0) {
-					return "没有可归档的已完成 Epic。";
-				}
-				return `📦 已归档 ${archived.length} 个 Epic：\n${archived.map((a) => `  ${a}`).join("\n")}`;
 			});
 			return { content: [{ type: "text" as const, text: result }], details: {} };
 		},

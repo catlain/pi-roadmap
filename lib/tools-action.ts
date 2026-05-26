@@ -12,6 +12,7 @@ import { listRoadmapFiles, readRoadmap, writeRoadmap, getRoadmapFilePath } from 
 import { getNextTasks } from "./progress";
 import { syncToProject, writeProjectRoadmap } from "./sync";
 import { clearDoing } from "./doing-store";
+import { markTaskDone as _markTaskDone } from "./tools-atomic-logic";
 
 export function registerNextTool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -111,40 +112,19 @@ export function registerDoneTool(pi: ExtensionAPI) {
 
 			const sessionId = (_ctx as any)?.sessionManager?.getSessionFile?.()?.split("/").pop()?.replace(/\.jsonl$/, "") ?? "unknown";
 
-			let found = false;
-			for (const epic of roadmap.epics) {
-				for (const story of epic.stories) {
-					for (const task of story.tasks) {
-						if (task.id === params.taskId) {
-							task.status = "done";
-							task.doneDate = new Date().toISOString().slice(0, 10);
-							task.doneBySessionId = sessionId;
-							delete task.doingSessionId;
-							if (params.note) task.note = params.note;
-							found = true;
-
-							// 级联更新 Story 状态
-							if (story.tasks.every((t) => t.status === "done")) {
-								story.status = "done";
-								story.doneDate = new Date().toISOString().slice(0, 10);
-
-								// 级联更新 Epic 状态
-								if (epic.stories.every((s) => s.status === "done")) {
-									epic.status = "done";
-									epic.doneDate = new Date().toISOString().slice(0, 10);
-								}
-							}
-
-							break;
-						}
-					}
-					if (found) break;
-				}
-				if (found) break;
+			const { result: doneResult, cascadeInfo } = _markTaskDone(roadmap, params.taskId, sessionId);
+			if (doneResult.includes("错误")) {
+				return { content: [{ type: "text" as const, text: doneResult }], details: {} };
 			}
 
-			if (!found) {
-				return { content: [{ type: "text" as const, text: `任务 "${params.taskId}" 在路线图 "${params.roadmapId}" 中不存在。` }], details: {} };
+			// 补充 note
+			if (params.note) {
+				for (const epic of roadmap.epics) {
+					for (const story of epic.stories) {
+						const task = story.tasks.find((t) => t.id === params.taskId);
+						if (task) { task.note = params.note; break; }
+					}
+				}
 			}
 
 			roadmap.meta.updated = new Date().toISOString().slice(0, 10);
