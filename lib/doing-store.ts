@@ -2,7 +2,7 @@
  * Doing 状态持久化 — 记录当前会话正在执行的 roadmap 任务
  *
  * 流程：
- *   roadmap_next 返回任务 → 写 doing.json
+ *   roadmap_plan 把 task 状态改为 doing → 写 doing.json
  *   roadmap_done 标记完成 → 清 doing.json
  *   agent_end → 读 doing.json，有内容则提醒 AI 同步进度
  */
@@ -72,4 +72,43 @@ export function clearAllDoing(): void {
 /** 是否有 doing 条目 */
 export function hasDoing(): boolean {
 	return readDoing().length > 0;
+}
+
+/** 收集 roadmap 中所有 task 的有效状态 */
+function collectTaskStatuses(
+	rms: Array<{ meta: { id: string }; epics: Array<{ stories: Array<{ tasks: Array<{ id: string; status: string }> }> }> }>,
+): Map<string, Map<string, string>> {
+	const map = new Map<string, Map<string, string>>();
+	for (const rm of rms) {
+		const taskMap = new Map<string, string>();
+		for (const epic of rm.epics) {
+			for (const story of epic.stories) {
+				for (const task of story.tasks) {
+					taskMap.set(task.id, task.status);
+				}
+			}
+		}
+		map.set(rm.meta.id, taskMap);
+	}
+	return map;
+}
+
+/** 同步 doing.json：根据 roadmap 实际状态清理无效条目（done/dropped/orphan） */
+export function syncDoing(
+	rms: Array<{ meta: { id: string }; epics: Array<{ stories: Array<{ tasks: Array<{ id: string; status: string }> }> }> }>,
+): void {
+	const entries = readDoing();
+	if (entries.length === 0) return;
+
+	const taskStatuses = collectTaskStatuses(rms);
+
+	const valid = entries.filter((e) => {
+		const rmTasks = taskStatuses.get(e.roadmapId);
+		if (!rmTasks) return false;
+		const status = rmTasks.get(e.taskId);
+		if (status === undefined) return false;
+		return status === "doing" || status === "todo";
+	});
+
+	writeDoing(valid);
 }

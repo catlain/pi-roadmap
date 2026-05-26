@@ -1,4 +1,14 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"include": ["index.ts", "lib/**/*.ts"]
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ES2022",
+		"moduleResolution": "bundler",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"outDir": "dist",
+		"rootDir": ".",
+		"declaration": true
+	},
+	"include": ["index.ts", "lib/**/*.ts", "tests/**/*.ts"]
 }
