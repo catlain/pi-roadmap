@@ -12,7 +12,7 @@ import { GLOBAL_ROADMAP_DIR } from "./types";
 import { writeRoadmap, getRoadmapFilePath } from "./store";
 import { syncToProject, writeProjectRoadmap } from "./sync";
 
-/** 加载提示词文件 */
+/** 加载单个提示词文件 */
 function loadPrompt(filename: string): string {
 	const promptsDir = path.join(__dirname, "..", "prompts");
 	const filePath = path.join(promptsDir, filename);
@@ -20,8 +20,19 @@ function loadPrompt(filename: string): string {
 	return fs.readFileSync(filePath, "utf-8").trim();
 }
 
+/** 按顺序加载并拼接多个提示词文件 */
+function loadPrompts(filenames: string[]): string {
+	return filenames
+		.map((f) => loadPrompt(f))
+		.filter(Boolean)
+		.join("\n\n");
+}
+
 export function registerPlanTool(pi: ExtensionAPI) {
-	const planDescription = loadPrompt("plan-description.md");
+	const planDescription = loadPrompts([
+		"plan-description.md",
+		"plan-output-format.md",
+	]);
 
 	pi.registerTool({
 		name: "roadmap_plan",

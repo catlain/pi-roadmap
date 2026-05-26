@@ -25,7 +25,7 @@
 - 哪些被讨论否定 → 标记 dropped
 - 哪些是全新的 → 按拆解规则创建
 
-差异分析时参考 prompts/plan-diff.md 的指导。
+差异分析要特别注意保留已有的 done 状态任务。
 
 ### 第 4 步：拆解
 将新增/修改的部分按以下规则拆解：
@@ -34,21 +34,17 @@
 - 每个 Epic 对应一个项目，有独立交付价值
 - 标题动词开头，如"发布 pi-memory npm 包"
 - 2-8 周完成粒度
-- 详细规则参考 prompts/decompose-epic.md
 
 **Story 层**（Epic → Story）：
 - 1-3 天可完成的工作块
 - 有明确交付物和验收标准
-- 详细规则参考 prompts/decompose-story.md
 
 **Task 层**（Story → Task）：
 - 30 分钟 - 2 小时的最小工作单元
 - 标题动词开头，一看就知道要做什么
-- 详细规则参考 prompts/decompose-task.md
 
 ### 第 5 步：输出格式
-调用本工具写入时，content 参数必须是完整的 roadmap JSON（不只是变更部分）。
-格式规范参考 prompts/plan-output-format.md。
+调用本工具写入时，content 参数必须是完整的 roadmap JSON（不只是变更部分）。JSON 结构见下方格式规范。
 
 ## 参数说明
 - roadmapId: 路线图 ID（slug 格式，如 "pi-atelier-split"）
