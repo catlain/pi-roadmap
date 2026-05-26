@@ -102,7 +102,39 @@ export function validateRoadmap(data: unknown): ValidationResult {
 								errors.push(`task[${k}].status 不合法`);
 						}
 					}
+
+					// 状态一致性：story=done 但有 task 未完成
+					if (
+						(story.status as string) === "done" &&
+						Array.isArray(story.tasks) &&
+						(story.tasks as Record<string, unknown>[]).some(
+							(t) => t.status !== "done" && t.status !== "dropped",
+						)
+					) {
+						errors.push(
+							`Story ${story.id} 状态为 done，但有未完成的 task：${(story.tasks as Record<string, unknown>[])
+								.filter((t) => t.status !== "done" && t.status !== "dropped")
+								.map((t) => `${t.id}(${t.status})`)
+								.join(", ")}`,
+						);
+					}
 				}
+			}
+
+			// 状态一致性：epic=done 但有 story 未完成
+			if (
+				(epic.status as string) === "done" &&
+				Array.isArray(epic.stories) &&
+				(epic.stories as Record<string, unknown>[]).some(
+					(s) => s.status !== "done" && s.status !== "dropped",
+				)
+			) {
+				errors.push(
+					`Epic ${epic.id} 状态为 done，但有未完成的 story：${(epic.stories as Record<string, unknown>[])
+						.filter((s) => s.status !== "done" && s.status !== "dropped")
+						.map((s) => `${s.id}(${s.status})`)
+						.join(", ")}`,
+				);
 			}
 		}
 	}
