@@ -2,6 +2,7 @@
  * Roadmap 扩展 — Epic→Story→Task 三层路线图管理
  *
  * 工具：roadmap_list / roadmap_show / roadmap_plan / roadmap_next / roadmap_done
+ * 增量工具：roadmap_create / roadmap_add_epic / roadmap_add_story / roadmap_add_task / roadmap_update / roadmap_archive
  *
  * 存储：
  *   全局: ~/.pi/roadmap/<id>.roadmap.json
@@ -19,6 +20,13 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerListTool, registerShowTool } from "./lib/tools-query";
 import { registerPlanTool } from "./lib/tools-plan";
 import { registerNextTool, registerDoneTool } from "./lib/tools-action";
+import {
+	registerCreateTool,
+	registerAddEpicTool,
+	registerAddStoryTool,
+	registerAddTaskTool,
+} from "./lib/tools-atomic-create";
+import { registerUpdateTool, registerArchiveTool } from "./lib/tools-atomic";
 import { readDoing, syncDoing } from "./lib/doing-store";
 import { listRoadmapFiles, readRoadmap } from "./lib/store";
 
@@ -26,9 +34,17 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 	// ── 注册所有工具 ──
 	registerListTool(pi);
 	registerShowTool(pi);
-	registerPlanTool(pi);
+	registerPlanTool(pi); // 保留兼容旧用法，推荐用原子操作
 	registerNextTool(pi);
 	registerDoneTool(pi);
+
+	// 增量操作工具（替代 roadmap_plan 的全量更新）
+	registerCreateTool(pi);
+	registerAddEpicTool(pi);
+	registerAddStoryTool(pi);
+	registerAddTaskTool(pi);
+	registerUpdateTool(pi);
+	registerArchiveTool(pi);
 
 	// ── agent_end：检查未同步的 doing 任务（仅当前会话） ──
 	pi.on("agent_end", async (_event, _ctx) => {
