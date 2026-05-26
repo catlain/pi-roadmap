@@ -143,7 +143,12 @@ export function formatRoadmapDetail(roadmap: RoadmapFile): string {
 					task.status === "dropped" ? "❌" : "⬜";
 				const note = task.note ? ` — ${task.note}` : "";
 				const date = task.doneDate ? ` (${task.doneDate})` : "";
-				output += `  ${check} ${task.id}: ${task.title}${date}${note}\n`;
+				const session = task.doingSessionId
+					? ` [会话 ${task.doingSessionId} 执行中]`
+					: task.doneBySessionId
+						? ` [会话 ${task.doneBySessionId} 完成]`
+						: "";
+				output += `  ${check} ${task.id}: ${task.title}${date}${session}${note}\n`;
 			}
 			output += "\n";
 		}
