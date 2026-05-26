@@ -68,7 +68,7 @@ export function registerNextTool(pi: ExtensionAPI) {
 					const taskList = item.tasks
 						.map(
 							(t) =>
-								`- [${t.status}] ${t.id}: ${t.title} (Epic: ${t.epicTitle})${t.task.doingSessionId ? ` [会话 ${t.task.doingSessionId} 执行中]` : ""}`,
+								`- [${t.status}] ${t.id}: ${t.title} (Epic: ${t.epicTitle})${t.doingSessionId ? ` [会话 ${t.doingSessionId} 执行中]` : ""}`,
 						)
 						.join("\n");
 					return `${header}\n${taskList}`;
