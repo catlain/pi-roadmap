@@ -84,7 +84,7 @@ export function registerDoneTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_done",
 		label: "Roadmap Done",
-		description: "标记路线图中的某个任务为完成。会自动同步到关联项目。",
+		description: "标记路线图中的某个任务为完成。自动填 doneDate、doneBySessionId，级联更新 Story/Epic 状态，同步到关联项目。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			taskId: Type.String({ description: "任务 ID，如 E1.S1.T1" }),
@@ -109,6 +109,8 @@ export function registerDoneTool(pi: ExtensionAPI) {
 				return { content: [{ type: "text" as const, text: `路线图 "${params.roadmapId}" 读取失败。` }], details: {} };
 			}
 
+			const sessionId = (_ctx as any)?.sessionManager?.getSessionFile?.()?.split("/").pop()?.replace(/\.jsonl$/, "") ?? "unknown";
+
 			let found = false;
 			for (const epic of roadmap.epics) {
 				for (const story of epic.stories) {
@@ -116,8 +118,8 @@ export function registerDoneTool(pi: ExtensionAPI) {
 						if (task.id === params.taskId) {
 							task.status = "done";
 							task.doneDate = new Date().toISOString().slice(0, 10);
-						task.doneBySessionId = (_ctx as any).session?.getSessionId?.() ?? "unknown";
-						delete task.doingSessionId;
+							task.doneBySessionId = sessionId;
+							delete task.doingSessionId;
 							if (params.note) task.note = params.note;
 							found = true;
 

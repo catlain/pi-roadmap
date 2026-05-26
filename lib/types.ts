@@ -49,6 +49,10 @@ export interface Task {
 	status: ItemStatus;
 	/** 优先级（可选，默认继承 Story/Epic 的优先级） */
 	priority?: Priority;
+	/** 创建日期 ISO */
+	createdDate?: string;
+	/** 开始执行日期 ISO（status 变为 doing 时填入） */
+	doingDate?: string;
 	/** 完成日期，仅 done 时有值 */
 	doneDate?: string;
 	/** 完成备注/产出链接 */
@@ -57,6 +61,8 @@ export interface Task {
 	doingSessionId?: string;
 	/** 完成此任务的会话 ID，仅 done 时有值，用于追溯 */
 	doneBySessionId?: string;
+	/** 归档标志，true 时默认不显示 */
+	archived?: boolean;
 }
 
 /** 工作块（1-3 天可完成） */
@@ -71,8 +77,14 @@ export interface Story {
 	status: ItemStatus;
 	/** 优先级（可选，默认继承 Epic 的优先级） */
 	priority?: Priority;
+	/** 创建日期 ISO */
+	createdDate?: string;
+	/** 完成日期，仅 done 时有值 */
+	doneDate?: string;
 	/** 任务列表 */
 	tasks: Task[];
+	/** 归档标志，true 时默认不显示 */
+	archived?: boolean;
 }
 
 /** Epic：大方向，必须对应到一个项目 */
@@ -89,8 +101,14 @@ export interface Epic {
 	priority: Priority;
 	/** 对应的项目路径（绝对路径） */
 	project: string;
+	/** 创建日期 ISO */
+	createdDate?: string;
+	/** 完成日期，仅 done 时有值 */
+	doneDate?: string;
 	/** Story 列表 */
 	stories: Story[];
+	/** 归档标志，true 时默认不显示 */
+	archived?: boolean;
 }
 
 /** 完整的路线图文件 */
