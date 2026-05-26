@@ -9,8 +9,9 @@ import * as path from "node:path";
 
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
-import { writeRoadmap, getRoadmapFilePath } from "./store";
+import { writeRoadmap, getRoadmapFilePath, readRoadmap } from "./store";
 import { syncToProject, writeProjectRoadmap } from "./sync";
+import { syncDoingChanges } from "./doing-sync";
 
 /** 加载单个提示词文件 */
 function loadPrompt(filename: string): string {
@@ -82,6 +83,15 @@ export function registerPlanTool(pi: ExtensionAPI) {
 			fs.mkdirSync(GLOBAL_ROADMAP_DIR, { recursive: true });
 
 			const filePath = getRoadmapFilePath(roadmapId);
+
+			// update 时：检测 task status 变迁 → 同步 doing.json
+			if (action === "update") {
+				const oldRoadmap = readRoadmap(filePath);
+				if (oldRoadmap) {
+					syncDoingChanges(oldRoadmap, roadmap);
+				}
+			}
+
 			writeRoadmap(filePath, roadmap);
 
 			// 同步到关联项目

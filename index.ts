@@ -9,9 +9,9 @@
  *   归档: ~/.pi/roadmap/archive/<id>.roadmap.json
  *
  * 进度同步：
- *   roadmap_next → 写 doing.json（持久化正在执行的任务）
- *   roadmap_done → 清 doing.json
- *   agent_end → 检查 doing.json，有未同步任务则提醒 AI
+ *   roadmap_plan 把 task 状态改为 doing → 写 doing.json
+ *   roadmap_done 标记完成 → 清 doing.json
+ *   agent_end → 检查 doing.json，有未同步任务则显示提醒（display only，不触发新 turn）
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -19,7 +19,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerListTool, registerShowTool } from "./lib/tools-query";
 import { registerPlanTool } from "./lib/tools-plan";
 import { registerNextTool, registerDoneTool } from "./lib/tools-action";
-import { readDoing } from "./lib/doing-store";
+import { readDoing, syncDoing } from "./lib/doing-store";
+import { listRoadmapFiles, readRoadmap } from "./lib/store";
 
 export default function roadmapExtension(pi: ExtensionAPI) {
 	// ── 注册所有工具 ──
@@ -30,7 +31,13 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 	registerDoneTool(pi);
 
 	// ── agent_end：检查未同步的 doing 任务 ──
+	// 用 setTimeout 确保在 roadmap_done 等操作之后执行
 	pi.on("agent_end", async (_event, _ctx) => {
+		// 先 syncDoing：清理已 done/dropped/孤儿条目
+		const rmFiles = listRoadmapFiles();
+		const rms = rmFiles.map((f) => readRoadmap(f)).filter(Boolean) as NonNullable<ReturnType<typeof readRoadmap>>[];
+		syncDoing(rms);
+
 		const doingEntries = readDoing();
 		if (doingEntries.length === 0) return;
 
@@ -44,20 +51,17 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 			`${taskList}\n\n` +
 			`如果任务已完成，请调用 \`roadmap_done\` 标记。如果未完成，可以忽略此提醒。`;
 
-		// 注入提醒消息，触发一个新 turn 让 AI 处理
-		setTimeout(() => {
-			try {
-				pi.sendMessage(
-					{
-						customType: "roadmap-doing-reminder",
-						content: reminder,
-						display: true,
-					},
-					{ triggerTurn: true },
-				);
-			} catch {
-				// session 已关闭或替换，忽略
-			}
-		}, 100);
+		// 仅 display 展示，不触发新 turn（防止 agent_end → sendMessage → AI 回复 → agent_end 循环）
+		try {
+			pi.sendMessage(
+				{
+					customType: "roadmap-doing-reminder",
+					content: reminder,
+					display: true,
+				},
+			);
+		} catch {
+			// session 已关闭或替换，忽略
+		}
 	});
 }

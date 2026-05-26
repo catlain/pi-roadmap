@@ -11,7 +11,7 @@ import { GLOBAL_ROADMAP_DIR } from "./types";
 import { listRoadmapFiles, readRoadmap, writeRoadmap, getRoadmapFilePath } from "./store";
 import { getNextTasks } from "./progress";
 import { syncToProject, writeProjectRoadmap } from "./sync";
-import { addDoing, clearDoing } from "./doing-store";
+import { clearDoing } from "./doing-store";
 
 export function registerNextTool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -60,18 +60,6 @@ export function registerNextTool(pi: ExtensionAPI) {
 
 			if (allNext.length === 0) {
 				return { content: [{ type: "text" as const, text: "当前没有待推进的任务。" }], details: {} };
-			}
-
-			// 持久化 doing 标志（agent_end 时检查并提醒同步进度）
-			for (const item of allNext) {
-				for (const t of item.tasks) {
-					addDoing({
-						roadmapId: item.roadmap.meta.id,
-						taskId: t.id,
-						taskTitle: t.title,
-						startedAt: new Date().toISOString(),
-					});
-				}
 			}
 
 			const text = allNext
