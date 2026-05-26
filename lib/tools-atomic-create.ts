@@ -4,12 +4,13 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import type { Epic, Story, Task, Priority, RoadmapFile } from "./types";
-import { readRoadmap, writeRoadmap, getRoadmapFilePath } from "./store";
-import { today, atomicUpdate } from "./tools-atomic-utils";
+import type { Priority } from "./types";
+import { writeRoadmap } from "./store";
+import { atomicUpdate } from "./tools-atomic-utils";
 import { GLOBAL_ROADMAP_DIR, FILE_SUFFIX } from "./types";
 import * as path from "node:path";
 import { existsSync } from "node:fs";
+import { createRoadmap as _createRoadmap, addEpic as _addEpic, addStory as _addStory, addTask as _addTask } from "./tools-atomic-logic";
 
 export function registerCreateTool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -26,11 +27,7 @@ export function registerCreateTool(pi: ExtensionAPI) {
 			if (existsSync(newPath)) {
 				return { content: [{ type: "text" as const, text: `路线图 "${params.roadmapId}" 已存在。` }], details: {} };
 			}
-			const now = new Date().toISOString();
-			const rm: RoadmapFile = {
-				meta: { id: params.roadmapId, title: params.title, status: "active", created: now, updated: now, tags: params.tags ?? [] },
-				epics: [],
-			};
+			const rm = _createRoadmap(params.roadmapId, params.title, params.tags);
 			writeRoadmap(newPath, rm);
 			return { content: [{ type: "text" as const, text: `✅ 路线图 "${params.title}" (${params.roadmapId}) 已创建。` }], details: {} };
 		},
@@ -51,13 +48,7 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 		}),
 		async execute(_tc: string, params: { roadmapId: string; title: string; description: string; priority?: string; project: string }) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				const epic: Epic = {
-					id: `E${rm.epics.length + 1}`, title: params.title, description: params.description,
-					status: "todo", priority: (params.priority as Priority) ?? "medium",
-					project: params.project, createdDate: today(), stories: [],
-				};
-				rm.epics.push(epic);
-				return `✅ Epic ${epic.id}: ${params.title} 已添加。`;
+				return _addEpic(rm, params.title, params.description, params.priority as Priority | undefined, params.project).result;
 			});
 			return { content: [{ type: "text" as const, text: result }], details: {} };
 		},
@@ -77,14 +68,7 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 		}),
 		async execute(_tc: string, params: { roadmapId: string; epic_id: string; title: string; description: string }) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				const epic = rm.epics.find((e) => e.id === params.epic_id);
-				if (!epic) return `错误：Epic "${params.epic_id}" 不存在。`;
-				const story: Story = {
-					id: `${epic.id}.S${epic.stories.length + 1}`, title: params.title,
-					description: params.description, status: "todo", createdDate: today(), tasks: [],
-				};
-				epic.stories.push(story);
-				return `✅ Story ${story.id}: ${params.title} 已添加。`;
+				return _addStory(rm, params.epic_id, params.title, params.description).result;
 			});
 			return { content: [{ type: "text" as const, text: result }], details: {} };
 		},
@@ -104,18 +88,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 		}),
 		async execute(_tc: string, params: { roadmapId: string; story_id: string; title: string; priority?: string }) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				for (const epic of rm.epics) {
-					const story = epic.stories.find((s) => s.id === params.story_id);
-					if (story) {
-						const task: Task = {
-							id: `${story.id}.T${story.tasks.length + 1}`, title: params.title,
-							status: "todo", priority: (params.priority as Priority) ?? undefined, createdDate: today(),
-						};
-						story.tasks.push(task);
-						return `✅ Task ${task.id}: ${params.title} 已添加。`;
-					}
-				}
-				return `错误：Story "${params.story_id}" 不存在。`;
+				return _addTask(rm, params.story_id, params.title, params.priority as Priority | undefined).result;
 			});
 			return { content: [{ type: "text" as const, text: result }], details: {} };
 		},
