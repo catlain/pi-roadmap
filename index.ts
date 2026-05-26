@@ -28,6 +28,7 @@ import {
 } from "./lib/tools-atomic-create";
 import { registerUpdateTool, registerArchiveTool } from "./lib/tools-atomic";
 import { readDoing, syncDoing } from "./lib/doing-store";
+import { checkArchiveableEpics } from "./lib/tools-atomic-logic";
 import { listRoadmapFiles, readRoadmap } from "./lib/store";
 
 export default function roadmapExtension(pi: ExtensionAPI) {
@@ -86,5 +87,24 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 		} catch {
 			// session 已关闭或替换，忽略
 		}
+	}
+
+	// ── agent_end：检查可归档的已完成 Epic ──
+	// 在同一个 agent_end 事件中，检查是否有全部完成的 Epic 未归档
+	const archiveReminder = checkArchiveableEpics(rms);
+	if (archiveReminder) {
+		try {
+			pi.sendMessage(
+				{
+					customType: "roadmap-archive-reminder",
+					content: archiveReminder,
+					display: true,
+				},
+			);
+		} catch {
+			// session 已关闭或替换，忽略
+		}
+	}
 	});
 }
+

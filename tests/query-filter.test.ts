@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { RoadmapFile } from "../lib/types";
-import { formatRoadmapDetail } from "../lib/tools-query-format";
+import { formatRoadmapDetail, getLatestActivityDate } from "../lib/tools-query-format";
 
 const testRoadmap: RoadmapFile = {
 	meta: { id: "test", title: "测试", status: "active", created: "2026-01-01", updated: "2026-01-01", tags: [] },
@@ -102,6 +102,30 @@ describe("formatRoadmapDetail", () => {
 		const todoLine = text.split("\n").find((l) => l.includes("E1.S1.T3"));
 		expect(todoLine).toContain("created: 2026-01-01");
 		expect(todoLine).not.toContain("doing:");
+	});
+
+	describe("getLatestActivityDate", () => {
+		it("返回 Epic 下最新 task 的日期", () => {
+			const date = getLatestActivityDate(testRoadmap.epics[0]);
+			expect(date).toBe("2026-01-05"); // doingDate of T2
+		});
+
+		it("无 task 且无 epic 级日期时返回 undefined", () => {
+			const emptyEpic = { id: "E1", title: "test", status: "todo", stories: [], priority: "medium", description: "", project: "" };
+			const date = getLatestActivityDate(emptyEpic as any);
+			expect(date).toBeUndefined();
+		});
+
+		it("只有 createdDate 时返回 createdDate", () => {
+			const epic = {
+				...testRoadmap.epics[0],
+				stories: [{
+					...testRoadmap.epics[0].stories[0],
+					tasks: [{ id: "T1", title: "test", status: "todo", createdDate: "2026-03-15" }],
+				}],
+			};
+			expect(getLatestActivityDate(epic as any)).toBe("2026-03-15");
+		});
 	});
 
 	it("状态图标正确", () => {

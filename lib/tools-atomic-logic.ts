@@ -169,3 +169,31 @@ export function markTaskDone(rm: RoadmapFile, taskId: string, sessionId: string)
 	}
 	return { result: `错误：Task "${taskId}" 不存在。`, doneTaskId: "", cascadeInfo };
 }
+
+/**
+ * 检查 roadmap 列表中是否有可归档的已完成 Epic
+ * @returns 提示文本，或 undefined（无可归档项）
+ */
+export function checkArchiveableEpics(rms: Array<{ epics: Epic[] }>): string | undefined {
+	const archivable: string[] = [];
+	for (const rm of rms) {
+		for (const epic of rm.epics) {
+			if (epic.archived) continue;
+			const taskCount = epic.stories.reduce((sum, s) => sum + s.tasks.length, 0);
+			const doneCount = epic.stories.reduce(
+				(sum, s) => sum + s.tasks.filter((t) => t.status === "done").length,
+				0,
+			);
+			if (taskCount > 0 && doneCount === taskCount) {
+				archivable.push(`  - ${epic.id}: ${epic.title}`);
+			}
+		}
+	}
+	if (archivable.length === 0) return undefined;
+	return (
+		`📦 **Roadmap 归档提醒**\n\n` +
+		`以下 Epic 已全部完成，建议调用 roadmap_archive 归档以减少列表噪音：\n\n` +
+		archivable.join("\n") +
+		`\n\n归档后默认不再显示，可用 roadmap_show(show_archived=true) 查看。`
+	);
+}

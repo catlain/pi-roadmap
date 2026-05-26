@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { checkArchiveableEpics } from "../lib/tools-atomic-logic";
 import type { RoadmapFile } from "../lib/types";
 import {
 	createRoadmap,
@@ -278,5 +279,92 @@ describe("markTaskDone", () => {
 		const task = rm.epics[0].stories[0].tasks[0];
 		expect(task.doingSessionId).toBeUndefined();
 		expect(task.doneBySessionId).toBe("sess-new");
+	});
+});
+
+// ── checkArchiveableEpics ──
+describe("checkArchiveableEpics", () => {
+	const baseEpic2 = {
+		id: "E1", title: "Test Epic", description: "", status: "todo" as const,
+		priority: "medium" as const, project: "/test", stories: [] as any[],
+	};
+	const baseStory2 = {
+		id: "E1.S1", title: "Test Story", description: "", status: "todo" as const, tasks: [] as any[],
+	};
+	const baseTask2 = {
+		id: "E1.S1.T1", title: "Test Task", status: "todo" as const,
+	};
+
+	it("无可归档项时返回 undefined", () => {
+		const result = checkArchiveableEpics([
+			{
+				epics: [
+					{
+						...baseEpic2,
+						status: "doing",
+						stories: [{ ...baseStory2, status: "doing", tasks: [{ ...baseTask2, status: "doing" }] }],
+					},
+				],
+			},
+		]);
+		expect(result).toBeUndefined();
+	});
+
+	it("全部完成的 Epic 返回归档提示", () => {
+		const result = checkArchiveableEpics([
+			{
+				epics: [
+					{
+						...baseEpic2,
+						id: "E1",
+						title: "已完成 Epic",
+						stories: [{ ...baseStory2, status: "done", tasks: [{ ...baseTask2, status: "done" }] }],
+					},
+				],
+			},
+		]);
+		expect(result).toContain("E1: 已完成 Epic");
+		expect(result).toContain("roadmap_archive");
+	});
+
+	it("已归档的 Epic 不提示", () => {
+		const result = checkArchiveableEpics([
+			{
+				epics: [
+					{
+						...baseEpic2,
+						archived: true,
+						stories: [{ ...baseStory2, status: "done", tasks: [{ ...baseTask2, status: "done" }] }],
+					},
+				],
+			},
+		]);
+		expect(result).toBeUndefined();
+	});
+
+	it("部分完成的 Epic 不提示", () => {
+		const result = checkArchiveableEpics([
+			{
+				epics: [
+					{
+						...baseEpic2,
+						stories: [
+							{ ...baseStory2, status: "done", tasks: [{ ...baseTask2, status: "done" }] },
+							{ ...baseStory2, id: "E1.S2", status: "doing", tasks: [{ ...baseTask2, id: "E1.S2.T1", status: "doing" }] },
+						],
+					},
+				],
+			},
+		]);
+		expect(result).toBeUndefined();
+	});
+
+	it("空 Epic（0 tasks）不提示", () => {
+		const result = checkArchiveableEpics([
+			{
+				epics: [{ ...baseEpic2, stories: [] }],
+			},
+		]);
+		expect(result).toBeUndefined();
 	});
 });
