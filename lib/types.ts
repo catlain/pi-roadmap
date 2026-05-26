@@ -53,6 +53,10 @@ export interface Task {
 	doneDate?: string;
 	/** 完成备注/产出链接 */
 	note?: string;
+	/** 正在执行此任务的会话 ID，仅 doing 时有值 */
+	doingSessionId?: string;
+	/** 完成此任务的会话 ID，仅 done 时有值，用于追溯 */
+	doneBySessionId?: string;
 }
 
 /** 工作块（1-3 天可完成） */

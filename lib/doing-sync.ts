@@ -27,8 +27,9 @@ export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile, session
 				const newStatus = task.status;
 
 				if (oldStatus === undefined) {
-					// 新增 task：如果已经是 doing，写入 doing
+					// 新增 task：如果已经是 doing，写入 doing + doingSessionId
 					if (newStatus === "doing") {
+						task.doingSessionId = sessionId;
 						addDoing({
 							roadmapId: newRm.meta.id,
 							taskId: task.id,
@@ -38,7 +39,8 @@ export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile, session
 						});
 					}
 				} else if (oldStatus !== "doing" && newStatus === "doing") {
-					// 非 doing → doing：写入 doing
+					// 非 doing → doing：写入 doing + doingSessionId
+					task.doingSessionId = sessionId;
 					addDoing({
 						roadmapId: newRm.meta.id,
 						taskId: task.id,
@@ -47,8 +49,16 @@ export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile, session
 						sessionId,
 					});
 				} else if (oldStatus === "doing" && newStatus !== "doing") {
-					// doing → 非 doing：清除 doing
+					// doing → 非 doing：清除 doing + doingSessionId
+					delete task.doingSessionId;
+					// doing → done：记录完成会话
+					if (newStatus === "done") {
+						task.doneBySessionId = sessionId;
+					}
 					clearDoing(newRm.meta.id, task.id);
+				} else if (oldStatus !== "done" && newStatus === "done") {
+					// 非 done → done（跳过 doing 阶段直接完成）：记录完成会话
+					task.doneBySessionId = sessionId;
 				}
 			}
 		}

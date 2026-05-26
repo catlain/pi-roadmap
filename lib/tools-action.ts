@@ -68,7 +68,7 @@ export function registerNextTool(pi: ExtensionAPI) {
 					const taskList = item.tasks
 						.map(
 							(t) =>
-								`- [${t.status}] ${t.id}: ${t.title} (Epic: ${t.epicTitle})`,
+								`- [${t.status}] ${t.id}: ${t.title} (Epic: ${t.epicTitle})${t.task.doingSessionId ? ` [会话 ${t.task.doingSessionId} 执行中]` : ""}`,
 						)
 						.join("\n");
 					return `${header}\n${taskList}`;
@@ -116,6 +116,8 @@ export function registerDoneTool(pi: ExtensionAPI) {
 						if (task.id === params.taskId) {
 							task.status = "done";
 							task.doneDate = new Date().toISOString().slice(0, 10);
+						task.doneBySessionId = getSessionId(_ctx as any);
+						delete task.doingSessionId;
 							if (params.note) task.note = params.note;
 							found = true;
 
