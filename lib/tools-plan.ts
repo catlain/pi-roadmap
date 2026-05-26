@@ -2,16 +2,15 @@
  * Roadmap 工具 — plan（创建/更新路线图）
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
 import * as fs from "node:fs";
 import * as path from "node:path";
-
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "@sinclair/typebox";
+import { syncDoingChanges } from "./doing-sync";
+import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
+import { syncToProject, writeProjectRoadmap } from "./sync";
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
-import { writeRoadmap, getRoadmapFilePath, readRoadmap } from "./store";
-import { syncToProject, writeProjectRoadmap } from "./sync";
-import { syncDoingChanges } from "./doing-sync";
 
 /** 加载单个提示词文件 */
 function loadPrompt(filename: string): string {
@@ -66,21 +65,46 @@ export function registerPlanTool(pi: ExtensionAPI) {
 
 			// 获取当前会话 ID
 			const ctx = _ctx as any;
-			const sessionId: string | undefined = ctx?.sessionManager?.getSessionFile?.()?.split('/').pop()?.replace(/\.jsonl$/, '') ?? undefined;
+			const sessionId: string | undefined =
+				ctx?.sessionManager
+					?.getSessionFile?.()
+					?.split("/")
+					.pop()
+					?.replace(/\.jsonl$/, "") ?? undefined;
 
 			// 兼容 LLM 传字符串的情况
 			if (typeof content === "string") {
-				try { content = JSON.parse(content); } catch { /* fallback below */ }
+				try {
+					content = JSON.parse(content);
+				} catch {
+					/* fallback below */
+				}
 			}
 
 			if (!content || typeof content !== "object") {
-				return { content: [{ type: "text" as const, text: "错误：content 必须是有效的 JSON 对象。" }], details: {} };
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: "错误：content 必须是有效的 JSON 对象。",
+						},
+					],
+					details: {},
+				};
 			}
 
 			const roadmap = content as RoadmapFile;
 
 			if (!roadmap.meta?.id || !roadmap.meta?.title) {
-				return { content: [{ type: "text" as const, text: "错误：meta.id 和 meta.title 必填。" }], details: {} };
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: "错误：meta.id 和 meta.title 必填。",
+						},
+					],
+					details: {},
+				};
 			}
 
 			roadmap.meta.updated = new Date().toISOString().slice(0, 10);

@@ -4,11 +4,15 @@
  * 纯逻辑模块，不依赖 typebox 或 ExtensionAPI，方便测试。
  */
 
-import type { RoadmapFile } from "./types";
 import { addDoing, clearDoing } from "./doing-store";
+import type { RoadmapFile } from "./types";
 
 /** 对比新旧 roadmap，根据 task status 变迁同步 doing.json */
-export function syncDoingChanges(oldRm: RoadmapFile, newRm: RoadmapFile, sessionId?: string): void {
+export function syncDoingChanges(
+	oldRm: RoadmapFile,
+	newRm: RoadmapFile,
+	sessionId?: string,
+): void {
 	// 构建旧 task 状态索引：taskId → status
 	const oldTasks = new Map<string, string>();
 	for (const epic of oldRm.epics) {

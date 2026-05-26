@@ -4,8 +4,19 @@
 
 import type { RoadmapFile } from "./types";
 
-const VALID_ROADMAP_STATUS = new Set(["active", "paused", "completed", "archived"]);
-const VALID_ITEM_STATUS = new Set(["todo", "doing", "done", "blocked", "dropped"]);
+const VALID_ROADMAP_STATUS = new Set([
+	"active",
+	"paused",
+	"completed",
+	"archived",
+]);
+const VALID_ITEM_STATUS = new Set([
+	"todo",
+	"doing",
+	"done",
+	"blocked",
+	"dropped",
+]);
 const VALID_PRIORITY = new Set(["low", "medium", "high"]);
 
 export interface ValidationResult {
@@ -28,12 +39,16 @@ export function validateRoadmap(data: unknown): ValidationResult {
 		errors.push("缺少 meta 字段");
 	} else {
 		const meta = d.meta as Record<string, unknown>;
-		if (!meta.id || typeof meta.id !== "string") errors.push("meta.id 缺失或非字符串");
-		if (!meta.title || typeof meta.title !== "string") errors.push("meta.title 缺失或非字符串");
+		if (!meta.id || typeof meta.id !== "string")
+			errors.push("meta.id 缺失或非字符串");
+		if (!meta.title || typeof meta.title !== "string")
+			errors.push("meta.title 缺失或非字符串");
 		if (!meta.status || !VALID_ROADMAP_STATUS.has(meta.status as string))
 			errors.push(`meta.status "${meta.status}" 不合法`);
-		if (!meta.created || typeof meta.created !== "string") errors.push("meta.created 缺失");
-		if (!meta.updated || typeof meta.updated !== "string") errors.push("meta.updated 缺失");
+		if (!meta.created || typeof meta.created !== "string")
+			errors.push("meta.created 缺失");
+		if (!meta.updated || typeof meta.updated !== "string")
+			errors.push("meta.updated 缺失");
 	}
 
 	// epics 检查
@@ -44,11 +59,13 @@ export function validateRoadmap(data: unknown): ValidationResult {
 		for (let i = 0; i < d.epics.length; i++) {
 			const epic = d.epics[i] as Record<string, unknown>;
 			if (!epic.id) errors.push(`epics[${i}].id 缺失`);
-			else if (epicIds.has(epic.id as string)) errors.push(`epic id "${epic.id}" 重复`);
+			else if (epicIds.has(epic.id as string))
+				errors.push(`epic id "${epic.id}" 重复`);
 			else epicIds.add(epic.id as string);
 
 			if (!epic.title) errors.push(`epics[${i}].title 缺失`);
-			if (epic.project !== undefined && typeof epic.project !== "string") errors.push(`epics[${i}].project 类型错误`);
+			if (epic.project !== undefined && typeof epic.project !== "string")
+				errors.push(`epics[${i}].project 类型错误`);
 			if (!VALID_ITEM_STATUS.has(epic.status as string))
 				errors.push(`epics[${i}].status "${epic.status}" 不合法`);
 			if (!VALID_PRIORITY.has(epic.priority as string))
@@ -101,7 +118,8 @@ export function repairRoadmap(data: any): RoadmapFile | null {
 		if (!data.meta.title) data.meta.title = data.meta.id;
 		if (!data.meta.status || !VALID_ROADMAP_STATUS.has(data.meta.status))
 			data.meta.status = "active";
-		if (!data.meta.created) data.meta.created = new Date().toISOString().slice(0, 10);
+		if (!data.meta.created)
+			data.meta.created = new Date().toISOString().slice(0, 10);
 		if (!data.meta.updated) data.meta.updated = data.meta.created;
 		if (!Array.isArray(data.meta.tags)) data.meta.tags = [];
 

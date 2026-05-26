@@ -2,8 +2,15 @@
  * Roadmap 原子操作 — 公共辅助函数
  */
 
-import type { RoadmapFile, Epic, Story, Task, ItemStatus, Priority } from "./types";
-import { readRoadmap, writeRoadmap, getRoadmapFilePath } from "./store";
+import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
+import type {
+	Epic,
+	ItemStatus,
+	Priority,
+	RoadmapFile,
+	Story,
+	Task,
+} from "./types";
 
 /** 获取当前日期 YYYY-MM-DD */
 export function today(): string {
@@ -12,11 +19,20 @@ export function today(): string {
 
 /** 从 _ctx 获取当前会话 ID */
 export function getSessionId(_ctx: unknown): string {
-	return (_ctx as any)?.sessionManager?.getSessionFile?.()?.split("/").pop()?.replace(/\.jsonl$/, "") ?? "unknown";
+	return (
+		(_ctx as any)?.sessionManager
+			?.getSessionFile?.()
+			?.split("/")
+			.pop()
+			?.replace(/\.jsonl$/, "") ?? "unknown"
+	);
 }
 
 /** 读取 → 修改 → 写入 roadmap 的原子操作封装 */
-export function atomicUpdate(roadmapId: string, fn: (rm: RoadmapFile) => string): string {
+export function atomicUpdate(
+	roadmapId: string,
+	fn: (rm: RoadmapFile) => string,
+): string {
 	const filePath = getRoadmapFilePath(roadmapId);
 	if (!filePath) return `错误：路线图 "${roadmapId}" 不存在。`;
 	const rm = readRoadmap(filePath);
@@ -28,11 +44,24 @@ export function atomicUpdate(roadmapId: string, fn: (rm: RoadmapFile) => string)
 }
 
 /** 更新通用字段（Epic/Story） */
-export function updateItem(item: Epic | Story, updates: Record<string, string>, sessionId: string): string {
+export function updateItem(
+	item: Epic | Story,
+	updates: Record<string, string>,
+	sessionId: string,
+): string {
 	const changed: string[] = [];
-	if (updates.title !== undefined) { item.title = updates.title; changed.push("title"); }
-	if (updates.description !== undefined) { item.description = updates.description; changed.push("description"); }
-	if (updates.priority !== undefined) { item.priority = updates.priority as Priority; changed.push("priority"); }
+	if (updates.title !== undefined) {
+		item.title = updates.title;
+		changed.push("title");
+	}
+	if (updates.description !== undefined) {
+		item.description = updates.description;
+		changed.push("description");
+	}
+	if (updates.priority !== undefined) {
+		item.priority = updates.priority as Priority;
+		changed.push("priority");
+	}
 	if (updates.status !== undefined) {
 		const oldStatus = item.status;
 		item.status = updates.status as ItemStatus;
@@ -48,11 +77,24 @@ export function updateItem(item: Epic | Story, updates: Record<string, string>, 
 }
 
 /** 更新 Task（支持 note 和 doingSessionId） */
-export function updateTask(task: Task, updates: Record<string, string>, sessionId: string): string {
+export function updateTask(
+	task: Task,
+	updates: Record<string, string>,
+	sessionId: string,
+): string {
 	const changed: string[] = [];
-	if (updates.title !== undefined) { task.title = updates.title; changed.push("title"); }
-	if (updates.priority !== undefined) { task.priority = updates.priority as Priority; changed.push("priority"); }
-	if (updates.note !== undefined) { task.note = updates.note; changed.push("note"); }
+	if (updates.title !== undefined) {
+		task.title = updates.title;
+		changed.push("title");
+	}
+	if (updates.priority !== undefined) {
+		task.priority = updates.priority as Priority;
+		changed.push("priority");
+	}
+	if (updates.note !== undefined) {
+		task.note = updates.note;
+		changed.push("note");
+	}
 	if (updates.status !== undefined) {
 		const oldStatus = task.status;
 		task.status = updates.status as ItemStatus;

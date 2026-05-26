@@ -7,10 +7,9 @@
  *   - 详情按需 roadmap_show
  */
 
-import type { RoadmapFile } from "./types";
-import { calcProgress } from "./progress";
-import { getNextTasks } from "./progress";
 import { filterByStatus, formatProgress } from "./parser";
+import { calcProgress, getNextTasks } from "./progress";
+import type { RoadmapFile } from "./types";
 
 export interface InjectionConfig {
 	/** 是否显示进度条 */
@@ -58,12 +57,8 @@ export function generateInjection(
 			const nextForEpic = allNextTasks.filter((t) => t.epicId === epic.id);
 			const statusLabel = epic.status === "doing" ? "doing" : "todo";
 			const nextHint =
-				nextForEpic.length > 0
-					? ` — 下一步: ${nextForEpic[0].title}`
-					: "";
-			lines.push(
-				`  Epic ${epic.id} ${epic.title} [${statusLabel}]${nextHint}`,
-			);
+				nextForEpic.length > 0 ? ` — 下一步: ${nextForEpic[0].title}` : "";
+			lines.push(`  Epic ${epic.id} ${epic.title} [${statusLabel}]${nextHint}`);
 		}
 		lines.push("");
 	}

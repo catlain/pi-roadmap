@@ -1,7 +1,7 @@
 /**
  * injector.ts 测试 — 注入文本生成
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { generateInjection } from "../lib/injector";
 import type { RoadmapFile } from "../lib/types";
 
@@ -89,7 +89,9 @@ describe("generateInjection", () => {
 	});
 
 	it("不显示进度条（配置关闭）", () => {
-		const text = generateInjection([ACTIVE_ROADMAP], { showProgressBar: false });
+		const text = generateInjection([ACTIVE_ROADMAP], {
+			showProgressBar: false,
+		});
 		expect(text).not.toMatch(/\[■|□/);
 	});
 

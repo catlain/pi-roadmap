@@ -1,12 +1,13 @@
 /**
  * sync.ts 测试 — 全局 → 项目级同步
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+
 import * as fs from "node:fs";
-import * as path from "node:path";
 import * as os from "node:os";
-import { syncToProject, markTaskDoneAndSyncBack } from "../lib/sync";
-import { writeRoadmap, getRoadmapFilePath } from "../lib/store";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getRoadmapFilePath, writeRoadmap } from "../lib/store";
+import { markTaskDoneAndSyncBack, syncToProject } from "../lib/sync";
 import type { RoadmapFile } from "../lib/types";
 
 const TEST_DIR = path.join(os.tmpdir(), "roadmap-sync-test");

@@ -1,17 +1,18 @@
 /**
  * planner.ts 测试 — 提示词加载 + 变量替换 + 拆解辅助
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+
 import * as fs from "node:fs";
-import * as path from "node:path";
 import * as os from "node:os";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-	loadPrompt,
 	buildPrompt,
-	listAvailablePrompts,
 	generateNextEpicId,
 	generateNextStoryId,
 	generateNextTaskId,
+	listAvailablePrompts,
+	loadPrompt,
 } from "../lib/planner";
 
 // ── 测试用的临时 prompts 目录 ──
@@ -30,10 +31,7 @@ afterEach(() => {
 
 describe("loadPrompt", () => {
 	it("加载存在的提示词文件", () => {
-		fs.writeFileSync(
-			path.join(TEST_PROMPTS_DIR, "test.md"),
-			"你好 {{name}}",
-		);
+		fs.writeFileSync(path.join(TEST_PROMPTS_DIR, "test.md"), "你好 {{name}}");
 		const result = loadPrompt("test.md", TEST_PROMPTS_DIR);
 		expect(result).toBe("你好 {{name}}");
 	});
@@ -58,7 +56,11 @@ describe("buildPrompt", () => {
 			path.join(TEST_PROMPTS_DIR, "multi.md"),
 			"{{a}} 和 {{b}} 和 {{c}}",
 		);
-		const result = buildPrompt("multi.md", { a: "1", b: "2", c: "3" }, TEST_PROMPTS_DIR);
+		const result = buildPrompt(
+			"multi.md",
+			{ a: "1", b: "2", c: "3" },
+			TEST_PROMPTS_DIR,
+		);
 		expect(result).toBe("1 和 2 和 3");
 	});
 
@@ -72,10 +74,7 @@ describe("buildPrompt", () => {
 	});
 
 	it("未提供的变量保持原样", () => {
-		fs.writeFileSync(
-			path.join(TEST_PROMPTS_DIR, "partial.md"),
-			"{{a}} {{b}}",
-		);
+		fs.writeFileSync(path.join(TEST_PROMPTS_DIR, "partial.md"), "{{a}} {{b}}");
 		const result = buildPrompt("partial.md", { a: "hello" }, TEST_PROMPTS_DIR);
 		expect(result).toBe("hello {{b}}");
 	});
@@ -104,11 +103,15 @@ describe("generateNextEpicId", () => {
 	});
 
 	it("已有 E1 E2 返回 E3", () => {
-		expect(generateNextEpicId([{ id: "E1" } as any, { id: "E2" } as any])).toBe("E3");
+		expect(generateNextEpicId([{ id: "E1" } as any, { id: "E2" } as any])).toBe(
+			"E3",
+		);
 	});
 
 	it("已有 E1 E3 返回 E4（取最大值+1）", () => {
-		expect(generateNextEpicId([{ id: "E1" } as any, { id: "E3" } as any])).toBe("E4");
+		expect(generateNextEpicId([{ id: "E1" } as any, { id: "E3" } as any])).toBe(
+			"E4",
+		);
 	});
 });
 
@@ -119,7 +122,10 @@ describe("generateNextStoryId", () => {
 
 	it("已有 S1 S2 返回 S3", () => {
 		expect(
-			generateNextStoryId("E2", [{ id: "E2.S1" } as any, { id: "E2.S2" } as any]),
+			generateNextStoryId("E2", [
+				{ id: "E2.S1" } as any,
+				{ id: "E2.S2" } as any,
+			]),
 		).toBe("E2.S3");
 	});
 });

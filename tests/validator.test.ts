@@ -2,9 +2,9 @@
  * Roadmap 验证器测试
  */
 
-import { describe, it, expect } from "vitest";
-import { validateRoadmap, repairRoadmap } from "../lib/validator";
+import { describe, expect, it } from "vitest";
 import type { RoadmapFile } from "../lib/types";
+import { repairRoadmap, validateRoadmap } from "../lib/validator";
 
 const VALID_ROADMAP: RoadmapFile = {
 	meta: {
@@ -31,7 +31,12 @@ const VALID_ROADMAP: RoadmapFile = {
 					status: "todo",
 					tasks: [
 						{ id: "E1.S1.T1", title: "Task 1", status: "todo" },
-						{ id: "E1.S1.T2", title: "Task 2", status: "done", doneDate: "2026-05-25" },
+						{
+							id: "E1.S1.T2",
+							title: "Task 2",
+							status: "done",
+							doneDate: "2026-05-25",
+						},
 					],
 				},
 			],
