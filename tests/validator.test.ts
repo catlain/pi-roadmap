@@ -122,6 +122,114 @@ describe("validateRoadmap", () => {
 	});
 });
 
+describe("validateRoadmap 状态一致性", () => {
+	it("story=done 但有 task 未完成时报错", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [
+				{
+					...VALID_ROADMAP.epics[0],
+					stories: [
+						{
+							id: "E1.S1",
+							title: "Story done but tasks not",
+							status: "done",
+							tasks: [
+								{ id: "E1.S1.T1", title: "T1", status: "done" },
+								{ id: "E1.S1.T2", title: "T2", status: "todo" },
+							],
+						},
+					],
+				},
+			],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(false);
+		expect(result.errors.some((e) => e.includes("Story E1.S1") && e.includes("E1.S1.T2(todo)"))).toBe(true);
+	});
+
+	it("story=done 且所有 task 都是 done/dropped 时通过", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [
+				{
+					...VALID_ROADMAP.epics[0],
+					stories: [
+						{
+							id: "E1.S1",
+							title: "All done",
+							status: "done",
+							tasks: [
+								{ id: "E1.S1.T1", title: "T1", status: "done" },
+								{ id: "E1.S1.T2", title: "T2", status: "dropped" },
+							],
+						},
+					],
+				},
+			],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(true);
+	});
+
+	it("epic=done 但有 story 未完成时报错", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [
+				{
+					...VALID_ROADMAP.epics[0],
+					status: "done",
+					stories: [
+						{
+							id: "E1.S1",
+							title: "Done story",
+							status: "done",
+							tasks: [{ id: "E1.S1.T1", title: "T1", status: "done" }],
+						},
+						{
+							id: "E1.S2",
+							title: "Not done story",
+							status: "todo",
+							tasks: [{ id: "E1.S2.T1", title: "T1", status: "todo" }],
+						},
+					],
+				},
+			],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(false);
+		expect(result.errors.some((e) => e.includes("Epic E1") && e.includes("E1.S2(todo)"))).toBe(true);
+	});
+
+	it("epic=done 且所有 story 都是 done/dropped 时通过", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [
+				{
+					...VALID_ROADMAP.epics[0],
+					status: "done",
+					stories: [
+						{
+							id: "E1.S1",
+							title: "Done",
+							status: "done",
+							tasks: [{ id: "E1.S1.T1", title: "T1", status: "done" }],
+						},
+						{
+							id: "E1.S2",
+							title: "Dropped",
+							status: "dropped",
+							tasks: [],
+						},
+					],
+				},
+			],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(true);
+	});
+});
+
 describe("repairRoadmap", () => {
 	it("修复缺少的 meta 字段", () => {
 		const data = { meta: { id: "repair-test" }, epics: [] };
