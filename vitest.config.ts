@@ -1,9 +1,12 @@
-import { defineConfig } from "vitest/config";
+import { createConfig } from "../vitest.config.base";
 
-export default defineConfig({
+export default createConfig({
+	alias: {
+		"@earendil-works/pi-coding-agent": true,
+	},
+	include: ["tests/**/*.test.ts"],
 	test: {
-		include: ["tests/**/*.test.ts"],
-		// doing 测试共享 doing.json，需要串行避免跨文件干扰
+		testTimeout: 10000,
 		fileParallelism: false,
 	},
 });
