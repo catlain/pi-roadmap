@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import {
 	formatRoadmapDetail,
 	getLatestActivityDate,
+	shortSessionId,
 } from "../lib/tools-query-format";
 import type { RoadmapFile } from "../lib/types";
 
@@ -48,7 +49,8 @@ const testRoadmap: RoadmapFile = {
 							status: "done",
 							createdDate: "2026-01-01",
 							doneDate: "2026-01-03",
-							doneBySessionId: "abc12345",
+							doneBySessionId:
+							"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
 						},
 						{
 							id: "E1.S1.T2",
@@ -56,7 +58,8 @@ const testRoadmap: RoadmapFile = {
 							status: "doing",
 							createdDate: "2026-01-01",
 							doingDate: "2026-01-05",
-							doingSessionId: "def67890",
+							doingSessionId:
+							"2026-05-27T03-15-00-000Z_019e6789-1111-2222-ee1c-68348bc0abcd",
 						},
 						{
 							id: "E1.S1.T3",
@@ -182,10 +185,10 @@ describe("formatRoadmapDetail", () => {
 		// Done Task 应显示 created + done + by
 		expect(text).toContain("created: 2026-01-01");
 		expect(text).toContain("done: 2026-01-03");
-		expect(text).toContain("by: abc12345");
+		expect(text).toContain("by: 8740-8fce3e7af232");
 		// Doing Task 应显示 doing + session
 		expect(text).toContain("doing: 2026-01-05");
-		expect(text).toContain("session: def67890");
+		expect(text).toContain("session: ee1c-68348bc0abcd");
 		// Todo Task 只显示 created
 		const todoLine = text.split("\n").find((l) => l.includes("E1.S1.T3"));
 		expect(todoLine).toContain("created: 2026-01-01");
@@ -230,6 +233,26 @@ describe("formatRoadmapDetail", () => {
 				],
 			};
 			expect(getLatestActivityDate(epic as any)).toBe("2026-03-15");
+		});
+	});
+
+	describe("shortSessionId", () => {
+		it("从完整会话 ID 提取 UUID 最后两段", () => {
+			expect(
+				shortSessionId(
+					"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
+				),
+			).toBe("8740-8fce3e7af232");
+		});
+
+		it("纯 UUID 直接取最后两段", () => {
+			expect(shortSessionId("019e6729-77b4-7bb8-8740-8fce3e7af232")).toBe(
+				"8740-8fce3e7af232",
+			);
+		});
+
+		it("短 ID 原样返回", () => {
+			expect(shortSessionId("abc")).toBe("abc");
 		});
 	});
 

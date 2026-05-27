@@ -7,6 +7,16 @@
 import { formatProgress, getOverview } from "./parser";
 import type { Epic, RoadmapFile, Story, Task } from "./types";
 
+/** 从完整会话 ID 中提取短标识（UUID 最后两段，如 8740-8fce3e7af232） */
+export function shortSessionId(sessionId: string): string {
+	// 格式：2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232
+	const uuid = sessionId.includes("_") ? sessionId.split("_").pop()! : sessionId;
+	const parts = uuid.split("-");
+	// UUID v7: time_high-mid-ver-clock_seq-node → 取最后两段
+	if (parts.length >= 2) return parts.slice(-2).join("-");
+	return uuid;
+}
+
 /** 格式化时间戳摘要 */
 export function formatTimestamps(item: {
 	createdDate?: string;
@@ -20,9 +30,9 @@ export function formatTimestamps(item: {
 	if (item.doingDate) parts.push(`doing: ${item.doingDate}`);
 	if (item.doneDate) parts.push(`done: ${item.doneDate}`);
 	if (item.doingSessionId)
-		parts.push(`session: ${item.doingSessionId.slice(0, 8)}`);
+		parts.push(`session: ${shortSessionId(item.doingSessionId)}`);
 	else if (item.doneBySessionId)
-		parts.push(`by: ${item.doneBySessionId.slice(0, 8)}`);
+		parts.push(`by: ${shortSessionId(item.doneBySessionId)}`);
 	return parts.length > 0 ? ` [${parts.join(", ")}]` : "";
 }
 
