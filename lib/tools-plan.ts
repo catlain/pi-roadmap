@@ -116,7 +116,7 @@ export function registerPlanTool(pi: ExtensionAPI) {
 			if (action === "update") {
 				const oldRoadmap = readRoadmap(filePath);
 				if (oldRoadmap) {
-					syncDoingChanges(oldRoadmap, roadmap);
+					syncDoingChanges(oldRoadmap, roadmap, sessionId);
 				}
 			}
 
