@@ -10,7 +10,12 @@ import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { formatProgress, getOverview } from "./parser";
-import { getRoadmapFilePath, listRoadmapFiles, readRoadmap } from "./store";
+import {
+	filterByProject,
+	getRoadmapFilePath,
+	listRoadmapFiles,
+	readRoadmap,
+} from "./store";
 import type { RoadmapFile } from "./types";
 import { ARCHIVE_DIR, GLOBAL_ROADMAP_DIR } from "./types";
 
@@ -64,7 +69,8 @@ export function registerListTool(pi: ExtensionAPI) {
 
 			let roadmaps = listRoadmapFiles()
 				.map((fp) => readRoadmap(fp))
-				.filter((r): r is RoadmapFile => r !== null);
+				.filter((r): r is RoadmapFile => r !== null)
+				.map((rm) => filterByProject(rm, process.cwd()));
 
 			if (params.status === "archived") {
 				const archiveDir = path.join(GLOBAL_ROADMAP_DIR, ARCHIVE_DIR);
@@ -195,8 +201,8 @@ export function registerShowTool(pi: ExtensionAPI) {
 				};
 			}
 
-			const roadmap = readRoadmap(filePath);
-			if (!roadmap) {
+			const data = readRoadmap(filePath);
+			if (!data) {
 				return {
 					content: [
 						{
@@ -207,6 +213,7 @@ export function registerShowTool(pi: ExtensionAPI) {
 					details: {},
 				};
 			}
+			const roadmap = filterByProject(data, process.cwd());
 
 			const showCompleted = params.show_completed ?? true;
 			const showArchived = params.show_archived ?? false;

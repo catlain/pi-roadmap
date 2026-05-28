@@ -130,12 +130,6 @@ export const ARCHIVE_DIR = "archive";
 /** 文件后缀 */
 export const FILE_SUFFIX = ".roadmap.json";
 
-/** 项目级路线图文件名 */
-export const PROJECT_ROADMAP_FILE = "roadmap.json";
-
-/** 项目级路线图目录 */
-export const PROJECT_ROADMAP_DIR = ".pi/roadmap";
-
 // ── 优先级工具 ──
 
 /** 优先级排序权重 */
