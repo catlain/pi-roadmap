@@ -8,7 +8,6 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { syncDoingChanges } from "./doing-sync";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
-import { syncToProject, writeProjectRoadmap } from "./sync";
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
 
@@ -122,25 +121,8 @@ export function registerPlanTool(pi: ExtensionAPI) {
 
 			writeRoadmap(filePath, roadmap);
 
-			// 同步到关联项目
-			const syncResults: string[] = [];
-			for (const epic of roadmap.epics) {
-				if (epic.project) {
-					const projectData = syncToProject(roadmap, epic.project);
-					if (projectData) {
-						writeProjectRoadmap(epic.project, projectData);
-						syncResults.push(
-							`同步到项目 ${epic.project}（${projectData.stories.length} stories）`,
-						);
-					}
-				}
-			}
-
 			const actionLabel = action === "create" ? "创建" : "更新";
-			let text = `路线图 "${roadmap.meta.title}" 已${actionLabel}。`;
-			if (syncResults.length > 0) {
-				text += `\n\n同步：\n${syncResults.map((s) => `- ${s}`).join("\n")}`;
-			}
+			const text = `路线图 "${roadmap.meta.title}" 已${actionLabel}。`;
 			return { content: [{ type: "text" as const, text }], details: {} };
 		},
 	});

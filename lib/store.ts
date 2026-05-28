@@ -11,6 +11,7 @@ import {
 	FILE_SUFFIX,
 	GLOBAL_ROADMAP_DIR,
 	type RoadmapFile,
+	type Epic,
 } from "./types";
 import { repairRoadmap, validateRoadmap } from "./validator";
 
@@ -81,6 +82,22 @@ export function readRoadmapById(id: string): RoadmapFile | null {
 	const archivePath = getArchivePath(id);
 	if (fs.existsSync(archivePath)) return readRoadmap(archivePath);
 	return null;
+}
+
+// ── 项目过滤 ──
+
+/** 按 epic.project 过滤 roadmap，只返回匹配 cwd 的 epic。
+ *  无匹配时返回全部（非项目目录场景）。
+ *  不修改原始对象。 */
+export function filterByProject(
+	rm: RoadmapFile,
+	cwd: string,
+): RoadmapFile {
+	const matched = rm.epics.filter((e: Epic) => e.project === cwd);
+	if (matched.length > 0) {
+		return { ...rm, epics: matched };
+	}
+	return rm;
 }
 
 // ── 归档 ──

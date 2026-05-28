@@ -5,9 +5,11 @@
  * 增量工具：roadmap_create / roadmap_add_epic / roadmap_add_story / roadmap_add_task / roadmap_update / roadmap_archive
  *
  * 存储：
- *   全局: ~/.pi/roadmap/<id>.roadmap.json
- *   项目: <project>/.pi/roadmap/roadmap.json（派生）
+ *   全局: ~/.pi/roadmap/<id>.roadmap.json（唯一数据源）
  *   归档: ~/.pi/roadmap/archive/<id>.roadmap.json
+ *
+ * 读端过滤：
+ *   在项目目录下时，只返回 epic.project 匹配 cwd 的 Epic（roadmap_list/show/next）
  *
  * 进度同步：
  *   roadmap_plan 把 task 状态改为 doing → 写 doing.json

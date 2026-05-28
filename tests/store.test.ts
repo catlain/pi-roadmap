@@ -8,6 +8,7 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	archiveRoadmap,
+	filterByProject,
 	getArchivePath,
 	getRoadmapFilePath,
 	readRoadmap,
@@ -39,6 +40,63 @@ const SAMPLE_ROADMAP: RoadmapFile = {
 			status: "todo",
 			priority: "high",
 			project: "/tmp/project",
+			stories: [],
+		},
+	],
+};
+
+/** 多项目 roadmap，用于 filterByProject 测试 */
+const MULTI_PROJECT_ROADMAP: RoadmapFile = {
+	meta: {
+		id: "multi",
+		title: "多项目路线图",
+		status: "active",
+		created: "2026-05-25",
+		updated: "2026-05-25",
+		tags: [],
+	},
+	epics: [
+		{
+			id: "E1",
+			title: "项目 A Epic",
+			description: "",
+			status: "todo",
+			priority: "high",
+			project: "/home/user/project-a",
+			stories: [
+				{
+					id: "E1.S1",
+					title: "S1",
+					description: "",
+					status: "todo",
+					tasks: [{ id: "E1.S1.T1", title: "T1", status: "todo" }],
+				},
+			],
+		},
+		{
+			id: "E2",
+			title: "项目 B Epic",
+			description: "",
+			status: "doing",
+			priority: "medium",
+			project: "/home/user/project-b",
+			stories: [
+				{
+					id: "E2.S1",
+					title: "S1",
+					description: "",
+					status: "doing",
+					tasks: [{ id: "E2.S1.T1", title: "T1", status: "doing" }],
+				},
+			],
+		},
+		{
+			id: "E3",
+			title: "共享 Epic",
+			description: "",
+			status: "todo",
+			priority: "low",
+			project: "/home/user/project-a",
 			stories: [],
 		},
 	],
@@ -90,5 +148,42 @@ describe("store", () => {
 	it("readRoadmap 返回 null 对严重损坏的 JSON", () => {
 		fs.writeFileSync(tmpFile, "{ broken json", "utf-8");
 		expect(readRoadmap(tmpFile)).toBeNull();
+	});
+});
+
+describe("filterByProject", () => {
+	it("匹配单个项目只返回该项目的 epic", () => {
+		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-a");
+		expect(result.epics).toHaveLength(2);
+		expect(result.epics.map((e) => e.id)).toEqual(["E1", "E3"]);
+	});
+
+	it("匹配另一个项目只返回对应的 epic", () => {
+		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-b");
+		expect(result.epics).toHaveLength(1);
+		expect(result.epics[0].id).toBe("E2");
+	});
+
+	it("无匹配时返回全部 epic（非项目目录）", () => {
+		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/unrelated");
+		expect(result.epics).toHaveLength(3);
+	});
+
+	it("空 epics 返回空数组", () => {
+		const empty: RoadmapFile = { ...MULTI_PROJECT_ROADMAP, epics: [] };
+		const result = filterByProject(empty, "/home/user/project-a");
+		expect(result.epics).toHaveLength(0);
+	});
+
+	it("不修改原始 roadmap 对象", () => {
+		const original = JSON.parse(JSON.stringify(MULTI_PROJECT_ROADMAP));
+		filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-a");
+		expect(MULTI_PROJECT_ROADMAP.epics).toEqual(original.epics);
+	});
+
+	it("meta 信息保持不变", () => {
+		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-a");
+		expect(result.meta.id).toBe("multi");
+		expect(result.meta.title).toBe("多项目路线图");
 	});
 });

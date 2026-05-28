@@ -8,12 +8,12 @@ import { Type } from "@sinclair/typebox";
 import { clearDoing } from "./doing-store";
 import { getNextTasks } from "./progress";
 import {
+	filterByProject,
 	getRoadmapFilePath,
 	listRoadmapFiles,
 	readRoadmap,
 	writeRoadmap,
 } from "./store";
-import { syncToProject, writeProjectRoadmap } from "./sync";
 import { markTaskDone as _markTaskDone } from "./tools-atomic-logic";
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
@@ -55,12 +55,15 @@ export function registerNextTool(pi: ExtensionAPI) {
 						details: {},
 					};
 				}
-				roadmaps = [rm];
+				roadmaps = [
+					filterByProject(rm, process.cwd()),
+				];
 			} else {
 				roadmaps = listRoadmapFiles()
 					.map((fp) => readRoadmap(fp))
 					.filter((r): r is RoadmapFile => r !== null)
-					.filter((r: RoadmapFile) => r.meta.status === "active");
+					.filter((r: RoadmapFile) => r.meta.status === "active")
+					.map((rm) => filterByProject(rm, process.cwd()));
 			}
 
 			if (roadmaps.length === 0) {
@@ -107,7 +110,7 @@ export function registerDoneTool(pi: ExtensionAPI) {
 		name: "roadmap_done",
 		label: "Roadmap Done",
 		description:
-			"标记路线图中的某个任务为完成。自动填 doneDate、doneBySessionId，级联更新 Story/Epic 状态，同步到关联项目。",
+			"标记路线图中的某个任务为完成。自动填 doneDate、doneBySessionId，级联更新 Story/Epic 状态。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			taskId: Type.String({ description: "任务 ID，如 E1.S1.T1" }),
@@ -178,30 +181,15 @@ export function registerDoneTool(pi: ExtensionAPI) {
 				}
 			}
 
+			// 写回全局文件
 			roadmap.meta.updated = new Date().toISOString().slice(0, 10);
 			writeRoadmap(filePath, roadmap);
-
-			// 同步到关联项目
-			const synced: string[] = [];
-			for (const epic of roadmap.epics) {
-				if (epic.project) {
-					const projectData = syncToProject(roadmap, epic.project);
-					if (projectData) {
-						writeProjectRoadmap(epic.project, projectData);
-						synced.push(epic.project);
-					}
-				}
-			}
 
 			// 清除 doing 标志
 			clearDoing(params.roadmapId, params.taskId);
 
-			let result = `✅ 任务 "${params.taskId}" 已标记完成。`;
-			if (synced.length > 0) {
-				result += `\n已同步到项目: ${synced.join(", ")}`;
-			}
 			return {
-				content: [{ type: "text" as const, text: result }],
+				content: [{ type: "text" as const, text: `✅ 任务 "${params.taskId}" 已标记完成。` }],
 				details: {},
 			};
 		},
