@@ -2,6 +2,7 @@
  * Roadmap 数据验证与修复
  */
 
+import { detectCycle } from "./dependency";
 import type { RoadmapFile } from "./types";
 
 const VALID_ROADMAP_STATUS = new Set([
@@ -55,6 +56,22 @@ export function validateRoadmap(data: unknown): ValidationResult {
 	if (!Array.isArray(d.epics)) {
 		errors.push("缺少 epics 数组");
 	} else {
+		// 先收集所有合法 ID
+		const allIds = new Set<string>();
+		for (const epic of d.epics as Record<string, unknown>[]) {
+			if (epic.id) allIds.add(epic.id as string);
+			if (Array.isArray(epic.stories)) {
+				for (const story of epic.stories as Record<string, unknown>[]) {
+					if (story.id) allIds.add(story.id as string);
+					if (Array.isArray(story.tasks)) {
+						for (const task of story.tasks as Record<string, unknown>[]) {
+							if (task.id) allIds.add(task.id as string);
+						}
+					}
+				}
+			}
+		}
+
 		const epicIds = new Set<string>();
 		for (let i = 0; i < d.epics.length; i++) {
 			const epic = d.epics[i] as Record<string, unknown>;
@@ -62,6 +79,19 @@ export function validateRoadmap(data: unknown): ValidationResult {
 			else if (epicIds.has(epic.id as string))
 				errors.push(`epic id "${epic.id}" 重复`);
 			else epicIds.add(epic.id as string);
+
+			// 检查 epic 的 dependsOn
+			if (Array.isArray(epic.dependsOn) && epic.id) {
+				for (const depId of epic.dependsOn as string[]) {
+					if (!allIds.has(depId)) {
+						errors.push(`Epic ${epic.id} dependsOn 引用了不存在的 ID "${depId}"`);
+					}
+				}
+				const cycle = detectCycle(d as unknown as RoadmapFile, epic.id as string, epic.dependsOn as string[]);
+				if (cycle) {
+					errors.push(`Epic ${epic.id} 存在循环依赖：${cycle.join(" → ")}`);
+				}
+			}
 
 			if (!epic.title) errors.push(`epics[${i}].title 缺失`);
 			if (epic.project !== undefined && typeof epic.project !== "string")
@@ -82,6 +112,19 @@ export function validateRoadmap(data: unknown): ValidationResult {
 						errors.push(`story id "${story.id}" 在 epic ${epic.id} 内重复`);
 					else storyIds.add(story.id as string);
 
+					// 检查 story 的 dependsOn
+					if (Array.isArray(story.dependsOn) && story.id) {
+						for (const depId of story.dependsOn as string[]) {
+							if (!allIds.has(depId)) {
+								errors.push(`Story ${story.id} dependsOn 引用了不存在的 ID "${depId}"`);
+							}
+						}
+						const cycle = detectCycle(d as unknown as RoadmapFile, story.id as string, story.dependsOn as string[]);
+						if (cycle) {
+							errors.push(`Story ${story.id} 存在循环依赖：${cycle.join(" → ")}`);
+						}
+					}
+
 					if (!story.title) errors.push(`epics[${i}].stories[${j}].title 缺失`);
 					if (!VALID_ITEM_STATUS.has(story.status as string))
 						errors.push(`epics[${i}].stories[${j}].status 不合法`);
@@ -96,6 +139,19 @@ export function validateRoadmap(data: unknown): ValidationResult {
 							else if (taskIds.has(task.id as string))
 								errors.push(`task id "${task.id}" 在 story ${story.id} 内重复`);
 							else taskIds.add(task.id as string);
+
+							// 检查 task 的 dependsOn
+							if (Array.isArray(task.dependsOn) && task.id) {
+								for (const depId of task.dependsOn as string[]) {
+									if (!allIds.has(depId)) {
+										errors.push(`Task ${task.id} dependsOn 引用了不存在的 ID "${depId}"`);
+									}
+								}
+								const cycle = detectCycle(d as unknown as RoadmapFile, task.id as string, task.dependsOn as string[]);
+								if (cycle) {
+									errors.push(`Task ${task.id} 存在循环依赖：${cycle.join(" → ")}`);
+								}
+							}
 
 							if (!task.title) errors.push(`task[${k}].title 缺失`);
 							if (!VALID_ITEM_STATUS.has(task.status as string))

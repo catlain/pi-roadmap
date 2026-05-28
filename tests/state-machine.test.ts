@@ -27,7 +27,7 @@ describe("状态机：合法转换", () => {
 			title: "T1",
 			status: from as any,
 		};
-		const result = updateTask(task, { status: to }, "session-1");
+		const result = updateTask({} as any, task, { status: to }, "session-1");
 		expect(result).not.toContain("不合法");
 		expect(task.status).toBe(to);
 	});
@@ -53,7 +53,7 @@ describe("状态机：非法转换", () => {
 			title: "T1",
 			status: from as any,
 		};
-		const result = updateTask(task, { status: to }, "session-1");
+		const result = updateTask({} as any, task, { status: to }, "session-1");
 		expect(result).toContain("不合法");
 		expect(task.status).toBe(from); // 状态未变
 	});
@@ -70,7 +70,7 @@ describe("状态机：字段清理", () => {
 			doingDate: "2026-01-01",
 			doingSessionId: "old-session",
 		};
-		updateTask(task, { status: "done" }, "session-1");
+		updateTask({} as any, task, { status: "done" }, "session-1");
 		expect(task.doingDate).toBeUndefined();
 		expect(task.doingSessionId).toBeUndefined();
 		expect(task.doneDate).toBe(today());
@@ -84,7 +84,7 @@ describe("状态机：字段清理", () => {
 			doneDate: "2026-01-01",
 			doneBySessionId: "old-session",
 		};
-		updateTask(task, { status: "todo" }, "session-1");
+		updateTask({} as any, task, { status: "todo" }, "session-1");
 		expect(task.doneDate).toBeUndefined();
 		expect(task.doneBySessionId).toBeUndefined();
 	});
@@ -97,7 +97,7 @@ describe("状态机：字段清理", () => {
 			doingDate: "2026-01-01",
 			doingSessionId: "session-1",
 		};
-		updateTask(task, { status: "blocked" }, "session-1");
+		updateTask({} as any, task, { status: "blocked" }, "session-1");
 		expect(task.doingDate).toBeUndefined();
 		expect(task.doingSessionId).toBeUndefined();
 	});
@@ -113,7 +113,7 @@ describe("状态机：字段清理", () => {
 			stories: [],
 			doingDate: "2026-01-01",
 		};
-		updateItem(epic, { status: "done" }, "session-1");
+		updateItem({} as any, epic, { status: "done" }, "session-1");
 		expect(epic.doingDate).toBeUndefined();
 		expect(epic.doneDate).toBe(today());
 	});
@@ -126,7 +126,7 @@ describe("状态机：字段清理", () => {
 			doingDate: "2026-01-01",
 			doingSessionId: "session-1",
 		};
-		const result = updateTask(task, { status: "doing" }, "session-2");
+		const result = updateTask({} as any, task, { status: "doing" }, "session-2");
 		expect(result).not.toContain("不合法");
 		expect(task.doingDate).toBe("2026-01-01"); // 未变
 	});

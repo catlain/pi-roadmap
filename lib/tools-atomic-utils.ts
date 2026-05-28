@@ -2,6 +2,7 @@
  * Roadmap 原子操作 — 公共辅助函数
  */
 
+import { areDependenciesMet, findItemStatus } from "./dependency";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
 import type {
 	Epic,
@@ -54,6 +55,7 @@ const VALID_TRANSITIONS: Record<ItemStatus, ReadonlySet<ItemStatus>> = {
 };
 
 export function updateItem(
+	rm: RoadmapFile,
 	item: Epic | Story,
 	updates: Record<string, string>,
 	sessionId: string,
@@ -80,6 +82,16 @@ export function updateItem(
 			item.status = newStatus;
 			if (newStatus === "doing") {
 				item.doingDate = today();
+				// 检查依赖是否满足
+				const deps = areDependenciesMet(rm, item.dependsOn);
+				if (!deps.met) {
+					const depNames: string[] = [];
+					for (const depId of deps.unmet) {
+						const s = findItemStatus(rm, depId);
+						depNames.push(`${depId}(${s ? statusIcon(s) + " " + s : "❓"})`);
+					}
+					return `⚠️ ${item.id} 依赖未完成：${depNames.join(", ")}。建议先完成上游任务。`;
+				}
 			} else {
 				// 离开 doing 时清除 doingDate
 				delete item.doingDate;
@@ -100,6 +112,7 @@ export function updateItem(
 
 /** 更新 Task（支持 note 和 doingSessionId） */
 export function updateTask(
+	rm: RoadmapFile,
 	task: Task,
 	updates: Record<string, string>,
 	sessionId: string,
@@ -127,6 +140,16 @@ export function updateTask(
 			if (newStatus === "doing") {
 				task.doingDate = today();
 				task.doingSessionId = sessionId;
+				// 检查依赖是否满足
+				const deps = areDependenciesMet(rm, task.dependsOn);
+				if (!deps.met) {
+					const depNames: string[] = [];
+					for (const depId of deps.unmet) {
+						const s = findItemStatus(rm, depId);
+						depNames.push(`${depId}(${s ? statusIcon(s) + " " + s : "❓"})`);
+					}
+					return `⚠️ ${task.id} 依赖未完成：${depNames.join(", ")}。建议先完成上游任务。`;
+				}
 			} else {
 				delete task.doingDate;
 				delete task.doingSessionId;
@@ -144,4 +167,16 @@ export function updateTask(
 		changed.push(`status: ${oldStatus} → ${task.status}`);
 	}
 	return `✅ ${task.id} 已更新：${changed.join(", ")}。`;
+}
+
+/** 状态对应的图标 */
+function statusIcon(s: ItemStatus): string {
+	const icons: Record<ItemStatus, string> = {
+		todo: "⬜",
+		doing: "🔄",
+		done: "✅",
+		blocked: "🚫",
+		dropped: "❌",
+	};
+	return icons[s];
 }
