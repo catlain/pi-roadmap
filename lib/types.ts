@@ -81,6 +81,8 @@ export interface Story {
 	createdDate?: string;
 	/** 完成日期，仅 done 时有值 */
 	doneDate?: string;
+	/** 开始执行日期，仅 doing 时有值 */
+	doingDate?: string;
 	/** 任务列表 */
 	tasks: Task[];
 	/** 归档标志，true 时默认不显示 */
@@ -105,6 +107,8 @@ export interface Epic {
 	createdDate?: string;
 	/** 完成日期，仅 done 时有值 */
 	doneDate?: string;
+	/** 开始执行日期，仅 doing 时有值 */
+	doingDate?: string;
 	/** Story 列表 */
 	stories: Story[];
 	/** 归档标志，true 时默认不显示 */
