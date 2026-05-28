@@ -12,14 +12,14 @@ import { today, updateItem, updateTask } from "../lib/tools-atomic-utils";
 describe("updateTask()", () => {
 	it("更新 title", () => {
 		const task = { id: "E1.S1.T1", title: "Old", status: "todo" as const };
-		const result = updateTask(task, { title: "New" }, "session-1");
+		const result = updateTask({} as any, task, { title: "New" }, "session-1");
 		expect(result).toContain("title");
 		expect(task.title).toBe("New");
 	});
 
 	it("status→doing 填 doingDate 和 doingSessionId", () => {
 		const task = { id: "E1.S1.T1", title: "T1", status: "todo" as const };
-		updateTask(task, { status: "doing" }, "session-123");
+		updateTask({} as any, task, { status: "doing" }, "session-123");
 		expect(task.doingDate).toBe(today());
 		expect(task.doingSessionId).toBe("session-123");
 	});
@@ -32,7 +32,7 @@ describe("updateTask()", () => {
 			doingDate: "2026-01-01",
 			doingSessionId: "old",
 		};
-		updateTask(task, { status: "done" }, "session-456");
+		updateTask({} as any, task, { status: "done" }, "session-456");
 		expect(task.doneDate).toBe(today());
 		expect(task.doneBySessionId).toBe("session-456");
 		expect(task.doingSessionId).toBeUndefined();
@@ -40,7 +40,7 @@ describe("updateTask()", () => {
 
 	it("更新 note", () => {
 		const task = { id: "E1.S1.T1", title: "T1", status: "todo" as const };
-		updateTask(task, { note: "测试备注" }, "session-1");
+		updateTask({} as any, task, { note: "测试备注" }, "session-1");
 		expect(task.note).toBe("测试备注");
 	});
 });
@@ -58,7 +58,7 @@ describe("updateItem()", () => {
 			project: "/test",
 			stories: [],
 		};
-		updateItem(epic, { title: "New" }, "session-1");
+		updateItem({} as any, epic, { title: "New" }, "session-1");
 		expect(epic.title).toBe("New");
 	});
 
@@ -70,7 +70,7 @@ describe("updateItem()", () => {
 			status: "todo" as const,
 			tasks: [],
 		};
-		updateItem(story, { status: "doing" }, "session-1");
+		updateItem({} as any, story, { status: "doing" }, "session-1");
 		expect(story.doingDate).toBe(today());
 	});
 
@@ -84,7 +84,7 @@ describe("updateItem()", () => {
 			project: "/test",
 			stories: [],
 		};
-		updateItem(epic, { status: "done" }, "session-1");
+		updateItem({} as any, epic, { status: "done" }, "session-1");
 		expect(epic.doneDate).toBe(today());
 	});
 });

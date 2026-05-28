@@ -2,6 +2,7 @@
  * Roadmap 进度计算与任务提取
  */
 
+import { areDependenciesMet } from "./dependency";
 import type { Epic, Priority, RoadmapFile, Story, Task } from "./types";
 import { comparePriority, getEffectivePriority } from "./types";
 
@@ -109,10 +110,19 @@ export function getNextTasks(roadmap: RoadmapFile, limit = 5): NextTask[] {
 		}
 	}
 
-	// doing 优先，然后按有效优先级排序（使用存储的 task.priority 作为 effective priority）
+	// doing 优先，然后按依赖满足情况，再按有效优先级排序
 	candidates.sort((a, b) => {
 		if (a.status === "doing" && b.status !== "doing") return -1;
 		if (a.status !== "doing" && b.status === "doing") return 1;
+
+		// 依赖全部满足的排在依赖未满足的前面
+		// 对于 getNextTasks，我们没有 roadmap 对象传给 areDependenciesMet，需要从 candidates 中找到完整的 roadmap
+		// 用 a.roadmapId 来查找
+		const aMet = a.dependsOn ? areDependenciesMet(roadmap, a.dependsOn).met : true;
+		const bMet = b.dependsOn ? areDependenciesMet(roadmap, b.dependsOn).met : true;
+		if (aMet && !bMet) return -1;
+		if (!aMet && bMet) return 1;
+
 		return comparePriority(a.priority ?? "medium", b.priority ?? "medium");
 	});
 

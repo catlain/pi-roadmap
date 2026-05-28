@@ -154,7 +154,7 @@ describe("registerAddTaskTool", () => {
 		vi.mocked(_addTask).mockReturnValue({ result: "✅ Task E1.S1.T1: 新Task 已添加。", taskId: "E1.S1.T1" });
 
 		await execute("", { roadmapId: "test", story_id: "E1.S1", title: "新Task", priority: "high" });
-		expect(_addTask).toHaveBeenCalledWith(expect.anything(), "E1.S1", "新Task", "high");
+		expect(_addTask).toHaveBeenCalledWith(expect.anything(), "E1.S1", "新Task", "high", undefined);
 	});
 
 	it("story 不存在时返回错误", async () => {

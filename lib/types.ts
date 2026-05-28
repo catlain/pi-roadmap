@@ -61,6 +61,8 @@ export interface Task {
 	doingSessionId?: string;
 	/** 完成此任务的会话 ID，仅 done 时有值，用于追溯 */
 	doneBySessionId?: string;
+	/** 依赖的其他项 ID 列表（如 ["E1.S1.T1", "E1.S2.T1"]），这些项必须完成才能开始此项 */
+	dependsOn?: string[];
 	/** 归档标志，true 时默认不显示 */
 	archived?: boolean;
 }
@@ -85,6 +87,8 @@ export interface Story {
 	doingDate?: string;
 	/** 任务列表 */
 	tasks: Task[];
+	/** 依赖的其他项 ID 列表（如 ["E1.S1.T1", "E1.S2.T1"]），这些项必须完成才能开始此项 */
+	dependsOn?: string[];
 	/** 归档标志，true 时默认不显示 */
 	archived?: boolean;
 }
@@ -111,6 +115,8 @@ export interface Epic {
 	doingDate?: string;
 	/** Story 列表 */
 	stories: Story[];
+	/** 依赖的其他项 ID 列表（如 ["E1.S1", "E1.S2"]），这些项必须完成才能开始此 Epic */
+	dependsOn?: string[];
 	/** 归档标志，true 时默认不显示 */
 	archived?: boolean;
 }

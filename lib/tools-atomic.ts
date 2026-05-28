@@ -69,7 +69,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				if (!epic) return `错误：Epic "${epicId}" 不存在。`;
 
 				if (parts.length === 1) {
-					return updateItem(epic, params.updates, sessionId);
+					return updateItem(rm, epic, params.updates, sessionId);
 				}
 
 				const storyId = `${parts[0]}.${parts[1]}`;
@@ -77,13 +77,13 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				if (!story) return `错误：Story "${storyId}" 不存在。`;
 
 				if (parts.length === 2) {
-					return updateItem(story, params.updates, sessionId);
+					return updateItem(rm, story, params.updates, sessionId);
 				}
 
 				const taskId = params.item_id;
 				const task = story.tasks.find((t) => t.id === taskId);
 				if (!task) return `错误：Task "${taskId}" 不存在。`;
-				return updateTask(task, params.updates, sessionId);
+				return updateTask(rm, task, params.updates, sessionId);
 			});
 			return {
 				content: [{ type: "text" as const, text: result }],

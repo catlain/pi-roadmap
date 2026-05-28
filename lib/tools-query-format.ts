@@ -4,6 +4,7 @@
  * 纯函数，不依赖 typebox / ExtensionAPI，方便测试
  */
 
+import { formatDependencies } from "./dependency";
 import { formatProgress, getOverview } from "./parser";
 import type { Epic, RoadmapFile, Story, Task } from "./types";
 
@@ -125,7 +126,10 @@ export function formatRoadmapDetail(
 									? "❌"
 									: "⬜";
 				const note = task.note ? ` — ${task.note}` : "";
-				output += `  ${check} ${task.id}: ${task.title}${formatTimestamps(task)}${note}\n`;
+				const deps = task.dependsOn
+					? ` [deps: ${formatDependencies(roadmap, task.dependsOn)}]`
+					: "";
+				output += `  ${check} ${task.id}: ${task.title}${formatTimestamps(task)}${note}${deps}\n`;
 			}
 			output += "\n";
 		}

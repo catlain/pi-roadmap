@@ -58,6 +58,7 @@ export function addStory(
 	epicId: string,
 	title: string,
 	description: string,
+	dependsOn?: string[],
 ): { result: string; storyId?: string } {
 	const epic = rm.epics.find((e) => e.id === epicId);
 	if (!epic) return { result: `错误：Epic "${epicId}" 不存在。` };
@@ -73,6 +74,7 @@ export function addStory(
 		description,
 		status: "todo",
 		createdDate: today(),
+		...(dependsOn ? { dependsOn } : {}),
 		tasks: [],
 	};
 	epic.stories.push(story);
@@ -89,6 +91,7 @@ export function addTask(
 	storyId: string,
 	title: string,
 	priority: Priority | undefined,
+	dependsOn?: string[],
 ): { result: string; taskId?: string } {
 	for (const epic of rm.epics) {
 		const story = epic.stories.find((s) => s.id === storyId);
@@ -113,6 +116,7 @@ export function addTask(
 				status: "todo",
 				priority: priority ?? undefined,
 				createdDate: today(),
+				...(dependsOn ? { dependsOn } : {}),
 			};
 			story.tasks.push(task);
 			return {

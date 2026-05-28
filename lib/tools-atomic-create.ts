@@ -113,6 +113,7 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 			epic_id: Type.String({ description: "Epic ID，如 E1" }),
 			title: Type.String({ description: "Story 标题" }),
 			description: Type.String({ description: "Story 描述" }),
+			dependsOn: Type.Optional(Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" })),
 		}),
 		async execute(
 			_tc: string,
@@ -121,10 +122,11 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 				epic_id: string;
 				title: string;
 				description: string;
+				dependsOn?: string[];
 			},
 		) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				return _addStory(rm, params.epic_id, params.title, params.description)
+				return _addStory(rm, params.epic_id, params.title, params.description, params.dependsOn)
 					.result;
 			});
 			return {
@@ -147,6 +149,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 			priority: Type.Optional(
 				Type.String({ description: "优先级: high/medium/low" }),
 			),
+			dependsOn: Type.Optional(Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" })),
 		}),
 		async execute(
 			_tc: string,
@@ -155,6 +158,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 				story_id: string;
 				title: string;
 				priority?: string;
+				dependsOn?: string[];
 			},
 		) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
@@ -163,6 +167,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 					params.story_id,
 					params.title,
 					params.priority as Priority | undefined,
+					params.dependsOn,
 				).result;
 			});
 			return {
