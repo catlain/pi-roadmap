@@ -165,6 +165,33 @@ describe("addStory", () => {
 		const { result } = addStory(rm, "E99", "Story", "");
 		expect(result).toContain("错误");
 	});
+
+	it("rejects adding story to archived epic", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		rm.epics[0].archived = true;
+		const { result } = addStory(rm, "E1", "Story", "");
+		expect(result).toContain("已归档");
+		expect(rm.epics[0].stories).toHaveLength(0);
+	});
+
+	it("rejects adding story to done epic", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		rm.epics[0].status = "done";
+		const { result } = addStory(rm, "E1", "Story", "");
+		expect(result).toContain("done");
+		expect(rm.epics[0].stories).toHaveLength(0);
+	});
+
+	it("rejects adding story to dropped epic", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		rm.epics[0].status = "dropped";
+		const { result } = addStory(rm, "E1", "Story", "");
+		expect(result).toContain("dropped");
+		expect(rm.epics[0].stories).toHaveLength(0);
+	});
 });
 
 // ── addTask ──
@@ -195,6 +222,47 @@ describe("addTask", () => {
 		const rm = makeRoadmap();
 		const { result } = addTask(rm, "E1.S99", "Task", undefined);
 		expect(result).toContain("错误");
+	});
+
+	it("rejects adding task to archived story", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addStory(rm, "E1", "Story", "");
+		rm.epics[0].stories[0].archived = true;
+		const { result } = addTask(rm, "E1.S1", "Task", undefined);
+		expect(result).toContain("已归档");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
+	});
+
+	it("rejects adding task to done story", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addStory(rm, "E1", "Story", "");
+		rm.epics[0].stories[0].status = "done";
+		const { result } = addTask(rm, "E1.S1", "Task", undefined);
+		expect(result).toContain("done");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
+	});
+
+	it("rejects adding task when parent epic is archived", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addStory(rm, "E1", "Story", "");
+		rm.epics[0].archived = true;
+		const { result } = addTask(rm, "E1.S1", "Task", undefined);
+		expect(result).toContain("Epic");
+		expect(result).toContain("已归档");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
+	});
+
+	it("rejects adding task when parent epic is done", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addStory(rm, "E1", "Story", "");
+		rm.epics[0].status = "done";
+		const { result } = addTask(rm, "E1.S1", "Task", undefined);
+		expect(result).toContain("done");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
 	});
 });
 
