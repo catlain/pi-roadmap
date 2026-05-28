@@ -61,6 +61,12 @@ export function addStory(
 ): { result: string; storyId?: string } {
 	const epic = rm.epics.find((e) => e.id === epicId);
 	if (!epic) return { result: `错误：Epic "${epicId}" 不存在。` };
+	if (epic.archived) {
+		return { result: `⚠️ Epic "${epicId}" 已归档，无法添加 Story。请先取消归档或使用其他 Epic。` };
+	}
+	if (epic.status === "done" || epic.status === "dropped") {
+		return { result: `⚠️ Epic "${epicId}" 状态为 "${epic.status}"，无法添加 Story。` };
+	}
 	const story: Story = {
 		id: `${epic.id}.S${epic.stories.length + 1}`,
 		title,
@@ -87,6 +93,20 @@ export function addTask(
 	for (const epic of rm.epics) {
 		const story = epic.stories.find((s) => s.id === storyId);
 		if (story) {
+			// 检查 story 是否已归档/已完成
+			if (story.archived) {
+				return { result: `⚠️ Story "${storyId}" 已归档，无法添加 Task。` };
+			}
+			if (story.status === "done" || story.status === "dropped") {
+				return { result: `⚠️ Story "${storyId}" 状态为 "${story.status}"，无法添加 Task。` };
+			}
+			// 检查所属 epic 是否已归档/已完成
+			if (epic.archived) {
+				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 已归档，无法添加 Task。` };
+			}
+			if (epic.status === "done" || epic.status === "dropped") {
+				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 状态为 "${epic.status}"，无法添加 Task。` };
+			}
 			const task: Task = {
 				id: `${story.id}.T${story.tasks.length + 1}`,
 				title,
