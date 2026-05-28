@@ -143,38 +143,41 @@ export function validateRoadmap(data: unknown): ValidationResult {
 }
 
 /** 尝试修复常见问题（轻量修复） */
-export function repairRoadmap(data: any): RoadmapFile | null {
+export function repairRoadmap(data: unknown): RoadmapFile | null {
 	try {
-		if (!data.meta) data.meta = {};
-		if (!data.meta.id) return null;
-		if (!data.meta.title) data.meta.title = data.meta.id;
-		if (!data.meta.status || !VALID_ROADMAP_STATUS.has(data.meta.status))
-			data.meta.status = "active";
-		if (!data.meta.created)
-			data.meta.created = new Date().toISOString().slice(0, 10);
-		if (!data.meta.updated) data.meta.updated = data.meta.created;
-		if (!Array.isArray(data.meta.tags)) data.meta.tags = [];
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- repair 函数必须对未知结构做 mutation
+		const d = data as Record<string, unknown>;
+		if (!d.meta) d.meta = {};
+		const meta = d.meta as Record<string, unknown>;
+		if (!meta.id) return null;
+		if (!meta.title) meta.title = meta.id;
+		if (!meta.status || !VALID_ROADMAP_STATUS.has(meta.status as string))
+			meta.status = "active";
+		if (!meta.created)
+			meta.created = new Date().toISOString().slice(0, 10);
+		if (!meta.updated) meta.updated = meta.created;
+		if (!Array.isArray(meta.tags)) meta.tags = [];
 
-		if (!Array.isArray(data.epics)) data.epics = [];
+		if (!Array.isArray(d.epics)) d.epics = [];
 
-		for (const epic of data.epics) {
-			if (!VALID_ITEM_STATUS.has(epic.status)) epic.status = "todo";
-			if (!VALID_PRIORITY.has(epic.priority)) epic.priority = "medium";
+		for (const epic of d.epics as Record<string, unknown>[]) {
+			if (!VALID_ITEM_STATUS.has(epic.status as string)) epic.status = "todo";
+			if (!VALID_PRIORITY.has(epic.priority as string)) epic.priority = "medium";
 			if (!epic.project) epic.project = "";
 			if (!Array.isArray(epic.stories)) epic.stories = [];
 
-			for (const story of epic.stories) {
-				if (!VALID_ITEM_STATUS.has(story.status)) story.status = "todo";
+			for (const story of epic.stories as Record<string, unknown>[]) {
+				if (!VALID_ITEM_STATUS.has(story.status as string)) story.status = "todo";
 				if (!Array.isArray(story.tasks)) story.tasks = [];
 
-				for (const task of story.tasks) {
-					if (!VALID_ITEM_STATUS.has(task.status)) task.status = "todo";
+				for (const task of story.tasks as Record<string, unknown>[]) {
+					if (!VALID_ITEM_STATUS.has(task.status as string)) task.status = "todo";
 				}
 			}
 		}
 
-		return data as RoadmapFile;
-	} catch {
+		return d as unknown as RoadmapFile;
+	} catch { // JSON 损坏或格式异常 → 视为无效
 		return null;
 	}
 }

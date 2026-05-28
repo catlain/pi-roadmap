@@ -63,16 +63,19 @@ export function readRoadmap(filePath: string): RoadmapFile | null {
 		// 验证通过，补全可选字段（tags 默认空数组）
 		if (!data.meta.tags) data.meta.tags = [];
 		return data as RoadmapFile;
-	} catch {
+	} catch { // JSON 损坏或权限异常 → 视为不存在
 		return null;
 	}
 }
 
-/** 写入 roadmap 文件 */
+/** 写入 roadmap 文件（原子写入：临时文件 + rename，防止中途崩溃丢数据） */
 export function writeRoadmap(filePath: string, data: RoadmapFile): void {
 	data.meta.updated = new Date().toISOString().slice(0, 10);
-	fs.mkdirSync(path.dirname(filePath), { recursive: true });
-	fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf-8");
+	const dir = path.dirname(filePath);
+	fs.mkdirSync(dir, { recursive: true });
+	const tmpPath = filePath + ".tmp";
+	fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2) + "\n", "utf-8");
+	fs.renameSync(tmpPath, filePath);
 }
 
 /** 按 ID 读取（先找活跃，再找归档） */

@@ -44,6 +44,15 @@ export function atomicUpdate(
 }
 
 /** 更新通用字段（Epic/Story） */
+/** 合法状态转换表（from → Set<to>） */
+const VALID_TRANSITIONS: Record<ItemStatus, ReadonlySet<ItemStatus>> = {
+	todo: new Set(["doing", "dropped"]),
+	doing: new Set(["todo", "done", "blocked", "dropped"]),
+	done: new Set(["todo"]), // 仅允许重开
+	blocked: new Set(["doing", "dropped"]),
+	dropped: new Set(["todo"]), // 仅允许重开
+};
+
 export function updateItem(
 	item: Epic | Story,
 	updates: Record<string, string>,
@@ -63,15 +72,28 @@ export function updateItem(
 		changed.push("priority");
 	}
 	if (updates.status !== undefined) {
+		const newStatus = updates.status as ItemStatus;
 		const oldStatus = item.status;
-		item.status = updates.status as ItemStatus;
-		if (updates.status === "doing" && oldStatus !== "doing") {
-			(item as any).doingDate = today();
+		if (oldStatus === newStatus) {
+			// 状态未变，不做任何处理
+		} else if (VALID_TRANSITIONS[oldStatus]?.has(newStatus)) {
+			item.status = newStatus;
+			if (newStatus === "doing") {
+				item.doingDate = today();
+			} else {
+				// 离开 doing 时清除 doingDate
+				delete item.doingDate;
+			}
+			if (newStatus === "done") {
+				item.doneDate = today();
+			} else if (oldStatus === "done") {
+				// 从 done 重开时清除 doneDate
+				delete item.doneDate;
+			}
+		} else {
+			return `⚠️ ${item.id} 状态转换不合法：${oldStatus} → ${newStatus}（允许：${[...VALID_TRANSITIONS[oldStatus]].join(",")}）`;
 		}
-		if (updates.status === "done") {
-			item.doneDate = today();
-		}
-		changed.push(`status: ${oldStatus} → ${updates.status}`);
+		changed.push(`status: ${oldStatus} → ${item.status}`);
 	}
 	return `✅ ${item.id} 已更新：${changed.join(", ")}。`;
 }
@@ -96,18 +118,30 @@ export function updateTask(
 		changed.push("note");
 	}
 	if (updates.status !== undefined) {
+		const newStatus = updates.status as ItemStatus;
 		const oldStatus = task.status;
-		task.status = updates.status as ItemStatus;
-		if (updates.status === "doing" && oldStatus !== "doing") {
-			task.doingDate = today();
-			task.doingSessionId = sessionId;
+		if (oldStatus === newStatus) {
+			// 状态未变
+		} else if (VALID_TRANSITIONS[oldStatus]?.has(newStatus)) {
+			task.status = newStatus;
+			if (newStatus === "doing") {
+				task.doingDate = today();
+				task.doingSessionId = sessionId;
+			} else {
+				delete task.doingDate;
+				delete task.doingSessionId;
+			}
+			if (newStatus === "done") {
+				task.doneDate = today();
+				task.doneBySessionId = sessionId;
+			} else if (oldStatus === "done") {
+				delete task.doneDate;
+				delete task.doneBySessionId;
+			}
+		} else {
+			return `⚠️ ${task.id} 状态转换不合法：${oldStatus} → ${newStatus}（允许：${[...VALID_TRANSITIONS[oldStatus]].join(",")}）`;
 		}
-		if (updates.status === "done") {
-			task.doneDate = today();
-			task.doneBySessionId = sessionId;
-			delete task.doingSessionId;
-		}
-		changed.push(`status: ${oldStatus} → ${updates.status}`);
+		changed.push(`status: ${oldStatus} → ${task.status}`);
 	}
 	return `✅ ${task.id} 已更新：${changed.join(", ")}。`;
 }

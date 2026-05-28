@@ -33,7 +33,7 @@ export function readDoing(): DoingEntry[] {
 		if (!fs.existsSync(DOING_FILE)) return [];
 		const raw = fs.readFileSync(DOING_FILE, "utf-8");
 		return JSON.parse(raw) as DoingEntry[];
-	} catch {
+	} catch { // ENOENT 或 JSON 损坏 → 视为无 doing 记录
 		return [];
 	}
 }

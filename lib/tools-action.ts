@@ -15,6 +15,7 @@ import {
 	writeRoadmap,
 } from "./store";
 import { markTaskDone as _markTaskDone } from "./tools-atomic-logic";
+import { getSessionId } from "./tools-atomic-utils";
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
 
@@ -149,12 +150,7 @@ export function registerDoneTool(pi: ExtensionAPI) {
 				};
 			}
 
-			const sessionId =
-				(_ctx as any)?.sessionManager
-					?.getSessionFile?.()
-					?.split("/")
-					.pop()
-					?.replace(/\.jsonl$/, "") ?? "unknown";
+			const sessionId = getSessionId(_ctx);
 
 			const { result: doneResult, cascadeInfo } = _markTaskDone(
 				roadmap,
