@@ -192,6 +192,20 @@ describe("addStory", () => {
 		expect(result).toContain("dropped");
 		expect(rm.epics[0].stories).toHaveLength(0);
 	});
+
+	it("warns when adding story with duplicate title", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "/p");
+		addStory(rm, "E1", "Same Title", "First");
+		const { result, storyId } = addStory(rm, "E1", "Same Title", "Second");
+		// 警告信息
+		expect(result).toContain("E1 下已存在同名 Story");
+		expect(result).toContain("Same Title");
+		// 但不阻止添加
+		expect(storyId).toBe("E1.S2");
+		expect(result).toContain("✅");
+		expect(rm.epics[0].stories).toHaveLength(2);
+	});
 });
 
 // ── addTask ──
@@ -263,6 +277,21 @@ describe("addTask", () => {
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
 		expect(result).toContain("done");
 		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
+	});
+
+	it("warns when adding task with duplicate title", () => {
+		const rm = makeRoadmap();
+		addEpic(rm, "Epic", "Desc", "medium", "/p");
+		addStory(rm, "E1", "Story", "");
+		addTask(rm, "E1.S1", "Same Task", undefined);
+		const { result, taskId } = addTask(rm, "E1.S1", "Same Task", undefined);
+		// 警告信息
+		expect(result).toContain("E1.S1 下已存在同名 Task");
+		expect(result).toContain("Same Task");
+		// 但不阻止添加
+		expect(taskId).toBe("E1.S1.T2");
+		expect(result).toContain("✅");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(2);
 	});
 });
 
