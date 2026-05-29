@@ -4,6 +4,8 @@
 
 # pi-roadmap
 
+[源码仓库](https://github.com/catlain/pi-roadmap) | [npm](https://www.npmjs.com/package/pi-roadmap)
+
 Project roadmap management for [pi](https://github.com/earendil-works/pi-coding-agent) — structured Epic/Story/Task planning with progress tracking, priority inheritance, and cross-session continuity.
 
 ## Why You Need It
@@ -99,6 +101,8 @@ Displays every Epic, Story, and Task with status icons, descriptions, and comple
 **Example output**:
 ```
 # My Project Roadmap ████████░░ 80%
+
+[源码仓库](https://github.com/catlain/pi-roadmap) | [npm](https://www.npmjs.com/package/pi-roadmap)
 Status: active | Tags: v2
 
 ## Epic E0: Core feature [done/high]
