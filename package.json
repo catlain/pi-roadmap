@@ -32,5 +32,17 @@
     "tsconfig.json",
     "vitest.config.ts",
     "package.json"
-  ]
+  ],
+  "keywords": [
+    "pi-package"
+  ],
+  "homepage": "https://catlain.github.io/pi-atelier/",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:catlain/pi-roadmap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/catlain/pi-roadmap/issues"
+  },
+  "license": "MIT"
 }
