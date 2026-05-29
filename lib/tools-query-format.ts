@@ -65,6 +65,11 @@ export interface FormatOptions {
 }
 
 /** 格式化路线图详情文本 */
+/** 状态 emoji 映射，统一维护 */
+export function statusIcon(status: string): string {
+	return status === "done" ? "✅" : status === "doing" ? "🔄" : status === "blocked" ? "🚫" : status === "dropped" ? "❌" : "⬜";
+}
+
 export function formatRoadmapDetail(
 	roadmap: RoadmapFile,
 	opts: FormatOptions = {},

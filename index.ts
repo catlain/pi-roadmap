@@ -31,11 +31,13 @@ import {
 import { checkArchiveableEpics } from "./lib/tools-atomic-logic";
 import { registerPlanTool } from "./lib/tools-plan";
 import { registerListTool, registerShowTool } from "./lib/tools-query";
+import { registerSearchTool } from "./lib/tools-query-search-reg";
 
 export default function roadmapExtension(pi: ExtensionAPI) {
 	// ── 注册所有工具 ──
 	registerListTool(pi);
 	registerShowTool(pi);
+	registerSearchTool(pi);
 	registerPlanTool(pi); // 保留兼容旧用法，推荐用原子操作
 	registerNextTool(pi);
 	registerDoneTool(pi);
