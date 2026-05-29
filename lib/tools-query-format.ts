@@ -31,9 +31,9 @@ export function formatTimestamps(item: {
 	if (item.doingDate) parts.push(`doing: ${item.doingDate}`);
 	if (item.doneDate) parts.push(`done: ${item.doneDate}`);
 	if (item.doingSessionId)
-		parts.push(`session: ${shortSessionId(item.doingSessionId)}`);
+		parts.push(`session: ${shortSessionId(item.doingSessionId)} (用 session_analyze 反查)`);
 	else if (item.doneBySessionId)
-		parts.push(`by: ${shortSessionId(item.doneBySessionId)}`);
+		parts.push(`by: ${shortSessionId(item.doneBySessionId)} (用 session_analyze 反查)`);
 	return parts.length > 0 ? ` [${parts.join(", ")}]` : "";
 }
 
