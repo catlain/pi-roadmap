@@ -27,7 +27,8 @@ export interface SearchOptions {
 
 // ── 辅助函数 ──
 
-function matches(text: string, query: string): boolean {
+function matches(text: string | undefined, query: string): boolean {
+	if (!text) return false;
 	return text.toLowerCase().includes(query.toLowerCase());
 }
 
