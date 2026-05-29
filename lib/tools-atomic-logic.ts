@@ -68,6 +68,12 @@ export function addStory(
 	if (epic.status === "done" || epic.status === "dropped") {
 		return { result: `⚠️ Epic "${epicId}" 状态为 "${epic.status}"，无法添加 Story。` };
 	}
+	// 检查同名 Story（不阻止，仅警告）
+	const existing = epic.stories.find((s) => s.title === title);
+	const warning = existing
+		? `⚠️ Epic ${epicId} 下已存在同名 Story "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
+		: "";
+
 	const story: Story = {
 		id: `${epic.id}.S${epic.stories.length + 1}`,
 		title,
@@ -79,7 +85,7 @@ export function addStory(
 	};
 	epic.stories.push(story);
 	return {
-		result: `✅ Story ${story.id}: ${title} 已添加。`,
+		result: `${warning}✅ Story ${story.id}: ${title} 已添加。`,
 		storyId: story.id,
 	};
 }
@@ -110,6 +116,12 @@ export function addTask(
 			if (epic.status === "done" || epic.status === "dropped") {
 				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 状态为 "${epic.status}"，无法添加 Task。` };
 			}
+			// 检查同名 Task（不阻止，仅警告）
+			const existing = story.tasks.find((t) => t.title === title);
+			const warning = existing
+				? `⚠️ Story ${storyId} 下已存在同名 Task "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
+				: "";
+
 			const task: Task = {
 				id: `${story.id}.T${story.tasks.length + 1}`,
 				title,
@@ -120,7 +132,7 @@ export function addTask(
 			};
 			story.tasks.push(task);
 			return {
-				result: `✅ Task ${task.id}: ${title} 已添加。`,
+				result: `${warning}✅ Task ${task.id}: ${title} 已添加。`,
 				taskId: task.id,
 			};
 		}

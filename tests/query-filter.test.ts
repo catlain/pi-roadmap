@@ -265,4 +265,94 @@ describe("formatRoadmapDetail", () => {
 		expect(text).toContain("🔄 E1.S1.T2"); // doing
 		expect(text).toContain("⬜ E1.S1.T3"); // todo
 	});
+
+	describe("依赖关系展示", () => {
+		const rmWithDeps: RoadmapFile = {
+			meta: {
+				id: "deps",
+				title: "依赖测试",
+				status: "active",
+				created: "2026-01-01",
+				updated: "2026-01-01",
+				tags: [],
+			},
+			epics: [
+				{
+					id: "E1",
+					title: "前置 Epic",
+					description: "",
+					status: "done",
+					priority: "high",
+					project: "/test",
+					stories: [
+						{
+							id: "E1.S1",
+							title: "前置 Story",
+							description: "",
+							status: "done",
+							tasks: [
+								{
+									id: "E1.S1.T1",
+									title: "前置 Task",
+									status: "done",
+								},
+							],
+						},
+					],
+				},
+				{
+					id: "E2",
+					title: "依赖 Epic",
+					description: "依赖 E1",
+					status: "doing",
+					priority: "high",
+					project: "/test",
+					dependsOn: ["E1"],
+					stories: [
+						{
+							id: "E2.S1",
+							title: "依赖 Story",
+							description: "依赖 E1.S1",
+							status: "doing",
+							dependsOn: ["E1.S1"],
+							tasks: [
+								{
+									id: "E2.S1.T1",
+									title: "依赖 Task",
+									status: "doing",
+									dependsOn: ["E1.S1.T1"],
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+
+		it("Epic 依赖展示", () => {
+			const text = formatRoadmapDetail(rmWithDeps, {
+				showCompleted: true,
+			});
+			expect(text).toContain("Dependencies: E1(✅)");
+		});
+
+		it("Story 依赖展示", () => {
+			const text = formatRoadmapDetail(rmWithDeps, {
+				showCompleted: true,
+			});
+			expect(text).toContain("[deps: E1.S1(✅)]");
+		});
+
+		it("Task 依赖仍然展示", () => {
+			const text = formatRoadmapDetail(rmWithDeps, {
+				showCompleted: true,
+			});
+			expect(text).toContain("[deps: E1.S1.T1(✅)]");
+		});
+
+		it("无依赖时不展示依赖信息", () => {
+			const text = formatRoadmapDetail(testRoadmap, { epicId: "E1" });
+			expect(text).not.toContain("Dependencies:");
+		});
+	});
 });

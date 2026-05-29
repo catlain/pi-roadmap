@@ -46,6 +46,9 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 						Type.String({ description: "新优先级: high/medium/low" }),
 					),
 					note: Type.Optional(Type.String({ description: "备注" })),
+					dependsOn: Type.Optional(
+						Type.Array(Type.String(), { description: "依赖项 ID 列表（替换整个列表）" })
+					),
 				},
 				{ description: "要更新的字段（只传需要改的）" },
 			),
@@ -55,7 +58,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			params: {
 				roadmapId: string;
 				item_id: string;
-				updates: Record<string, string>;
+				updates: Record<string, string | string[]>;
 			},
 			_signal: AbortSignal | undefined,
 			_onUpdate: unknown,

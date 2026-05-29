@@ -2,7 +2,7 @@
  * Roadmap 原子操作 — 公共辅助函数
  */
 
-import { areDependenciesMet, findItemStatus } from "./dependency";
+import { areDependenciesMet, detectCycle, findItemStatus } from "./dependency";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
 import type {
 	Epic,
@@ -57,21 +57,38 @@ const VALID_TRANSITIONS: Record<ItemStatus, ReadonlySet<ItemStatus>> = {
 export function updateItem(
 	rm: RoadmapFile,
 	item: Epic | Story,
-	updates: Record<string, string>,
+	updates: Record<string, string | string[]>,
 	sessionId: string,
 ): string {
 	const changed: string[] = [];
 	if (updates.title !== undefined) {
-		item.title = updates.title;
+		item.title = updates.title as string;
 		changed.push("title");
 	}
 	if (updates.description !== undefined) {
-		item.description = updates.description;
+		item.description = updates.description as string;
 		changed.push("description");
 	}
 	if (updates.priority !== undefined) {
 		item.priority = updates.priority as Priority;
 		changed.push("priority");
+	}
+	if (updates.dependsOn !== undefined) {
+		const newDependsOn = updates.dependsOn as string[];
+		// 验证依赖 ID 是否存在
+		for (const depId of newDependsOn) {
+			const status = findItemStatus(rm, depId);
+			if (status === null) {
+				return `❌ 依赖项 "${depId}" 不存在。`;
+			}
+		}
+		// 验证循环依赖
+		const cycle = detectCycle(rm, item.id, newDependsOn);
+		if (cycle) {
+			return `❌ 检测到循环依赖：${cycle.join(" → ")}`;
+		}
+		item.dependsOn = newDependsOn;
+		changed.push(`dependsOn: [${newDependsOn.join(", ")}]`);
 	}
 	if (updates.status !== undefined) {
 		const newStatus = updates.status as ItemStatus;
@@ -114,12 +131,12 @@ export function updateItem(
 export function updateTask(
 	rm: RoadmapFile,
 	task: Task,
-	updates: Record<string, string>,
+	updates: Record<string, string | string[]>,
 	sessionId: string,
 ): string {
 	const changed: string[] = [];
 	if (updates.title !== undefined) {
-		task.title = updates.title;
+		task.title = updates.title as string;
 		changed.push("title");
 	}
 	if (updates.priority !== undefined) {
@@ -127,8 +144,25 @@ export function updateTask(
 		changed.push("priority");
 	}
 	if (updates.note !== undefined) {
-		task.note = updates.note;
+		task.note = updates.note as string;
 		changed.push("note");
+	}
+	if (updates.dependsOn !== undefined) {
+		const newDependsOn = updates.dependsOn as string[];
+		// 验证依赖 ID 是否存在
+		for (const depId of newDependsOn) {
+			const status = findItemStatus(rm, depId);
+			if (status === null) {
+				return `❌ 依赖项 "${depId}" 不存在。`;
+			}
+		}
+		// 验证循环依赖
+		const cycle = detectCycle(rm, task.id, newDependsOn);
+		if (cycle) {
+			return `❌ 检测到循环依赖：${cycle.join(" → ")}`;
+		}
+		task.dependsOn = newDependsOn;
+		changed.push(`dependsOn: [${newDependsOn.join(", ")}]`);
 	}
 	if (updates.status !== undefined) {
 		const newStatus = updates.status as ItemStatus;

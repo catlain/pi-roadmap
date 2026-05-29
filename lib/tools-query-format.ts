@@ -93,6 +93,10 @@ export function formatRoadmapDetail(
 		const archiveTag = epic.archived ? " 📦" : "";
 		output += `## Epic ${epic.id}: ${epic.title} [${epic.status}/${epic.priority}]${archiveTag}${formatTimestamps(epic)}\n`;
 		output += `${epic.description}\n`;
+		const epicDeps = epic.dependsOn
+			? `Dependencies: ${formatDependencies(roadmap, epic.dependsOn)}\n`
+			: "";
+		output += `${epicDeps}`;
 		output += `Project: ${epic.project || "未指定"}\n\n`;
 
 		for (const story of epic.stories) {
@@ -107,7 +111,10 @@ export function formatRoadmapDetail(
 			}
 
 			const storyArchiveTag = story.archived ? " 📦" : "";
-			output += `### Story ${story.id}: ${story.title} [${story.status}]${storyArchiveTag}${formatTimestamps(story)}\n`;
+			const storyDeps = story.dependsOn
+				? ` [deps: ${formatDependencies(roadmap, story.dependsOn)}]`
+				: "";
+			output += `### Story ${story.id}: ${story.title} [${story.status}]${storyArchiveTag}${formatTimestamps(story)}${storyDeps}\n`;
 			output += `${story.description}\n`;
 			if (story.tasks.length === 0) {
 				output += "  (暂无 Task)\n";
