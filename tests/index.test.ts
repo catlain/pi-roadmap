@@ -24,7 +24,7 @@ describe("roadmapExtension", () => {
 		const mod = await import("../index");
 		mod.default(pi);
 
-		expect(pi.registerTool).toHaveBeenCalledTimes(11);
+		expect(pi.registerTool).toHaveBeenCalledTimes(12);
 		expect(pi.on).toHaveBeenCalledWith("agent_end", expect.any(Function));
 	});
 
