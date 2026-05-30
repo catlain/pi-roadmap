@@ -46,6 +46,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 						Type.String({ description: "新优先级: high/medium/low" }),
 					),
 					note: Type.Optional(Type.String({ description: "备注" })),
+					planPath: Type.Optional(Type.String({ description: "计划文档文件名（如 E1-S3.md）。命名规则：Epic=E1.md, Story=E1-S3.md, Task=E1-S3-T2.md" })),
 					dependsOn: Type.Optional(
 						Type.Array(Type.String(), { description: "依赖项 ID 列表（替换整个列表）" })
 					),
@@ -93,10 +94,14 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				return updateTask(rm, task, params.updates, sessionId);
 			});
 
-			// doing 转换时检查 planPath，提示 AI 先读取计划文档
+			// doing 转换时检查 planPath，引导 AI 读取或创建计划文档
 			let finalResult = result;
-			if (params.updates.status === "doing" && targetItem?.planPath) {
-				finalResult += `\n此事项有计划文档 (${targetItem.planPath})，请先 read 计划文档后再开始执行。`;
+			if (params.updates.status === "doing") {
+				if (targetItem?.planPath) {
+					finalResult += `\n此事项有计划文档 (${targetItem.planPath})，请先 read 计划文档后再开始执行。`;
+				} else {
+					finalResult += `\n此事项没有计划文档。请先用 write 创建计划文档（命名参考：Epic=E1.md, Story=E1-S1.md, Task=E1-S1-T1.md，存放在项目 .pi/plans/ 目录下），然后用 roadmap_update 设置 planPath 字段，再开始执行。`;
+				}
 			}
 			return {
 				content: [{ type: "text" as const, text: finalResult }],

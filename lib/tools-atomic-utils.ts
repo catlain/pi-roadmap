@@ -90,6 +90,10 @@ export function updateItem(
 		item.dependsOn = newDependsOn;
 		changed.push(`dependsOn: [${newDependsOn.join(", ")}]`);
 	}
+	if (updates.planPath !== undefined) {
+		item.planPath = updates.planPath as string;
+		changed.push(`planPath: ${item.planPath}`);
+	}
 	if (updates.status !== undefined) {
 		const newStatus = updates.status as ItemStatus;
 		const oldStatus = item.status;
@@ -163,6 +167,10 @@ export function updateTask(
 		}
 		task.dependsOn = newDependsOn;
 		changed.push(`dependsOn: [${newDependsOn.join(", ")}]`);
+	}
+	if (updates.planPath !== undefined) {
+		task.planPath = updates.planPath as string;
+		changed.push(`planPath: ${task.planPath}`);
 	}
 	if (updates.status !== undefined) {
 		const newStatus = updates.status as ItemStatus;
