@@ -1,5 +1,5 @@
 /**
- * tests tools-atomic.ts — doing 转换时的 planPath 提示
+ * tests tools-atomic.ts — doing 转换时不再强制 planPath 检查
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,12 +47,12 @@ const MOCK_RM_WITH_PLAN: RoadmapFile = {
 	],
 };
 
-describe("registerUpdateTool — doing 时 planPath 提示", () => {
+describe("registerUpdateTool — doing 时不附加 planPath 提示", () => {
 	const execute = getExecute(registerUpdateTool);
 
 	beforeEach(() => vi.clearAllMocks());
 
-	it("Epic → doing 时，有 planPath 应提示读取计划文档", async () => {
+	it("Epic → doing 时，直接返回结果，不附加计划文档提示", async () => {
 		vi.mocked(atomicUpdate).mockImplementation((_id, fn) => {
 			const rm = JSON.parse(JSON.stringify(MOCK_RM_WITH_PLAN)) as RoadmapFile;
 			return fn(rm);
@@ -63,41 +63,10 @@ describe("registerUpdateTool — doing 时 planPath 提示", () => {
 		const result = await execute("call-1", {
 			roadmapId: "test", item_id: "E1", updates: { status: "doing" },
 		}, undefined, undefined, {} as any);
-		expect(result.content[0].text).toContain("计划文档");
-		expect(result.content[0].text).toContain("E1.md");
+		expect(result.content[0].text).toBe("✅ E1 已更新：status: todo → doing。");
 	});
 
-	it("Story → doing 时，有 planPath 应提示读取计划文档", async () => {
-		vi.mocked(atomicUpdate).mockImplementation((_id, fn) => {
-			const rm = JSON.parse(JSON.stringify(MOCK_RM_WITH_PLAN)) as RoadmapFile;
-			return fn(rm);
-		});
-		vi.mocked(getSessionId).mockReturnValue("session-1");
-		vi.mocked(updateItem).mockReturnValue("✅ E1.S1 已更新：status: todo → doing。");
-
-		const result = await execute("call-1", {
-			roadmapId: "test", item_id: "E1.S1", updates: { status: "doing" },
-		}, undefined, undefined, {} as any);
-		expect(result.content[0].text).toContain("计划文档");
-		expect(result.content[0].text).toContain("E1-S1.md");
-	});
-
-	it("Task → doing 时，有 planPath 应提示读取计划文档", async () => {
-		vi.mocked(atomicUpdate).mockImplementation((_id, fn) => {
-			const rm = JSON.parse(JSON.stringify(MOCK_RM_WITH_PLAN)) as RoadmapFile;
-			return fn(rm);
-		});
-		vi.mocked(getSessionId).mockReturnValue("session-1");
-		vi.mocked(updateTask).mockReturnValue("✅ E1.S1.T1 已更新：status: todo → doing。");
-
-		const result = await execute("call-1", {
-			roadmapId: "test", item_id: "E1.S1.T1", updates: { status: "doing" },
-		}, undefined, undefined, {} as any);
-		expect(result.content[0].text).toContain("计划文档");
-		expect(result.content[0].text).toContain("E1-S1-T1.md");
-	});
-
-	it("Task → doing 时，无 planPath 应提示创建", async () => {
+	it("Task → doing 时，无 planPath 也不提示创建", async () => {
 		vi.mocked(atomicUpdate).mockImplementation((_id, fn) => {
 			const rm = JSON.parse(JSON.stringify(MOCK_RM_WITH_PLAN)) as RoadmapFile;
 			return fn(rm);
@@ -108,21 +77,6 @@ describe("registerUpdateTool — doing 时 planPath 提示", () => {
 		const result = await execute("call-1", {
 			roadmapId: "test", item_id: "E1.S1.T2", updates: { status: "doing" },
 		}, undefined, undefined, {} as any);
-		expect(result.content[0].text).toContain("此事项没有计划文档");
-		expect(result.content[0].text).toContain("请先用 write 创建计划文档");
-	});
-
-	it("非 doing 转换时，不应提示计划文档", async () => {
-		vi.mocked(atomicUpdate).mockImplementation((_id, fn) => {
-			const rm = JSON.parse(JSON.stringify(MOCK_RM_WITH_PLAN)) as RoadmapFile;
-			return fn(rm);
-		});
-		vi.mocked(getSessionId).mockReturnValue("session-1");
-		vi.mocked(updateItem).mockReturnValue("✅ E1 已更新：title。");
-
-		const result = await execute("call-1", {
-			roadmapId: "test", item_id: "E1", updates: { title: "新标题" },
-		}, undefined, undefined, {} as any);
-		expect(result.content[0].text).not.toContain("计划文档");
+		expect(result.content[0].text).toBe("✅ E1.S1.T2 已更新：status: todo → doing。");
 	});
 });

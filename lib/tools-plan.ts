@@ -8,9 +8,53 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { syncDoingChanges } from "./doing-sync";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
-import type { RoadmapFile } from "./types";
+import { resolveAbsolutePath } from "./plan-resolver";
+import type { Epic, RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
 import { validateRoadmap } from "./validator";
+
+/**
+ * 扫描 roadmap 中所有 planPath，返回不存在的文件路径列表
+ * 使用第一个非空 project 作为解析上下文
+ */
+export function scanPlanPaths(roadmap: RoadmapFile): string[] {
+	const missing: string[] = [];
+
+	// 找一个有效的 project 路径用于解析
+	const firstProject = roadmap.epics.find(e => e.project)?.project;
+
+	for (const epic of roadmap.epics) {
+		const project = epic.project || firstProject;
+		const ctx = { project, roadmapId: roadmap.meta.id };
+
+		if (epic.planPath) {
+			const absPath = resolveAbsolutePath(epic.planPath, ctx);
+			if (!fs.existsSync(absPath)) {
+				missing.push(`${epic.planPath} (${epic.id}: ${epic.title})`);
+			}
+		}
+
+		for (const story of epic.stories) {
+			if (story.planPath) {
+				const absPath = resolveAbsolutePath(story.planPath, ctx);
+				if (!fs.existsSync(absPath)) {
+					missing.push(`${story.planPath} (${story.id}: ${story.title})`);
+				}
+			}
+
+			for (const task of story.tasks) {
+				if (task.planPath) {
+					const absPath = resolveAbsolutePath(task.planPath, ctx);
+					if (!fs.existsSync(absPath)) {
+						missing.push(`${task.planPath} (${task.id}: ${task.title})`);
+					}
+				}
+			}
+		}
+	}
+
+	return missing;
+}
 
 /** 加载单个提示词文件 */
 function loadPrompt(filename: string): string {
@@ -135,8 +179,14 @@ export function registerPlanTool(pi: ExtensionAPI) {
 
 			writeRoadmap(filePath, roadmap);
 
+			// 扫描 planPath 列表，检查文件是否存在
+			const planPathWarnings = scanPlanPaths(roadmap);
+
 			const actionLabel = action === "create" ? "创建" : "更新";
-			const text = `路线图 "${roadmap.meta.title}" 已${actionLabel}。`;
+			let text = `路线图 "${roadmap.meta.title}" 已${actionLabel}。`;
+			if (planPathWarnings.length > 0) {
+				text += `\n\n⚠️ 以下计划文档尚未创建，请用 write 创建后再设置 planPath：\n${planPathWarnings.map(p => `  - ${p}`).join("\n")}`;
+			}
 			return { content: [{ type: "text" as const, text }], details: {} };
 		},
 	});
