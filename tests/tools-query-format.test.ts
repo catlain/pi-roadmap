@@ -68,7 +68,7 @@ const BASE_RM: RoadmapFile = {
 describe("formatRoadmapDetail — planPath 标记", () => {
 	it("Epic 有 planPath 时显示计划文档路径", () => {
 		const output = formatRoadmapDetail(BASE_RM);
-		expect(output).toContain("计划文档: E1.md");
+		expect(output).toContain("计划文档: .pi/plans/E1.md");
 	});
 
 	it("Epic 无 planPath 时不显示计划文档", () => {

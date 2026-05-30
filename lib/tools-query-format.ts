@@ -69,14 +69,20 @@ export interface FormatOptions {
 }
 
 /** 检查 planPath 文件是否存在（需要解析上下文） */
+/** 解析 planPath 为相对路径（相对于项目根目录） */
+function planPathRelative(planPath: string, project: string | undefined): string {
+	return project ? `.pi/plans/${planPath}` : `~/.pi/roadmap/plans/${planPath}`;
+}
+
 function checkPlanPathExists(
 	ctx: (PlanResolutionContext & { roadmapId: string }) | undefined,
 	planPath: string,
 	project: string | undefined,
-): boolean | undefined {
-	if (!ctx) return undefined; // 无检查上下文时不验证
+): { exists: boolean | undefined; relativePath: string } {
+	const relativePath = planPathRelative(planPath, project);
+	if (!ctx) return { exists: undefined, relativePath }; // 无检查上下文时不验证
 	const absPath = resolveAbsolutePath(planPath, { ...ctx, project: project ?? ctx.project });
-	return fs.existsSync(absPath);
+	return { exists: fs.existsSync(absPath), relativePath };
 }
 
 /** 格式化路线图详情文本 */
@@ -119,11 +125,11 @@ export function formatRoadmapDetail(
 		output += `${epicDeps}`;
 		// planPath 标记（验证文件存在性）
 		if (epic.planPath) {
-			const exists = checkPlanPathExists(opts.planPathCheck, epic.planPath, epic.project);
+			const { exists, relativePath } = checkPlanPathExists(opts.planPathCheck, epic.planPath, epic.project);
 			if (exists === false) {
-				output += `⚠️ 计划文档: ${epic.planPath} (文件不存在)\n`;
+				output += `⚠️ 计划文档: ${relativePath} (文件不存在)\n`;
 			} else {
-				output += `计划文档: ${epic.planPath}\n`;
+				output += `计划文档: ${relativePath}\n`;
 			}
 		}
 		output += `Project: ${epic.project || "未指定"}\n\n`;
@@ -146,11 +152,11 @@ export function formatRoadmapDetail(
 			output += `### Story ${story.id}: ${story.title} [${story.status}]${storyArchiveTag}${formatTimestamps(story)}${storyDeps}\n`;
 			output += `${story.description}\n`;
 			if (story.planPath) {
-				const exists = checkPlanPathExists(opts.planPathCheck, story.planPath, epic.project);
+				const { exists, relativePath } = checkPlanPathExists(opts.planPathCheck, story.planPath, epic.project);
 				if (exists === false) {
-					output += `  ⚠️ 计划文档: ${story.planPath} (文件不存在)\n`;
+					output += `  ⚠️ 计划文档: ${relativePath} (文件不存在)\n`;
 				} else {
-					output += `  计划文档: ${story.planPath}\n`;
+					output += `  计划文档: ${relativePath}\n`;
 				}
 			}
 			if (story.tasks.length === 0) {
@@ -175,11 +181,11 @@ export function formatRoadmapDetail(
 					: "";
 				output += `  ${check} ${task.id}: ${task.title}${formatTimestamps(task)}${note}${deps}\n`;
 				if (task.planPath) {
-					const exists = checkPlanPathExists(opts.planPathCheck, task.planPath, epic.project);
+					const { exists, relativePath } = checkPlanPathExists(opts.planPathCheck, task.planPath, epic.project);
 					if (exists === false) {
-						output += `    ⚠️ 计划文档: ${task.planPath} (文件不存在)\n`;
+						output += `    ⚠️ 计划文档: ${relativePath} (文件不存在)\n`;
 					} else {
-						output += `    计划文档: ${task.planPath}\n`;
+						output += `    计划文档: ${relativePath}\n`;
 					}
 				}
 			}
