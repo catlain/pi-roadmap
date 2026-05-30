@@ -52,9 +52,7 @@ export function addEpic(
 	rm.epics.push(epic);
 	let msg = `✅ Epic ${epic.id}: ${title} 已添加。`;
 	if (planPath) {
-		msg += `\n计划文档: ${planPath}。请创建计划文档。`;
-	} else {
-		msg += `\n💡 建议创建计划文档: ${epic.id}.md（Epic 级计划：背景、目标、架构决策）。`;
+		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
 	return { result: msg, epicId: epic.id };
 }
@@ -96,9 +94,7 @@ export function addStory(
 	epic.stories.push(story);
 	let msg = `${warning}✅ Story ${story.id}: ${title} 已添加。`;
 	if (planPath) {
-		msg += `\n计划文档: ${planPath}。请创建计划文档。`;
-	} else {
-		msg += `\n💡 建议创建计划文档: ${story.id.replace(/\./g, "-")}.md（Story 级计划：目标、实现方案、验收标准）。`;
+		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
 	return { result: msg, storyId: story.id };
 }
@@ -148,9 +144,7 @@ export function addTask(
 			story.tasks.push(task);
 			let msg = `${warning}✅ Task ${task.id}: ${title} 已添加。`;
 			if (planPath) {
-				msg += `\n计划文档: ${planPath}。请创建计划文档。`;
-			} else {
-				msg += `\n💡 复杂 Task 可创建计划文档: ${task.id.replace(/\./g, "-")}.md（Task 级计划：具体步骤、预期产出）。`;
+				msg += `\n计划文档: .pi/plans/${planPath}`;
 			}
 			return {
 				result: msg,
