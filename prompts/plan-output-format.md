@@ -20,17 +20,20 @@ roadmap_plan 的 content 参数必须是合法 JSON，遵循以下格式：
       "status": "todo | doing | done | blocked | dropped",
       "priority": "high | medium | low",
       "project": "项目路径（必填）",
+      "planPath": "E1.md（可选，Epic 计划文档）",
       "stories": [
         {
           "id": "E1.S1",
           "title": "Story 标题",
           "description": "描述",
           "status": "todo",
+          "planPath": "E1-S1.md（可选，Story 计划文档）",
           "tasks": [
             {
               "id": "E1.S1.T1",
               "title": "动词开头的 Task",
-              "status": "todo"
+              "status": "todo",
+              "planPath": "E1-S1-T1.md（可选，仅复杂 Task）"
             }
           ]
         }
@@ -48,5 +51,6 @@ roadmap_plan 的 content 参数必须是合法 JSON，遵循以下格式：
 - [ ] Task id 在 Story 内唯一（E1.S1.T1, E1.S1.T2, ...）
 - [ ] 所有 status 是合法枚举值
 - [ ] Task 是最底层，无嵌套子任务
+- [ ] planPath 是可选字段，格式为纯文件名（如 E1.md、E1-S3.md、E1-S3-T2.md）
 - [ ] 已有的 done 任务保持原样
 - [ ] 每个 Epic 有 project 字段

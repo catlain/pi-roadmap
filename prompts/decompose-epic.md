@@ -20,7 +20,20 @@
 - status: "todo"（新建 Epic 默认 todo）
 - priority: "high" / "medium" / "low"
 - project: 实际项目路径（必填）
+- planPath: "E{n}.md"（自动生成，对应计划文档）
 - stories: []（初始为空，后续用 decompose-story 进一步拆解）
+
+## 计划文档（plan）
+
+每个 Epic **必须**有计划文档，回答 Why（为什么做）和 What（做什么）。
+
+创建 Epic 后，你需要用 `write` 工具创建计划文档：
+- **路径**：`{project}/.pi/plans/E{n}.md`
+- **模板**：参考 `plan-template-epic.md`
+- **命名规则**：`E{n}.md`（Epic ID 中 `.` 保留，无短横线）
+- **内容**：背景目标、成功指标、范围（含排除项）、方案概述、Story 概览、风险
+
+如果 Epic 已有 planPath 但文件不存在，show/update 工具会提示创建。
 
 ## 优先级判断
 - high: 直接影响核心目标，不做会卡住后续工作

@@ -10,6 +10,7 @@ import { syncDoingChanges } from "./doing-sync";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
 import type { RoadmapFile } from "./types";
 import { GLOBAL_ROADMAP_DIR } from "./types";
+import { validateRoadmap } from "./validator";
 
 /** 加载单个提示词文件 */
 function loadPrompt(filename: string): string {
@@ -108,6 +109,19 @@ export function registerPlanTool(pi: ExtensionAPI) {
 
 			roadmap.meta.updated = new Date().toISOString().slice(0, 10);
 			fs.mkdirSync(GLOBAL_ROADMAP_DIR, { recursive: true });
+
+			// planPath 格式验证
+			const validation = validateRoadmap(roadmap);
+			const planPathErrors = validation.errors.filter((e: string) => e.includes("planPath"));
+			if (planPathErrors.length > 0) {
+				return {
+					content: [{
+						type: "text" as const,
+						text: `⚠️ 计划文档路径格式错误：\n${planPathErrors.join("\n")}`,
+					}],
+					details: {},
+				};
+			}
 
 			const filePath = getRoadmapFilePath(roadmapId);
 

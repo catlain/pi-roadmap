@@ -102,7 +102,7 @@ describe("registerAddEpicTool", () => {
 		await execute("", {
 			roadmapId: "test", title: "新Epic", description: "描述", priority: "high", project: "/test",
 		});
-		expect(_addEpic).toHaveBeenCalledWith(expect.anything(), "新Epic", "描述", "high", "/test");
+		expect(_addEpic).toHaveBeenCalledWith(expect.anything(), "新Epic", "描述", "high", "/test", undefined);
 	});
 });
 
@@ -154,7 +154,7 @@ describe("registerAddTaskTool", () => {
 		vi.mocked(_addTask).mockReturnValue({ result: "✅ Task E1.S1.T1: 新Task 已添加。", taskId: "E1.S1.T1" });
 
 		await execute("", { roadmapId: "test", story_id: "E1.S1", title: "新Task", priority: "high" });
-		expect(_addTask).toHaveBeenCalledWith(expect.anything(), "E1.S1", "新Task", "high", undefined);
+		expect(_addTask).toHaveBeenCalledWith(expect.anything(), "E1.S1", "新Task", "high", undefined, undefined);
 	});
 
 	it("story 不存在时返回错误", async () => {

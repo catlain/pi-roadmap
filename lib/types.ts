@@ -65,6 +65,8 @@ export interface Task {
 	dependsOn?: string[];
 	/** 归档标志，true 时默认不显示 */
 	archived?: boolean;
+	/** 计划文档文件名（如 "E1-S3-T2.md"），由 plan-resolver 解析为绝对路径 */
+	planPath?: string;
 }
 
 /** 工作块（1-3 天可完成） */
@@ -91,6 +93,8 @@ export interface Story {
 	dependsOn?: string[];
 	/** 归档标志，true 时默认不显示 */
 	archived?: boolean;
+	/** 计划文档文件名（如 "E1-S3.md"），由 plan-resolver 解析为绝对路径 */
+	planPath?: string;
 }
 
 /** Epic：大方向，必须对应到一个项目 */
@@ -119,6 +123,8 @@ export interface Epic {
 	dependsOn?: string[];
 	/** 归档标志，true 时默认不显示 */
 	archived?: boolean;
+	/** 计划文档文件名（如 "E1.md"），由 plan-resolver 解析为绝对路径 */
+	planPath?: string;
 }
 
 /** 完整的路线图文件 */

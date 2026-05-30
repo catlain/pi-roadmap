@@ -75,6 +75,7 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 				Type.String({ description: "优先级: high/medium/low" }),
 			),
 			project: Type.String({ description: "对应项目路径" }),
+			planPath: Type.Optional(Type.String({ description: "计划文档文件名，如 E1.md。留空则 AI 自动生成默认路径" })),
 		}),
 		async execute(
 			_tc: string,
@@ -84,6 +85,7 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 				description: string;
 				priority?: string;
 				project: string;
+				planPath?: string;
 			},
 		) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
@@ -93,6 +95,7 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 					params.description,
 					params.priority as Priority | undefined,
 					params.project,
+					params.planPath,
 				).result;
 			});
 			return {
@@ -114,6 +117,7 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 			title: Type.String({ description: "Story 标题" }),
 			description: Type.String({ description: "Story 描述" }),
 			dependsOn: Type.Optional(Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" })),
+			planPath: Type.Optional(Type.String({ description: "计划文档文件名，如 E1-S1.md。留空则 AI 自动生成默认路径" })),
 		}),
 		async execute(
 			_tc: string,
@@ -123,10 +127,11 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 				title: string;
 				description: string;
 				dependsOn?: string[];
+				planPath?: string;
 			},
 		) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				return _addStory(rm, params.epic_id, params.title, params.description, params.dependsOn)
+				return _addStory(rm, params.epic_id, params.title, params.description, params.dependsOn, params.planPath)
 					.result;
 			});
 			return {
@@ -150,6 +155,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 				Type.String({ description: "优先级: high/medium/low" }),
 			),
 			dependsOn: Type.Optional(Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" })),
+			planPath: Type.Optional(Type.String({ description: "计划文档文件名，如 E1-S1-T1.md（可选，仅复杂 Task 需要）" })),
 		}),
 		async execute(
 			_tc: string,
@@ -159,6 +165,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 				title: string;
 				priority?: string;
 				dependsOn?: string[];
+				planPath?: string;
 			},
 		) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
@@ -168,6 +175,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 					params.title,
 					params.priority as Priority | undefined,
 					params.dependsOn,
+					params.planPath,
 				).result;
 			});
 			return {

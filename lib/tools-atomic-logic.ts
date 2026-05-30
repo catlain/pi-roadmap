@@ -36,6 +36,7 @@ export function addEpic(
 	description: string,
 	priority: Priority | undefined,
 	project: string,
+	planPath?: string,
 ): { result: string; epicId: string } {
 	const epic: Epic = {
 		id: `E${rm.epics.length + 1}`,
@@ -46,9 +47,16 @@ export function addEpic(
 		project,
 		createdDate: today(),
 		stories: [],
+		...(planPath ? { planPath } : {}),
 	};
 	rm.epics.push(epic);
-	return { result: `✅ Epic ${epic.id}: ${title} 已添加。`, epicId: epic.id };
+	let msg = `✅ Epic ${epic.id}: ${title} 已添加。`;
+	if (planPath) {
+		msg += `\n📋 计划文档: ${planPath}。`;
+	} else {
+		msg += `\n💡 建议创建计划文档: ${epic.id}.md（Epic 级计划：背景、目标、架构决策）。`;
+	}
+	return { result: msg, epicId: epic.id };
 }
 
 // ── Add Story ──
@@ -59,6 +67,7 @@ export function addStory(
 	title: string,
 	description: string,
 	dependsOn?: string[],
+	planPath?: string,
 ): { result: string; storyId?: string } {
 	const epic = rm.epics.find((e) => e.id === epicId);
 	if (!epic) return { result: `错误：Epic "${epicId}" 不存在。` };
@@ -81,13 +90,17 @@ export function addStory(
 		status: "todo",
 		createdDate: today(),
 		...(dependsOn ? { dependsOn } : {}),
+		...(planPath ? { planPath } : {}),
 		tasks: [],
 	};
 	epic.stories.push(story);
-	return {
-		result: `${warning}✅ Story ${story.id}: ${title} 已添加。`,
-		storyId: story.id,
-	};
+	let msg = `${warning}✅ Story ${story.id}: ${title} 已添加。`;
+	if (planPath) {
+		msg += `\n📋 计划文档: ${planPath}。`;
+	} else {
+		msg += `\n💡 建议创建计划文档: ${story.id.replace(/\./g, "-")}.md（Story 级计划：目标、实现方案、验收标准）。`;
+	}
+	return { result: msg, storyId: story.id };
 }
 
 // ── Add Task ──
@@ -98,6 +111,7 @@ export function addTask(
 	title: string,
 	priority: Priority | undefined,
 	dependsOn?: string[],
+	planPath?: string,
 ): { result: string; taskId?: string } {
 	for (const epic of rm.epics) {
 		const story = epic.stories.find((s) => s.id === storyId);
@@ -129,10 +143,17 @@ export function addTask(
 				priority: priority ?? undefined,
 				createdDate: today(),
 				...(dependsOn ? { dependsOn } : {}),
+				...(planPath ? { planPath } : {}),
 			};
 			story.tasks.push(task);
+			let msg = `${warning}✅ Task ${task.id}: ${title} 已添加。`;
+			if (planPath) {
+				msg += `\n📋 计划文档: ${planPath}。`;
+			} else {
+				msg += `\n💡 复杂 Task 可创建计划文档: ${task.id.replace(/\./g, "-")}.md（Task 级计划：具体步骤、预期产出）。`;
+			}
 			return {
-				result: `${warning}✅ Task ${task.id}: ${title} 已添加。`,
+				result: msg,
 				taskId: task.id,
 			};
 		}

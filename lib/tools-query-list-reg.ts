@@ -122,8 +122,9 @@ export function registerListTool(pi: ExtensionAPI) {
 							}
 
 							const archiveTag = isArchived ? " 📦" : "";
+							const planTag = epic.planPath ? " 📋" : "";
 							return (
-								`  ${epic.id} [${epic.status}/${epic.priority}] ${epic.title}${archiveTag}\n` +
+								`  ${epic.id} [${epic.status}/${epic.priority}] ${epic.title}${archiveTag}${planTag}\n` +
 								`    Stories: ${storyCount} | Tasks: ${doneTasks}/${taskCount}`
 							);
 						})

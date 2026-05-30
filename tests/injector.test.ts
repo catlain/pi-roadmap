@@ -52,6 +52,24 @@ const ACTIVE_ROADMAP: RoadmapFile = {
 				},
 			],
 		},
+		{
+			id: "E3",
+			title: "Epic C",
+			description: "方向 C",
+			status: "todo",
+			priority: "medium",
+			project: "/project/c",
+			planPath: "E3.md",
+			stories: [
+				{
+					id: "E3.S1",
+					title: "Story C1",
+					description: "工作 C1",
+					status: "todo",
+					tasks: [{ id: "E3.S1.T1", title: "C1 任务", status: "todo" }],
+				},
+			],
+		},
 	],
 };
 
@@ -98,5 +116,12 @@ describe("generateInjection", () => {
 	it("maxLines 截断", () => {
 		const text = generateInjection([ACTIVE_ROADMAP], { maxLines: 3 });
 		expect(text).toContain("截断");
+	});
+
+	it("有 planPath 的 Epic 标记 📋", () => {
+		const text = generateInjection([ACTIVE_ROADMAP]);
+		// E1 没有 planPath，E2 是 done 不显示，E3 有 planPath
+		expect(text).not.toMatch(/Epic E1.*📋/);
+		expect(text).toMatch(/Epic E3.*📋/);
 	});
 });
