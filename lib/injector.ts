@@ -58,7 +58,7 @@ export function generateInjection(
 			const statusLabel = epic.status === "doing" ? "doing" : "todo";
 			const nextHint =
 				nextForEpic.length > 0 ? ` — 下一步: ${nextForEpic[0].title}` : "";
-			const planMark = epic.planPath ? " 📋" : "";
+			const planMark = epic.planPath ? ` [plan: ${epic.planPath}]` : "";
 			lines.push(`  Epic ${epic.id} ${epic.title} [${statusLabel}]${planMark}${nextHint}`);
 		}
 		lines.push("");

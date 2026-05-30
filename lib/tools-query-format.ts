@@ -104,7 +104,7 @@ export function formatRoadmapDetail(
 		output += `${epicDeps}`;
 		// planPath 标记
 		if (epic.planPath) {
-			output += `📋 计划文档: ${epic.planPath}\n`;
+			output += `计划文档: ${epic.planPath}\n`;
 		}
 		output += `Project: ${epic.project || "未指定"}\n\n`;
 
@@ -126,7 +126,7 @@ export function formatRoadmapDetail(
 			output += `### Story ${story.id}: ${story.title} [${story.status}]${storyArchiveTag}${formatTimestamps(story)}${storyDeps}\n`;
 			output += `${story.description}\n`;
 			if (story.planPath) {
-				output += `  📋 计划文档: ${story.planPath}\n`;
+				output += `  计划文档: ${story.planPath}\n`;
 			}
 			if (story.tasks.length === 0) {
 				output += "  (暂无 Task)\n";
@@ -150,7 +150,7 @@ export function formatRoadmapDetail(
 					: "";
 				output += `  ${check} ${task.id}: ${task.title}${formatTimestamps(task)}${note}${deps}\n`;
 				if (task.planPath) {
-					output += `    📋 计划文档: ${task.planPath}\n`;
+					output += `    计划文档: ${task.planPath}\n`;
 				}
 			}
 			output += "\n";

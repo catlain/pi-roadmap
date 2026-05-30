@@ -66,13 +66,12 @@ const BASE_RM: RoadmapFile = {
 };
 
 describe("formatRoadmapDetail — planPath 标记", () => {
-	it("Epic 有 planPath 时显示 📋 标记和路径", () => {
+	it("Epic 有 planPath 时显示计划文档路径", () => {
 		const output = formatRoadmapDetail(BASE_RM);
-		expect(output).toContain("📋");
-		expect(output).toContain("E1.md");
+		expect(output).toContain("计划文档: E1.md");
 	});
 
-	it("Epic 无 planPath 时不显示 📋 标记", () => {
+	it("Epic 无 planPath 时不显示计划文档", () => {
 		const output = formatRoadmapDetail(BASE_RM);
 		const e2Section = output.substring(output.indexOf("Epic E2"));
 		// E2 没有 planPath，其区域不应包含 📋 或计划文档
