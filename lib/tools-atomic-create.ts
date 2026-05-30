@@ -66,7 +66,7 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_add_epic",
 		label: "Roadmap Add Epic",
-		description: "向指定路线图添加一个 Epic。自动分配 ID 和 createdDate。",
+		description: "向指定路线图添加一个 Epic。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——目标是否明确、方案是否确定、边界是否清晰。如果不确定，先向用户追问确认，不要假设自己理解了。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			title: Type.String({ description: "Epic 标题（动词开头）" }),
@@ -110,7 +110,7 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_add_story",
 		label: "Roadmap Add Story",
-		description: "向指定 Epic 添加一个 Story。自动分配 ID 和 createdDate。",
+		description: "向指定 Epic 添加一个 Story。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——实现方案、验收标准、关键决策是否明确。如果不确定，先向用户追问确认，不要假设自己理解了。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			epic_id: Type.String({ description: "Epic ID，如 E1" }),
@@ -146,7 +146,7 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_add_task",
 		label: "Roadmap Add Task",
-		description: "向指定 Story 添加一个 Task。自动分配 ID 和 createdDate。",
+		description: "向指定 Story 添加一个 Task。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——具体做什么、预期产出是否明确。如果不确定，先向用户追问确认，不要假设自己理解了。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			story_id: Type.String({ description: "Story ID，如 E1.S1" }),

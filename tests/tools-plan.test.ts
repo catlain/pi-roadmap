@@ -189,6 +189,47 @@ oadmapId: "test-plan",
 		expect(writeRoadmap).toHaveBeenCalled();
 	});
 
+	it("planPath 合法但文件不存在时警告", async () => {
+		vi.mocked(readRoadmap).mockReturnValue(null);
+		vi.mocked(writeRoadmap).mockImplementation(() => {});
+		vi.mocked(fs.existsSync).mockReturnValue(false);
+
+		const contentWithPlan = {
+			...VALID_CONTENT,
+			epics: [{ ...VALID_CONTENT.epics[0], planPath: "E1.md" }],
+		};
+
+		const result = await execute("call-1", {
+			roadmapId: "test-plan",
+			content: contentWithPlan,
+			action: "create",
+		}, undefined, undefined, {} as any);
+
+		expect(result.content[0].text).toContain("已创建");
+		expect(result.content[0].text).toContain("⚠️");
+		expect(result.content[0].text).toContain("E1.md");
+	});
+
+	it("planPath 合法且文件存在时不警告", async () => {
+		vi.mocked(readRoadmap).mockReturnValue(null);
+		vi.mocked(writeRoadmap).mockImplementation(() => {});
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+
+		const contentWithPlan = {
+			...VALID_CONTENT,
+			epics: [{ ...VALID_CONTENT.epics[0], planPath: "E1.md" }],
+		};
+
+		const result = await execute("call-1", {
+			roadmapId: "test-plan",
+			content: contentWithPlan,
+			action: "create",
+		}, undefined, undefined, {} as any);
+
+		expect(result.content[0].text).toContain("已创建");
+		expect(result.content[0].text).not.toContain("⚠️");
+	});
+
 	it("planPath 格式非法时返回警告", async () => {
 		vi.mocked(readRoadmap).mockReturnValue(null);
 		vi.mocked(writeRoadmap).mockImplementation(() => {});

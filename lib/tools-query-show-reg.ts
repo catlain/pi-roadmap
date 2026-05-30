@@ -78,6 +78,7 @@ export function registerShowTool(pi: ExtensionAPI) {
 							epicId: params.epic_id,
 							showCompleted,
 							showArchived,
+							planPathCheck: { roadmapId: roadmap.meta.id, project: roadmap.epics[0]?.project },
 						}),
 					},
 				],
