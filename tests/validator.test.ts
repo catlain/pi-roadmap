@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import type { RoadmapFile } from "../lib/types";
 import { repairRoadmap, validateRoadmap } from "../lib/validator";
+import { validatePlanPath } from "../lib/plan-resolver";
 
 const VALID_ROADMAP: RoadmapFile = {
 	meta: {
@@ -285,5 +286,76 @@ describe("repairRoadmap", () => {
 		expect(repaired).not.toBeNull();
 		expect(repaired!.epics[0].stories[0].status).toBe("todo");
 		expect(repaired!.epics[0].stories[0].tasks[0].status).toBe("todo");
+	});
+
+	// ── planPath 验证 ──
+
+	it("合法 planPath 通过验证（Epic 级）", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [{ ...VALID_ROADMAP.epics[0], planPath: "E1.md" }],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(true);
+	});
+
+	it("合法 planPath 通过验证（Story 级）", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [
+				{
+					...VALID_ROADMAP.epics[0],
+					stories: [
+						{ ...VALID_ROADMAP.epics[0].stories[0], planPath: "E1-S1.md" },
+					],
+				},
+			],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(true);
+	});
+
+	it("合法 planPath 通过验证（Task 级）", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [
+				{
+					...VALID_ROADMAP.epics[0],
+					stories: [
+						{
+							...VALID_ROADMAP.epics[0].stories[0],
+							tasks: [{ id: "E1.S1.T1", title: "T1", status: "todo", planPath: "E1-S1-T1.md" }],
+						},
+					],
+				},
+			],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(true);
+	});
+
+	it("非法 planPath 格式报错", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [{ ...VALID_ROADMAP.epics[0], planPath: "../evil.md" }],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(false);
+		expect(result.errors.some((e) => e.includes("planPath"))).toBe(true);
+	});
+
+	it("planPath 含路径分隔符报错", () => {
+		const data = {
+			...VALID_ROADMAP,
+			epics: [{ ...VALID_ROADMAP.epics[0], planPath: "sub/E1.md" }],
+		};
+		const result = validateRoadmap(data);
+		expect(result.valid).toBe(false);
+		expect(result.errors.some((e) => e.includes("planPath"))).toBe(true);
+	});
+
+	it("无 planPath 时不报错（向后兼容）", () => {
+		const result = validateRoadmap(VALID_ROADMAP);
+		expect(result.valid).toBe(true);
 	});
 });

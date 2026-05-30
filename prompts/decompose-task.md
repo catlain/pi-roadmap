@@ -18,6 +18,20 @@ Story: {{storyTitle}}
 - title: 动词开头，如"写 README 的安装章节"、"提取 memory 扩展代码"
 - status: "todo"
 
+## 计划文档（plan）— 可选
+
+大部分 Task **不需要**独立计划文档（标题已足够）。
+仅在以下情况创建计划文档：
+- 涉及 3 个以上文件的修改
+- 需要协调多个模块的变更
+- 有复杂的依赖关系或执行顺序
+
+需要时，用 `write` 工具创建：
+- **路径**：`{project}/.pi/plans/E{n}-S{m}-T{p}.md`
+- **模板**：参考 `plan-template-task.md`
+- **命名规则**：`E{n}-S{m}-T{p}.md`（Task ID 中 `.` 替换为 `-`）
+- **上层引用**：在文档中注明所属 Story 计划路径：`.pi/plans/E{n}-S{m}.md`
+
 ## 拆解示例
 Story: "文档与发布准备" →
   T1: "写整体 README（项目介绍、功能列表、截图）"

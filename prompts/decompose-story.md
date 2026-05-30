@@ -19,7 +19,21 @@ Epic: {{epicTitle}}
 - title: 名词短语，如"文档与发布准备"、"核心模块拆分"
 - description: 输入是什么、产出是什么、验收标准
 - status: "todo"
+- planPath: "E{n}-S{m}.md"（自动生成，对应计划文档）
 - tasks: []（初始为空，后续用 decompose-task 进一步拆解）
+
+## 计划文档（plan）
+
+每个 Story **必须**有计划文档，回答 How（怎么做）和 Acceptance（验收标准）。
+
+创建 Story 后，你需要用 `write` 工具创建计划文档：
+- **路径**：`{project}/.pi/plans/E{n}-S{m}.md`
+- **模板**：参考 `plan-template-story.md`
+- **命名规则**：`E{n}-S{m}.md`（Story ID 中 `.` 替换为 `-`）
+- **内容**：用户故事、验收标准、实现步骤、依赖、测试计划
+- **上层引用**：在文档中注明所属 Epic 计划路径：`.pi/plans/E{n}.md`
+
+如果 Story 已有 planPath 但文件不存在，show/update 工具会提示创建。
 
 ## 拆解思路
 按以下维度选择最适合的拆法：

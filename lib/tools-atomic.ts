@@ -65,6 +65,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			_ctx: unknown,
 		) {
 			const sessionId = getSessionId(_ctx);
+			let targetItem: { planPath?: string } | undefined;
 			const result = atomicUpdate(params.roadmapId, (rm) => {
 				const parts = params.item_id.split(".");
 				const epicId = parts[0];
@@ -72,6 +73,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				if (!epic) return `错误：Epic "${epicId}" 不存在。`;
 
 				if (parts.length === 1) {
+					targetItem = epic;
 					return updateItem(rm, epic, params.updates, sessionId);
 				}
 
@@ -80,16 +82,24 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				if (!story) return `错误：Story "${storyId}" 不存在。`;
 
 				if (parts.length === 2) {
+					targetItem = story;
 					return updateItem(rm, story, params.updates, sessionId);
 				}
 
 				const taskId = params.item_id;
 				const task = story.tasks.find((t) => t.id === taskId);
 				if (!task) return `错误：Task "${taskId}" 不存在。`;
+				targetItem = task;
 				return updateTask(rm, task, params.updates, sessionId);
 			});
+
+			// doing 转换时检查 planPath，提示 AI 先读取计划文档
+			let finalResult = result;
+			if (params.updates.status === "doing" && targetItem?.planPath) {
+				finalResult += `\n📋 此事项有计划文档 (${targetItem.planPath})，请先 read 计划文档后再开始执行。`;
+			}
 			return {
-				content: [{ type: "text" as const, text: result }],
+				content: [{ type: "text" as const, text: finalResult }],
 				details: {},
 			};
 		},

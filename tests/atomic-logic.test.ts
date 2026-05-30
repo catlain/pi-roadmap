@@ -137,6 +137,7 @@ describe("addEpic", () => {
 		addEpic(rm, "E", "", undefined, "/p");
 		expect(rm.epics[0].priority).toBe("medium");
 	});
+
 });
 
 // ── addStory ──
@@ -206,6 +207,7 @@ describe("addStory", () => {
 		expect(result).toContain("✅");
 		expect(rm.epics[0].stories).toHaveLength(2);
 	});
+
 });
 
 // ── addTask ──
@@ -293,6 +295,7 @@ describe("addTask", () => {
 		expect(result).toContain("✅");
 		expect(rm.epics[0].stories[0].tasks).toHaveLength(2);
 	});
+
 });
 
 // ── archiveEpic ──

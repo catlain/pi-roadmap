@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncDoingChanges } from "../lib/doing-sync";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "../lib/store";
 import { registerPlanTool } from "../lib/tools-plan";
+import { validateRoadmap } from "../lib/validator";
 
 vi.mock("@sinclair/typebox", () => ({ Type: { Object: () => ({}), String: () => ({}), Number: () => ({}), Boolean: () => ({}), Any: () => ({}), Optional: (t: any) => t, Union: (t: any[]) => t[0], Literal: (v: any) => ({ type: "literal", value: v }), Array: (t: any) => ({ type: "array", items: t }) } }));
 vi.mock("node:fs");
@@ -166,5 +167,44 @@ describe("registerPlanTool", () => {
 		}, undefined, undefined, { sessionManager: { getSessionFile: () => "session-abc.jsonl" } } as any);
 
 		expect(syncDoingChanges).toHaveBeenCalled();
+	});
+
+	it("planPath 合法时正常写入", async () => {
+		vi.mocked(readRoadmap).mockReturnValue(null);
+		vi.mocked(writeRoadmap).mockImplementation(() => {});
+
+		const contentWithPlan = {
+			...VALID_CONTENT,
+			epics: [{ ...VALID_CONTENT.epics[0], planPath: "E1.md" }],
+		};
+
+		const result = await execute("call-1", {
+		
+oadmapId: "test-plan",
+			content: contentWithPlan,
+			action: "create",
+		}, undefined, undefined, {} as any);
+
+		expect(result.content[0].text).toContain("已创建");
+		expect(writeRoadmap).toHaveBeenCalled();
+	});
+
+	it("planPath 格式非法时返回警告", async () => {
+		vi.mocked(readRoadmap).mockReturnValue(null);
+		vi.mocked(writeRoadmap).mockImplementation(() => {});
+
+		const contentWithBadPlan = {
+			...VALID_CONTENT,
+			epics: [{ ...VALID_CONTENT.epics[0], planPath: "../hack.md" }],
+		};
+
+		const result = await execute("call-1", {
+		
+oadmapId: "test-plan",
+			content: contentWithBadPlan,
+			action: "create",
+		}, undefined, undefined, {} as any);
+
+		expect(result.content[0].text).toContain("../hack.md");
 	});
 });

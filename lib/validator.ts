@@ -2,6 +2,7 @@
  * Roadmap 数据验证与修复
  */
 
+import { validatePlanPath } from "./plan-resolver";
 import { detectCycle } from "./dependency";
 import type { RoadmapFile } from "./types";
 
@@ -100,6 +101,8 @@ export function validateRoadmap(data: unknown): ValidationResult {
 				errors.push(`epics[${i}].status "${epic.status}" 不合法`);
 			if (!VALID_PRIORITY.has(epic.priority as string))
 				errors.push(`epics[${i}].priority "${epic.priority}" 不合法`);
+			if (epic.planPath !== undefined && !validatePlanPath(epic.planPath as string))
+				errors.push(`epics[${i}].planPath "${epic.planPath}" 格式不合法`);
 
 			if (!Array.isArray(epic.stories)) {
 				errors.push(`epics[${i}].stories 不是数组`);
@@ -128,6 +131,8 @@ export function validateRoadmap(data: unknown): ValidationResult {
 					if (!story.title) errors.push(`epics[${i}].stories[${j}].title 缺失`);
 					if (!VALID_ITEM_STATUS.has(story.status as string))
 						errors.push(`epics[${i}].stories[${j}].status 不合法`);
+					if (story.planPath !== undefined && !validatePlanPath(story.planPath as string))
+						errors.push(`epics[${i}].stories[${j}].planPath "${story.planPath}" 格式不合法`);
 
 					if (!Array.isArray(story.tasks)) {
 						errors.push(`epics[${i}].stories[${j}].tasks 不是数组`);
@@ -156,6 +161,8 @@ export function validateRoadmap(data: unknown): ValidationResult {
 							if (!task.title) errors.push(`task[${k}].title 缺失`);
 							if (!VALID_ITEM_STATUS.has(task.status as string))
 								errors.push(`task[${k}].status 不合法`);
+							if (task.planPath !== undefined && !validatePlanPath(task.planPath as string))
+								errors.push(`task[${k}].planPath "${task.planPath}" 格式不合法`);
 						}
 					}
 
