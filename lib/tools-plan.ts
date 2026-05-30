@@ -39,24 +39,24 @@ export function formatPlanOutput(roadmap: RoadmapFile, action: "create" | "updat
 
 	// 下一步操作指南
 	lines.push("━".repeat(40));
-	lines.push("📌 下一步：逐个创建计划文档，然后 add 写入 roadmap");
+	lines.push("📌 下一步：逐个创建计划文档，然后用 roadmap_add 写入");
 	lines.push("");
 
 	let stepNum = 1;
 	for (const epic of roadmap.epics) {
 		// Epic 需要计划文档
-		lines.push(`${stepNum}. write .pi/plans/${epic.id}.md → add_epic(roadmapId, "${epic.title}", desc, project, planPath="${epic.id}.md")`);
+		lines.push(`${stepNum}. write .pi/plans/${epic.id}.md → roadmap_add(roadmapId, item_type="epic", title="${epic.title}", project=..., planPath="${epic.id}.md")`);
 		stepNum++;
 
 		for (const story of epic.stories) {
 			// Story 需要计划文档
 			const storyPlanFile = story.id.replace(".", "-S") + ".md";
-			lines.push(`${stepNum}. write .pi/plans/${storyPlanFile} → add_story(roadmapId, "${epic.id}", "${story.title}", desc, planPath="${storyPlanFile}")`);
+			lines.push(`${stepNum}. write .pi/plans/${storyPlanFile} → roadmap_add(roadmapId, item_type="story", epic_id="${epic.id}", title="${story.title}", planPath="${storyPlanFile}")`);
 			stepNum++;
 
 			for (const task of story.tasks) {
 				// Task 不强制计划文档
-				lines.push(`${stepNum}. add_task(roadmapId, "${story.id}", "${task.title}") — Task 不需要计划文档，直接添加`);
+				lines.push(`${stepNum}. roadmap_add(roadmapId, item_type="task", story_id="${story.id}", title="${task.title}")`);
 				stepNum++;
 			}
 		}

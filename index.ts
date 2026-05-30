@@ -20,35 +20,19 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { readDoing, syncDoing } from "./lib/doing-store";
 import { listRoadmapFiles, readRoadmap } from "./lib/store";
-import { registerDoneTool, registerNextTool } from "./lib/tools-action";
-import { registerArchiveTool, registerUpdateTool } from "./lib/tools-atomic";
-import {
-	registerAddEpicTool,
-	registerAddStoryTool,
-	registerAddTaskTool,
-	registerCreateTool,
-} from "./lib/tools-atomic-create";
+import { registerAddTool } from "./lib/tools-add-reg";
 import { checkArchiveableEpics } from "./lib/tools-atomic-logic";
 import { registerPlanTool } from "./lib/tools-plan";
 import { registerListTool, registerShowTool } from "./lib/tools-query";
-import { registerSearchTool } from "./lib/tools-query-search-reg";
+import { registerUpdateTool } from "./lib/tools-update-reg";
 
 export default function roadmapExtension(pi: ExtensionAPI) {
 	// ── 注册所有工具 ──
 	registerListTool(pi);
 	registerShowTool(pi);
-	registerSearchTool(pi);
-	registerPlanTool(pi); // 保留兼容旧用法，推荐用原子操作
-	registerNextTool(pi);
-	registerDoneTool(pi);
-
-	// 增量操作工具（替代 roadmap_plan 的全量更新）
-	registerCreateTool(pi);
-	registerAddEpicTool(pi);
-	registerAddStoryTool(pi);
-	registerAddTaskTool(pi);
+	registerPlanTool(pi);
+	registerAddTool(pi);
 	registerUpdateTool(pi);
-	registerArchiveTool(pi);
 
 	// ── agent_end：检查未同步的 doing 任务（仅当前会话） ──
 	pi.on("agent_end", async (_event, _ctx) => {

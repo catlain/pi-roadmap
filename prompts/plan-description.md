@@ -19,7 +19,7 @@
 - **有模糊的** → **停下来向用户提问**，一次一个问题，给出你的建议答案让用户确认。不要假装自己理解了就动手拆解。例子：用户说"优化性能"，你要问"是哪个操作慢？当前耗时多少？目标耗时多少？"，而不是直接拆成"性能优化"的 Epic
 - **用户明确说"看着办"或"先拆着"** → 可以带模糊点拆解，但在 description 里标注"⚠️ 待确认：{具体事项}"，后续执行前必须跟用户确认
 
-这个评估同样适用于 `roadmap_add_epic`、`roadmap_add_story`、`roadmap_add_task`——任何时候新增事项，如果你自己都觉得信息不够，都应该先追问。
+这个评估同样适用于 `roadmap_add`——任何时候新增事项，如果你自己都觉得信息不够，都应该先追问。
 
 ### 第 1 步：读取现状
 - 如果是更新，先用 roadmap_show 查看当前 roadmap 的完整内容
@@ -68,7 +68,11 @@
 ⚠ planPath 指向的文件必须实际存在。不要在 JSON 里填了 planPath 但没创建文件。要么先 write 文件再设 planPath，要么不填。
 
 ### 第 6 步：输出格式
-调用本工具写入时，content 参数必须是完整的 roadmap JSON（不只是变更部分）。JSON 结构见下方格式规范。
+plan 是讨论沙盘，**不写入 roadmap 数据**。工具会格式化输出拆解结果和下一步操作指南。
+
+AI 拿到输出后，按指南逐个操作：
+1. 先 write 计划文档到 `.pi/plans/` 目录
+2. 再用 `roadmap_add` 写入 roadmap（Epic/Story 必须传 planPath，Task 可选）
 
 ## 参数说明
 - roadmapId: 路线图 ID（slug 格式，如 "pi-atelier-split"）
@@ -76,6 +80,7 @@
 - action: "create"（新建）或 "update"（更新已有）
 
 ## 重要约束
+- plan 不写入任何数据，只输出格式化文本
 - 已有的 done 状态任务保持原样（不改状态、不改内容）
 - 只修改 todo/doing/blocked 状态的项
 - 每个 Epic 必须有 project 字段指向实际项目

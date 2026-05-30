@@ -16,11 +16,15 @@ export function registerShowTool(pi: ExtensionAPI) {
 		name: "roadmap_show",
 		label: "Roadmap Show",
 		description:
-			"查看某个路线图的详情。默认隐藏已完成和已归档项。可用 epic_id 查看指定 Epic，show_completed/show_archived 控制显示。",
+			"查看路线图详情或搜索内容。不传 query 显示完整详情，传 query 搜索匹配的 Epic/Story/Task。" +
+			"默认隐藏已完成和已归档项。可用 epic_id 查看指定 Epic。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			epic_id: Type.Optional(
 				Type.String({ description: "只查看指定 Epic，如 E1" }),
+			),
+			query: Type.Optional(
+				Type.String({ description: "搜索关键词（大小写不敏感），匹配 title/description" }),
 			),
 			show_completed: Type.Optional(
 				Type.Boolean({ description: "显示已完成 Epic 详情，默认 true" }),
@@ -34,6 +38,7 @@ export function registerShowTool(pi: ExtensionAPI) {
 			params: {
 				roadmapId: string;
 				epic_id?: string;
+				query?: string;
 				show_completed?: boolean;
 				show_archived?: boolean;
 			},
@@ -70,6 +75,46 @@ export function registerShowTool(pi: ExtensionAPI) {
 
 			const showCompleted = params.show_completed ?? true;
 			const showArchived = params.show_archived ?? false;
+
+			// 搜索模式
+			if (params.query) {
+				const { searchRoadmapData } = await import("./tools-query-search");
+				const results = searchRoadmapData([roadmap], params.query, {
+					includeArchived: showArchived,
+				});
+				if (results.length === 0) {
+					return {
+						content: [
+							{
+								type: "text" as const,
+								text: `在路线图 "${params.roadmapId}" 中未找到匹配 "${params.query}" 的内容。`,
+							},
+						],
+						details: {},
+					};
+				}
+				const text = results
+					.map((r) => {
+						const scopeLabel =
+							r.matchedType === "epic"
+								? "Epic"
+								: r.matchedType === "story"
+									? "Story"
+									: "Task";
+						return (
+							`---\n${scopeLabel} ${r.matchedId}: ${r.matchedTitle}\n\n` +
+							r.detail
+						);
+					})
+					.join("\n");
+				const header = `搜索 "${params.query}" — 找到 ${results.length} 条结果\n\n`;
+				return {
+					content: [{ type: "text" as const, text: header + text }],
+					details: {},
+				};
+			}
+
+			// 普通展示模式
 			return {
 				content: [
 					{

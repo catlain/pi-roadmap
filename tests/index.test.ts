@@ -14,7 +14,7 @@ vi.mock("../lib/doing-store");
 vi.mock("../lib/tools-atomic-logic");
 
 describe("roadmapExtension", () => {
-	it("注册所有 11 个工具", async () => {
+	it("注册所有 5 个工具", async () => {
 		const pi = {
 			registerTool: vi.fn() as any,
 			on: vi.fn() as any,
@@ -24,7 +24,7 @@ describe("roadmapExtension", () => {
 		const mod = await import("../index");
 		mod.default(pi);
 
-		expect(pi.registerTool).toHaveBeenCalledTimes(12);
+		expect(pi.registerTool).toHaveBeenCalledTimes(5);
 		expect(pi.on).toHaveBeenCalledWith("agent_end", expect.any(Function));
 	});
 
