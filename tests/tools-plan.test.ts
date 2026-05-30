@@ -72,9 +72,7 @@ describe("registerPlanTool", () => {
 
 		const text = result.content[0].text;
 		expect(text).toContain("📌 下一步");
-		expect(text).toContain("add_epic");
-		expect(text).toContain("add_story");
-		expect(text).toContain("add_task");
+		expect(text).toContain("roadmap_add");
 	});
 
 	it("content 为字符串时自动解析 JSON", async () => {
