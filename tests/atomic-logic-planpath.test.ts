@@ -28,15 +28,18 @@ function makeRoadmap(): RoadmapFile {
 describe("addEpic planPath", () => {
 	it("stores planPath when provided", () => {
 		const rm = makeRoadmap();
-		const { result } = addEpic(rm, "Epic", "Desc", undefined, "/proj", "E1.md");
+		const { result, epicId } = addEpic(rm, "Epic", "Desc", undefined, "/proj", "E1.md");
+		expect(epicId).toBe("E1");
 		expect(rm.epics[0].planPath).toBe("E1.md");
 		expect(result).toContain("E1.md");
 	});
 
-	it("does not set planPath when omitted", () => {
+	it("rejects without planPath", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", undefined, "/proj");
-		expect(rm.epics[0].planPath).toBeUndefined();
+		const { result, epicId } = addEpic(rm, "Epic", "Desc", undefined, "/proj");
+		expect(epicId).toBeUndefined();
+		expect(rm.epics).toHaveLength(0);
+		expect(result).toContain("必须关联计划文档");
 	});
 });
 
@@ -45,17 +48,20 @@ describe("addEpic planPath", () => {
 describe("addStory planPath", () => {
 	it("stores planPath when provided", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", undefined, "/p");
-		const { result } = addStory(rm, "E1", "Story", "Desc", undefined, "E1-S1.md");
+		addEpic(rm, "Epic", "Desc", undefined, "/p", "E1.md");
+		const { result, storyId } = addStory(rm, "E1", "Story", "Desc", undefined, "E1-S1.md");
+		expect(storyId).toBe("E1.S1");
 		expect(rm.epics[0].stories[0].planPath).toBe("E1-S1.md");
 		expect(result).toContain("E1-S1.md");
 	});
 
-	it("does not set planPath when omitted", () => {
+	it("rejects without planPath", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", undefined, "/p");
-		addStory(rm, "E1", "Story", "Desc");
-		expect(rm.epics[0].stories[0].planPath).toBeUndefined();
+		addEpic(rm, "Epic", "Desc", undefined, "/p", "E1.md");
+		const { result, storyId } = addStory(rm, "E1", "Story", "Desc");
+		expect(storyId).toBeUndefined();
+		expect(rm.epics[0].stories).toHaveLength(0);
+		expect(result).toContain("必须关联计划文档");
 	});
 });
 
@@ -64,17 +70,17 @@ describe("addStory planPath", () => {
 describe("addTask planPath", () => {
 	it("stores planPath when provided", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", undefined, "/p");
-		addStory(rm, "E1", "Story", "Desc");
+		addEpic(rm, "Epic", "Desc", undefined, "/p", "E1.md");
+		addStory(rm, "E1", "Story", "Desc", undefined, "E1-S1.md");
 		const { result } = addTask(rm, "E1.S1", "Task", undefined, undefined, "E1-S1-T1.md");
 		expect(rm.epics[0].stories[0].tasks[0].planPath).toBe("E1-S1-T1.md");
 		expect(result).toContain("E1-S1-T1.md");
 	});
 
-	it("does not set planPath when omitted", () => {
+	it("does not require planPath", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", undefined, "/p");
-		addStory(rm, "E1", "Story", "Desc");
+		addEpic(rm, "Epic", "Desc", undefined, "/p", "E1.md");
+		addStory(rm, "E1", "Story", "Desc", undefined, "E1-S1.md");
 		addTask(rm, "E1.S1", "Task", undefined);
 		expect(rm.epics[0].stories[0].tasks[0].planPath).toBeUndefined();
 	});

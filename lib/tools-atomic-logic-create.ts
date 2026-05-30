@@ -37,7 +37,12 @@ export function addEpic(
 	priority: Priority | undefined,
 	project: string,
 	planPath?: string,
-): { result: string; epicId: string } {
+): { result: string; epicId?: string } {
+
+	if (!planPath) {
+		return { result: `⚠️ Epic 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/E${rm.epics.length + 1}.md），然后传 planPath 参数。` };
+	}
+
 	const epic = {
 		id: `E${rm.epics.length + 1}`,
 		title,
@@ -67,6 +72,11 @@ export function addStory(
 	dependsOn?: string[],
 	planPath?: string,
 ): { result: string; storyId?: string } {
+	if (!planPath) {
+		const epic = rm.epics.find((e) => e.id === epicId);
+		const storyNum = epic ? epic.stories.length + 1 : 1;
+		return { result: `⚠️ Story 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/${epicId}-S${storyNum}.md），然后传 planPath 参数。` };
+	}
 	const epic = rm.epics.find((e) => e.id === epicId);
 	if (!epic) return { result: `错误：Epic "${epicId}" 不存在。` };
 	if (epic.archived) {

@@ -41,13 +41,13 @@ describe("addTask with dependsOn", () => {
 describe("addStory with dependsOn", () => {
 	it("传递 dependsOn", () => {
 		const rm = makeRoadmap([makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1", status: "done" })])]);
-		addStory(rm, "E1", "新Story", "描述", ["E1.S1"]);
+		addStory(rm, "E1", "新Story", "描述", ["E1.S1"], "E1-S2.md");
 		const s = rm.epics[0].stories.find(s => s.title === "新Story")!;
 		expect(s.dependsOn).toEqual(["E1.S1"]);
 	});
 	it("不加 dependsOn 时不设置", () => {
 		const rm = makeRoadmap([makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1" })])]);
-		addStory(rm, "E1", "新Story", "描述");
+		addStory(rm, "E1", "新Story", "描述", undefined, "E1-S2.md");
 		expect(rm.epics[0].stories[1].dependsOn).toBeUndefined();
 	});
 });

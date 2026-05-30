@@ -115,6 +115,7 @@ describe("addEpic", () => {
 			"Description",
 			"high",
 			"/proj",
+			"E1.md",
 		);
 		expect(epicId).toBe("E1");
 		expect(result).toContain("E1");
@@ -127,14 +128,14 @@ describe("addEpic", () => {
 
 	it("auto-increments epic ID", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "First", "", undefined, "/p");
-		const { epicId } = addEpic(rm, "Second", "", undefined, "/p");
+		addEpic(rm, "First", "", undefined, "/p", "E.md");
+		const { epicId } = addEpic(rm, "Second", "", undefined, "/p", "E.md");
 		expect(epicId).toBe("E2");
 	});
 
 	it("defaults priority to medium", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "E", "", undefined, "/p");
+		addEpic(rm, "E", "", undefined, "/p", "E.md");
 		expect(rm.epics[0].priority).toBe("medium");
 	});
 
@@ -145,8 +146,8 @@ describe("addEpic", () => {
 describe("addStory", () => {
 	it("adds story to correct epic", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		const { result, storyId } = addStory(rm, "E1", "Story 1", "Desc");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		const { result, storyId } = addStory(rm, "E1", "Story 1", "Desc", undefined, "S.md");
 		expect(storyId).toBe("E1.S1");
 		expect(result).toContain("E1.S1");
 		expect(rm.epics[0].stories).toHaveLength(1);
@@ -155,50 +156,50 @@ describe("addStory", () => {
 
 	it("auto-increments story ID", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		addStory(rm, "E1", "S1", "");
-		const { storyId } = addStory(rm, "E1", "S2", "");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		addStory(rm, "E1", "S1", "", undefined, "S.md");
+		const { storyId } = addStory(rm, "E1", "S2", "", undefined, "S.md");
 		expect(storyId).toBe("E1.S2");
 	});
 
 	it("returns error for non-existent epic", () => {
 		const rm = makeRoadmap();
-		const { result } = addStory(rm, "E99", "Story", "");
+		const { result } = addStory(rm, "E99", "Story", "", undefined, "S.md");
 		expect(result).toContain("错误");
 	});
 
 	it("rejects adding story to archived epic", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
 		rm.epics[0].archived = true;
-		const { result } = addStory(rm, "E1", "Story", "");
+		const { result } = addStory(rm, "E1", "Story", "", undefined, "S.md");
 		expect(result).toContain("已归档");
 		expect(rm.epics[0].stories).toHaveLength(0);
 	});
 
 	it("rejects adding story to done epic", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
 		rm.epics[0].status = "done";
-		const { result } = addStory(rm, "E1", "Story", "");
+		const { result } = addStory(rm, "E1", "Story", "", undefined, "S.md");
 		expect(result).toContain("done");
 		expect(rm.epics[0].stories).toHaveLength(0);
 	});
 
 	it("rejects adding story to dropped epic", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
 		rm.epics[0].status = "dropped";
-		const { result } = addStory(rm, "E1", "Story", "");
+		const { result } = addStory(rm, "E1", "Story", "", undefined, "S.md");
 		expect(result).toContain("dropped");
 		expect(rm.epics[0].stories).toHaveLength(0);
 	});
 
 	it("warns when adding story with duplicate title", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "/p");
-		addStory(rm, "E1", "Same Title", "First");
-		const { result, storyId } = addStory(rm, "E1", "Same Title", "Second");
+		addEpic(rm, "Epic", "Desc", "medium", "/p", "E.md");
+		addStory(rm, "E1", "Same Title", "First", undefined, "S.md");
+		const { result, storyId } = addStory(rm, "E1", "Same Title", "Second", undefined, "S.md");
 		// 警告信息
 		expect(result).toContain("E1 下已存在同名 Story");
 		expect(result).toContain("Same Title");
@@ -215,8 +216,8 @@ describe("addStory", () => {
 describe("addTask", () => {
 	it("adds task to correct story", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		const { result, taskId } = addTask(rm, "E1.S1", "Do thing", "high");
 		expect(taskId).toBe("E1.S1.T1");
 		expect(result).toContain("E1.S1.T1");
@@ -227,8 +228,8 @@ describe("addTask", () => {
 
 	it("auto-increments task ID", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		addTask(rm, "E1.S1", "T1", undefined);
 		const { taskId } = addTask(rm, "E1.S1", "T2", undefined);
 		expect(taskId).toBe("E1.S1.T2");
@@ -242,8 +243,8 @@ describe("addTask", () => {
 
 	it("rejects adding task to archived story", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		rm.epics[0].stories[0].archived = true;
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
 		expect(result).toContain("已归档");
@@ -252,8 +253,8 @@ describe("addTask", () => {
 
 	it("rejects adding task to done story", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		rm.epics[0].stories[0].status = "done";
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
 		expect(result).toContain("done");
@@ -262,8 +263,8 @@ describe("addTask", () => {
 
 	it("rejects adding task when parent epic is archived", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		rm.epics[0].archived = true;
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
 		expect(result).toContain("Epic");
@@ -273,8 +274,8 @@ describe("addTask", () => {
 
 	it("rejects adding task when parent epic is done", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "project");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		rm.epics[0].status = "done";
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
 		expect(result).toContain("done");
@@ -283,8 +284,8 @@ describe("addTask", () => {
 
 	it("warns when adding task with duplicate title", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "Desc", "medium", "/p");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "Desc", "medium", "/p", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		addTask(rm, "E1.S1", "Same Task", undefined);
 		const { result, taskId } = addTask(rm, "E1.S1", "Same Task", undefined);
 		// 警告信息
@@ -375,8 +376,8 @@ describe("getArchivedEpics", () => {
 describe("markTaskDone", () => {
 	it("marks a task done with timestamps", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		addTask(rm, "E1.S1", "Task 1", undefined);
 
 		const { result, doneTaskId, cascadeInfo } = markTaskDone(
@@ -397,8 +398,8 @@ describe("markTaskDone", () => {
 
 	it("marks task done without cascade when other tasks remain", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		addTask(rm, "E1.S1", "Task 1", undefined);
 		addTask(rm, "E1.S1", "Task 2", undefined);
 
@@ -415,8 +416,8 @@ describe("markTaskDone", () => {
 
 	it("clears doingSessionId on done", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "Epic", "", undefined, "/p");
-		addStory(rm, "E1", "Story", "");
+		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
+		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		addTask(rm, "E1.S1", "Task 1", undefined);
 		rm.epics[0].stories[0].tasks[0].doingSessionId = "sess-old";
 
