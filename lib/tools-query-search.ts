@@ -33,19 +33,29 @@ function matches(text: string | undefined, query: string): boolean {
 }
 
 function formatStoryDetail(epic: Epic, story: Story, includeArchived: boolean): string {
-	let out = `## Epic ${epic.id}: ${epic.title} [${epic.status}/${epic.priority}]\n`;
-	out += `### Story ${story.id}: ${story.title} [${story.status}]\n${story.description}\n\n`;
+	let out = `## Epic ${epic.id}: ${epic.title} [${epic.status}/${epic.priority}]`;
+	if (epic.planPath) out += ` [plan: ${epic.planPath}]`;
+	out += `\n### Story ${story.id}: ${story.title} [${story.status}]`;
+	if (story.planPath) out += ` [plan: ${story.planPath}]`;
+	out += `\n${story.description}\n\n`;
 	for (const task of story.tasks) {
 		if (task.archived && !includeArchived) continue;
 		const note = task.note ? ` — ${task.note}` : "";
-		out += `  ${statusIcon(task.status)} ${task.id}: ${task.title}${note}\n`;
+		const plan = task.planPath ? ` [plan: ${task.planPath}]` : "";
+		out += `  ${statusIcon(task.status)} ${task.id}: ${task.title}${note}${plan}\n`;
 	}
 	return out;
 }
 
 function formatTaskDetail(epic: Epic, story: Story, task: Task): string {
 	const note = task.note ? ` — ${task.note}` : "";
-	return `## Epic ${epic.id}: ${epic.title}\n### Story ${story.id}: ${story.title}\n\n${statusIcon(task.status)} ${task.id}: ${task.title} [${task.status}]${note}\n`;
+	const plan = task.planPath ? ` [plan: ${task.planPath}]` : "";
+	let out = `## Epic ${epic.id}: ${epic.title}`;
+	if (epic.planPath) out += ` [plan: ${epic.planPath}]`;
+	out += `\n### Story ${story.id}: ${story.title}`;
+	if (story.planPath) out += ` [plan: ${story.planPath}]`;
+	out += `\n\n${statusIcon(task.status)} ${task.id}: ${task.title} [${task.status}]${note}${plan}\n`;
+	return out;
 }
 
 // ── 搜索逻辑 ──

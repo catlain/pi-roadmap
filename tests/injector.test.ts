@@ -118,10 +118,10 @@ describe("generateInjection", () => {
 		expect(text).toContain("截断");
 	});
 
-	it("有 planPath 的 Epic 标记 📋", () => {
+	it("有 planPath 的 Epic 显示计划路径", () => {
 		const text = generateInjection([ACTIVE_ROADMAP]);
 		// E1 没有 planPath，E2 是 done 不显示，E3 有 planPath
-		expect(text).not.toMatch(/Epic E1.*📋/);
-		expect(text).toMatch(/Epic E3.*📋/);
+		expect(text).not.toMatch(/Epic E1.*plan:/);
+		expect(text).toMatch(/Epic E3.*plan: E3.md/);
 	});
 });

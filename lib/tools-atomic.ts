@@ -96,7 +96,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			// doing 转换时检查 planPath，提示 AI 先读取计划文档
 			let finalResult = result;
 			if (params.updates.status === "doing" && targetItem?.planPath) {
-				finalResult += `\n📋 此事项有计划文档 (${targetItem.planPath})，请先 read 计划文档后再开始执行。`;
+				finalResult += `\n此事项有计划文档 (${targetItem.planPath})，请先 read 计划文档后再开始执行。`;
 			}
 			return {
 				content: [{ type: "text" as const, text: finalResult }],
