@@ -79,21 +79,21 @@ describe("planPath update 端到端（不 mock）", () => {
 		const rm = makeRM();
 		rm.epics[0].planPath = "E1.md";
 		const output = formatRoadmapDetail(rm);
-		expect(output).toContain("计划文档: E1.md");
+		expect(output).toContain("计划文档: .pi/plans/E1.md");
 	});
 
 	it("formatRoadmapDetail 展示 Story 的 planPath", () => {
 		const rm = makeRM();
 		rm.epics[0].stories[0].planPath = "E1-S1.md";
 		const output = formatRoadmapDetail(rm);
-		expect(output).toContain("计划文档: E1-S1.md");
+		expect(output).toContain("计划文档: .pi/plans/E1-S1.md");
 	});
 
 	it("formatRoadmapDetail 展示 Task 的 planPath", () => {
 		const rm = makeRM();
 		rm.epics[0].stories[0].tasks[0].planPath = "E1-S1-T1.md";
 		const output = formatRoadmapDetail(rm);
-		expect(output).toContain("计划文档: E1-S1-T1.md");
+		expect(output).toContain("计划文档: .pi/plans/E1-S1-T1.md");
 	});
 
 	it("updateItem 清除 planPath（传空字符串）", () => {

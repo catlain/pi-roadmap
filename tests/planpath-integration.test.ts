@@ -42,7 +42,7 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 
 		// 3. show 格式化展示（纯函数只展示文件名，不做路径解析）
 		const showOutput = formatRoadmapDetail(rm);
-		expect(showOutput).toContain("计划文档: E1.md");
+		expect(showOutput).toContain("计划文档: .pi/plans/E1.md");
 
 		// 4. doing 提示
 		const doingResult = updateItem(rm, epic, { status: "doing" }, "s1");
