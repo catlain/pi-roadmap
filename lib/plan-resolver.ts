@@ -48,7 +48,10 @@ export function resolveAbsolutePath(
 
 	// 有 project 且非空字符串 → 项目级
 	if (project) {
-		return path.join(project, ".pi", "plans", planPath);
+		const resolvedProject = project.startsWith("~")
+			? path.join(os.homedir(), project.slice(1))
+			: project;
+		return path.join(resolvedProject, ".pi", "plans", planPath);
 	}
 
 	// 无 project → 全局级
