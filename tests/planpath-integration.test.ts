@@ -69,14 +69,12 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 		expect(task.planPath).toBe("E1-S1-T1.md");
 	});
 
-	it("不传 planPath 时不附加提示", () => {
+	it("Epic 不传 planPath 时被拒绝", () => {
 		const rm = makeRoadmap();
-		const { result } = addEpic(rm, "Epic without explicit plan", "desc");
-		expect(result).toContain("已添加");
-		expect(result).not.toContain("计划文档");
-
-		// 不传 planPath 时不会自动设置（需要 AI 在 write 计划文档时通过 update 设置）
-		expect(rm.epics[0].planPath).toBeUndefined();
+		const { result, epicId } = addEpic(rm, "Epic without planPath", "desc");
+		expect(result).toContain("必须关联计划文档");
+		expect(epicId).toBeUndefined();
+		expect(rm.epics).toHaveLength(0);
 	});
 
 	it("多层 planPath 共存 → show 正确展示", () => {

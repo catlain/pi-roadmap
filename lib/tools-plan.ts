@@ -1,59 +1,68 @@
 /**
- * Roadmap 工具 — plan（创建/更新路线图）
+ * Roadmap 工具 — plan（讨论沙盘推演，不写入数据）
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { syncDoingChanges } from "./doing-sync";
-import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
-import { resolveAbsolutePath } from "./plan-resolver";
-import type { Epic, RoadmapFile } from "./types";
-import { GLOBAL_ROADMAP_DIR } from "./types";
+import type { RoadmapFile } from "./types";
 import { validateRoadmap } from "./validator";
 
 /**
- * 扫描 roadmap 中所有 planPath，返回不存在的文件路径列表
- * 使用第一个非空 project 作为解析上下文
+ * 格式化 plan 输出：拆解结果 + 下一步 add 操作指南
  */
-export function scanPlanPaths(roadmap: RoadmapFile): string[] {
-	const missing: string[] = [];
+export function formatPlanOutput(roadmap: RoadmapFile, action: "create" | "update"): string {
+	const lines: string[] = [];
+	const actionLabel = action === "create" ? "新建" : "更新";
 
-	// 找一个有效的 project 路径用于解析
-	const firstProject = roadmap.epics.find(e => e.project)?.project;
+	lines.push(`📋 路线图拆解方案："${roadmap.meta.title}" (${actionLabel})`);
+	lines.push("━".repeat(40));
+	lines.push("");
 
 	for (const epic of roadmap.epics) {
-		const project = epic.project || firstProject;
-		const ctx = { project, roadmapId: roadmap.meta.id };
-
-		if (epic.planPath) {
-			const absPath = resolveAbsolutePath(epic.planPath, ctx);
-			if (!fs.existsSync(absPath)) {
-				missing.push(`${epic.planPath} (${epic.id}: ${epic.title})`);
-			}
-		}
+		lines.push(`Epic ${epic.id}: ${epic.title} [${epic.priority ?? "medium"}]`);
+		if (epic.description) lines.push(`  ${epic.description}`);
+		lines.push("");
 
 		for (const story of epic.stories) {
-			if (story.planPath) {
-				const absPath = resolveAbsolutePath(story.planPath, ctx);
-				if (!fs.existsSync(absPath)) {
-					missing.push(`${story.planPath} (${story.id}: ${story.title})`);
-				}
-			}
+			lines.push(`  Story ${story.id}: ${story.title}`);
+			if (story.description) lines.push(`    ${story.description}`);
+			lines.push("");
 
 			for (const task of story.tasks) {
-				if (task.planPath) {
-					const absPath = resolveAbsolutePath(task.planPath, ctx);
-					if (!fs.existsSync(absPath)) {
-						missing.push(`${task.planPath} (${task.id}: ${task.title})`);
-					}
-				}
+				lines.push(`    Task ${task.id}: ${task.title}`);
+			}
+			if (story.tasks.length > 0) lines.push("");
+		}
+	}
+
+	// 下一步操作指南
+	lines.push("━".repeat(40));
+	lines.push("📌 下一步：逐个创建计划文档，然后 add 写入 roadmap");
+	lines.push("");
+
+	let stepNum = 1;
+	for (const epic of roadmap.epics) {
+		// Epic 需要计划文档
+		lines.push(`${stepNum}. write .pi/plans/${epic.id}.md → add_epic(roadmapId, "${epic.title}", desc, project, planPath="${epic.id}.md")`);
+		stepNum++;
+
+		for (const story of epic.stories) {
+			// Story 需要计划文档
+			const storyPlanFile = story.id.replace(".", "-S") + ".md";
+			lines.push(`${stepNum}. write .pi/plans/${storyPlanFile} → add_story(roadmapId, "${epic.id}", "${story.title}", desc, planPath="${storyPlanFile}")`);
+			stepNum++;
+
+			for (const task of story.tasks) {
+				// Task 不强制计划文档
+				lines.push(`${stepNum}. add_task(roadmapId, "${story.id}", "${task.title}") — Task 不需要计划文档，直接添加`);
+				stepNum++;
 			}
 		}
 	}
 
-	return missing;
+	return lines.join("\n");
 }
 
 /** 加载单个提示词文件 */
@@ -83,7 +92,7 @@ export function registerPlanTool(pi: ExtensionAPI) {
 		label: "Roadmap Plan",
 		description:
 			planDescription ||
-			"创建或更新路线图。从讨论中提炼意图，拆解为 Epic→Story→Task。",
+			"路线图拆解沙盘。讨论结论拆解为 Epic→Story→Task 结构，输出拆解方案和下一步操作指南。不写入数据，AI 需用 add_epic/add_story/add_task 逐个写入。",
 		parameters: Type.Object({
 			roadmapId: Type.String({
 				description: "路线图 ID（slug 格式，如 pi-atelier-split）",
@@ -104,17 +113,8 @@ export function registerPlanTool(pi: ExtensionAPI) {
 			_onUpdate: unknown,
 			_ctx: unknown,
 		) {
-			const { roadmapId, action } = params;
+			const { action } = params;
 			let { content } = params;
-
-			// 获取当前会话 ID
-			const ctx = _ctx as any;
-			const sessionId: string | undefined =
-				ctx?.sessionManager
-					?.getSessionFile?.()
-					?.split("/")
-					.pop()
-					?.replace(/\.jsonl$/, "") ?? undefined;
 
 			// 兼容 LLM 传字符串的情况
 			if (typeof content === "string") {
@@ -151,9 +151,6 @@ export function registerPlanTool(pi: ExtensionAPI) {
 				};
 			}
 
-			roadmap.meta.updated = new Date().toISOString().slice(0, 10);
-			fs.mkdirSync(GLOBAL_ROADMAP_DIR, { recursive: true });
-
 			// planPath 格式验证
 			const validation = validateRoadmap(roadmap);
 			const planPathErrors = validation.errors.filter((e: string) => e.includes("planPath"));
@@ -167,26 +164,10 @@ export function registerPlanTool(pi: ExtensionAPI) {
 				};
 			}
 
-			const filePath = getRoadmapFilePath(roadmapId);
+			// plan 是讨论沙盘，不写入 roadmap JSON
+			// 格式化输出拆解结果，AI 用 add_epic/add_story/add_task 逐个写入
+			const text = formatPlanOutput(roadmap, action);
 
-			// update 时：检测 task status 变迁 → 同步 doing.json
-			if (action === "update") {
-				const oldRoadmap = readRoadmap(filePath);
-				if (oldRoadmap) {
-					syncDoingChanges(oldRoadmap, roadmap, sessionId);
-				}
-			}
-
-			writeRoadmap(filePath, roadmap);
-
-			// 扫描 planPath 列表，检查文件是否存在
-			const planPathWarnings = scanPlanPaths(roadmap);
-
-			const actionLabel = action === "create" ? "创建" : "更新";
-			let text = `路线图 "${roadmap.meta.title}" 已${actionLabel}。`;
-			if (planPathWarnings.length > 0) {
-				text += `\n\n⚠️ 以下计划文档尚未创建，请用 write 创建后再设置 planPath：\n${planPathWarnings.map(p => `  - ${p}`).join("\n")}`;
-			}
 			return { content: [{ type: "text" as const, text }], details: {} };
 		},
 	});
