@@ -1,6 +1,6 @@
 {
   "name": "pi-roadmap",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Roadmap management extension for pi-coding-agent — Epic/Story/Task planning with 5 tools",
   "main": "index.ts",
   "scripts": {
