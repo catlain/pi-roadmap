@@ -38,7 +38,8 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 
 		// 2. resolvePlanPath 生成正确绝对路径
 		const absPath = resolveAbsolutePath("E1.md", { project: "/test-project", roadmapId: "test-rm" });
-		expect(absPath).toBe("/test-project/.pi/plans/E1.md");
+		// 跨平台：Unix 返回正斜杠，Windows 返回反斜杠
+		expect(absPath).toMatch(/test-project[\\/]\.pi[\\/]plans[\\/]E1\.md$/);
 
 		// 3. show 格式化展示（纯函数只展示文件名，不做路径解析）
 		const showOutput = formatRoadmapDetail(rm);
@@ -120,6 +121,7 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 		const epic = makeEpic({ id: "E1", planPath: "E1.md", project: "" });
 		// project 为空字符串 → 回退到全局路径
 		const absPath = resolveAbsolutePath("E1.md", { roadmapId: "my-roadmap" });
-		expect(absPath).toContain("roadmap/plans/my-roadmap/E1.md");
+		// 跨平台：Windows 用反斜杠
+		expect(absPath).toMatch(/roadmap[\\/]plans[\\/]my-roadmap[\\/]E1\.md$/);
 	});
 });
