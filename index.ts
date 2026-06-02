@@ -23,13 +23,14 @@ import { listRoadmapFiles, readRoadmap } from "./lib/store";
 import { registerAddTool } from "./lib/tools-add-reg";
 import { checkArchiveableEpics } from "./lib/tools-atomic-logic";
 import { registerPlanTool } from "./lib/tools-plan";
-import { registerListTool, registerShowTool } from "./lib/tools-query";
+import { registerListTool, registerShowTool, registerSearchTool } from "./lib/tools-query";
 import { registerUpdateTool } from "./lib/tools-update-reg";
 
 export default function roadmapExtension(pi: ExtensionAPI) {
 	// ── 注册所有工具 ──
 	registerListTool(pi);
 	registerShowTool(pi);
+	registerSearchTool(pi);
 	registerPlanTool(pi);
 	registerAddTool(pi);
 	registerUpdateTool(pi);

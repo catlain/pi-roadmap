@@ -19,3 +19,4 @@ export {
 
 export { registerListTool } from "./tools-query-list-reg";
 export { registerShowTool } from "./tools-query-show-reg";
+export { registerSearchTool } from "./tools-query-search-reg";
