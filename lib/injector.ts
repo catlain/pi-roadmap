@@ -9,6 +9,7 @@
 
 import { filterByStatus, formatProgress } from "./parser";
 import { calcProgress, getNextTasks } from "./progress";
+import { shortSessionId } from "./tools-query-format";
 import type { RoadmapFile } from "./types";
 
 export interface InjectionConfig {
@@ -37,6 +38,48 @@ export function generateInjection(
 	const lines: string[] = [];
 	lines.push("# 项目路线图");
 	lines.push("");
+
+	// ── 🔄 进行中任务（跨会话可见性）
+	const doingTasks: Array<{
+		roadmapTitle: string;
+		epicId: string;
+		storyId: string;
+		taskId: string;
+		taskTitle: string;
+		sessionId?: string;
+		doingDate?: string;
+	}> = [];
+	for (const rm of active) {
+		for (const epic of rm.epics) {
+			for (const story of epic.stories) {
+				for (const task of story.tasks) {
+					if (task.status === "doing") {
+						doingTasks.push({
+							roadmapTitle: rm.meta.title,
+							epicId: epic.id,
+							storyId: story.id,
+							taskId: task.id,
+							taskTitle: task.title,
+							sessionId: task.doingSessionId,
+							doingDate: task.doingDate,
+						});
+					}
+				}
+			}
+		}
+	}
+	if (doingTasks.length > 0) {
+		lines.push("## 🔄 进行中");
+		lines.push("");
+		for (const dt of doingTasks) {
+			const session = dt.sessionId ? `session: ${shortSessionId(dt.sessionId)}` : "";
+			const timeAgo = dt.doingDate ? timeSince(dt.doingDate) : "";
+			const meta = [session, timeAgo].filter(Boolean).join(", ");
+			const metaStr = meta ? ` (${meta})` : "";
+			lines.push(`  🔄 ${dt.taskId} ${dt.taskTitle}${metaStr}`);
+		}
+		lines.push("");
+	}
 
 	for (const rm of active) {
 		const progress = calcProgress(rm);
@@ -73,4 +116,23 @@ export function generateInjection(
 	lines.push("调用 roadmap_next 查看可执行任务。");
 
 	return lines.join("\n");
+}
+
+/** 计算时间差的人类可读描述（如 "5分钟前"、"2小时前"、"1天前"） */
+export function timeSince(isoDate: string): string {
+	const now = Date.now();
+	const then = new Date(isoDate).getTime();
+	if (isNaN(then)) return "";
+	const diffMs = now - then;
+	if (diffMs < 0) return "刚刚";
+
+	const seconds = Math.floor(diffMs / 1000);
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
+	const days = Math.floor(hours / 24);
+
+	if (days > 0) return `${days}天前`;
+	if (hours > 0) return `${hours}小时前`;
+	if (minutes > 0) return `${minutes}分钟前`;
+	return "刚刚";
 }

@@ -2,7 +2,7 @@
  * injector.ts 测试 — 注入文本生成
  */
 import { describe, expect, it } from "vitest";
-import { generateInjection } from "../lib/injector";
+import { generateInjection, timeSince } from "../lib/injector";
 import type { RoadmapFile } from "../lib/types";
 
 const ACTIVE_ROADMAP: RoadmapFile = {
@@ -123,5 +123,84 @@ describe("generateInjection", () => {
 		// E1 没有 planPath，E2 是 done 不显示，E3 有 planPath
 		expect(text).not.toMatch(/Epic E1.*plan:/);
 		expect(text).toMatch(/Epic E3.*plan: E3.md/);
+	});
+
+	it("doing 任务显示 🔄 进行中段落", () => {
+		const text = generateInjection([ACTIVE_ROADMAP]);
+		// E1.S1.T2 是 doing
+		expect(text).toContain("🔄 进行中");
+		expect(text).toContain("E1.S1.T2 做另一事");
+	});
+
+	it("doing 任务显示 session 短 ID", () => {
+		const roadmap: RoadmapFile = {
+			...ACTIVE_ROADMAP,
+			epics: [
+				{
+					...ACTIVE_ROADMAP.epics[0],
+					stories: [
+						{
+							...ACTIVE_ROADMAP.epics[0].stories[0],
+							tasks: [
+								{
+									id: "E1.S1.T1",
+									title: "做某事",
+									status: "doing",
+									doingSessionId: "2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
+									doingDate: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+								},
+							],
+						},
+					],
+				},
+			],
+		};
+		const text = generateInjection([roadmap]);
+		expect(text).toContain("session: 8740-8fce3e7af232");
+		expect(text).toContain("分钟前");
+	});
+
+	it("无 doing 任务时不显示进行中段落", () => {
+		const roadmap: RoadmapFile = {
+			...ACTIVE_ROADMAP,
+			epics: [
+				{
+					...ACTIVE_ROADMAP.epics[0],
+					status: "todo",
+					stories: [
+						{
+							...ACTIVE_ROADMAP.epics[0].stories[0],
+							status: "todo",
+							tasks: [
+								{ id: "E1.S1.T1", title: "做某事", status: "todo" },
+							],
+						},
+					],
+				},
+			],
+		};
+		const text = generateInjection([roadmap]);
+		expect(text).not.toContain("🔄 进行中");
+	});
+});
+
+describe("timeSince", () => {
+	it("刚刚（< 60秒）", () => {
+		expect(timeSince(new Date(Date.now() - 30_000).toISOString())).toBe("刚刚");
+	});
+	it("分钟前", () => {
+		expect(timeSince(new Date(Date.now() - 5 * 60_000).toISOString())).toBe("5分钟前");
+	});
+	it("小时前", () => {
+		expect(timeSince(new Date(Date.now() - 3 * 3600_000).toISOString())).toBe("3小时前");
+	});
+	it("天前", () => {
+		expect(timeSince(new Date(Date.now() - 2 * 86400_000).toISOString())).toBe("2天前");
+	});
+	it("无效日期返回空", () => {
+		expect(timeSince("not-a-date")).toBe("");
+	});
+	it("未来时间返回刚刚", () => {
+		expect(timeSince(new Date(Date.now() + 60_000).toISOString())).toBe("刚刚");
 	});
 });
