@@ -128,8 +128,8 @@ describe("addEpic", () => {
 
 	it("auto-increments epic ID", () => {
 		const rm = makeRoadmap();
-		addEpic(rm, "First", "", undefined, "/p", "E.md");
-		const { epicId } = addEpic(rm, "Second", "", undefined, "/p", "E.md");
+		addEpic(rm, "First", "", undefined, "/p", "E1.md");
+		const { epicId } = addEpic(rm, "Second", "", undefined, "/p", "E2.md");
 		expect(epicId).toBe("E2");
 	});
 
@@ -157,8 +157,8 @@ describe("addStory", () => {
 	it("auto-increments story ID", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
-		addStory(rm, "E1", "S1", "", undefined, "S.md");
-		const { storyId } = addStory(rm, "E1", "S2", "", undefined, "S.md");
+		addStory(rm, "E1", "S1", "", undefined, "S1.md");
+		const { storyId } = addStory(rm, "E1", "S2", "", undefined, "S2.md");
 		expect(storyId).toBe("E1.S2");
 	});
 
@@ -198,8 +198,8 @@ describe("addStory", () => {
 	it("warns when adding story with duplicate title", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", "medium", "/p", "E.md");
-		addStory(rm, "E1", "Same Title", "First", undefined, "S.md");
-		const { result, storyId } = addStory(rm, "E1", "Same Title", "Second", undefined, "S.md");
+		addStory(rm, "E1", "Same Title", "First", undefined, "S1.md");
+		const { result, storyId } = addStory(rm, "E1", "Same Title", "Second", undefined, "S2.md");
 		// 警告信息
 		expect(result).toContain("E1 下已存在同名 Story");
 		expect(result).toContain("Same Title");

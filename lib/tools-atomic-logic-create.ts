@@ -58,15 +58,13 @@ export function addEpic(
 		return { result: `⚠️ Epic 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/E${rm.epics.length + 1}.md），然后传 planPath 参数。` };
 	}
 
-	// planPath 唯一性检查
-	const planWarning = planPath
-		? (() => {
-			const users = findPlanPathUsers(rm, planPath);
-			return users.length > 0
-				? `⚠️ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。确认是否需要复用？\n`
-				: "";
-		})()
-		: "";
+	// planPath 唯一性检查（硬拒绝）
+	if (planPath) {
+		const users = findPlanPathUsers(rm, planPath);
+		if (users.length > 0) {
+			return { result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。` };
+		}
+	}
 
 	const epic = {
 		id: `E${rm.epics.length + 1}`,
@@ -80,7 +78,7 @@ export function addEpic(
 		...(planPath ? { planPath } : {}),
 	};
 	rm.epics.push(epic);
-	let msg = `${planWarning}✅ Epic ${epic.id}: ${title} 已添加。`;
+	let msg = `✅ Epic ${epic.id}: ${title} 已添加。`;
 	if (planPath) {
 		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
@@ -120,15 +118,13 @@ export function addStory(
 		? `⚠️ Epic ${epicId} 下已存在同名 Story "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
 		: "";
 
-	// planPath 唯一性检查
-	const planWarning = planPath
-		? (() => {
-			const users = findPlanPathUsers(rm, planPath);
-			return users.length > 0
-				? `⚠️ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。确认是否需要复用？\n`
-				: "";
-		})()
-		: "";
+	// planPath 唯一性检查（硬拒绝）
+	if (planPath) {
+		const users = findPlanPathUsers(rm, planPath);
+		if (users.length > 0) {
+			return { result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。` };
+		}
+	}
 
 	const story = {
 		id: `${epic.id}.S${epic.stories.length + 1}`,
@@ -141,7 +137,7 @@ export function addStory(
 		tasks: [] as never[],
 	};
 	epic.stories.push(story);
-	let msg = `${planWarning}${warning}✅ Story ${story.id}: ${title} 已添加。`;
+	let msg = `${warning}✅ Story ${story.id}: ${title} 已添加。`;
 	if (planPath) {
 		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
@@ -183,15 +179,13 @@ export function addTask(
 				? `⚠️ Story ${storyId} 下已存在同名 Task "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
 				: "";
 
-			// planPath 唯一性检查
-			const planWarning = planPath
-				? (() => {
-					const users = findPlanPathUsers(rm, planPath);
-					return users.length > 0
-						? `⚠️ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。确认是否需要复用？\n`
-						: "";
-				})()
-				: "";
+			// planPath 唯一性检查（硬拒绝）
+			if (planPath) {
+				const users = findPlanPathUsers(rm, planPath);
+				if (users.length > 0) {
+					return { result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。` };
+				}
+			}
 
 			const task = {
 				id: `${story.id}.T${story.tasks.length + 1}`,
@@ -203,7 +197,7 @@ export function addTask(
 				...(planPath ? { planPath } : {}),
 			};
 			story.tasks.push(task);
-			let msg = `${planWarning}${warning}✅ Task ${task.id}: ${title} 已添加。`;
+			let msg = `${warning}✅ Task ${task.id}: ${title} 已添加。`;
 			if (planPath) {
 				msg += `\n计划文档: .pi/plans/${planPath}`;
 			}
