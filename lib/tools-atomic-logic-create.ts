@@ -7,6 +7,21 @@
 import { today } from "./tools-atomic-utils";
 import type { Priority, RoadmapFile } from "./types";
 
+/** 遍历整个 roadmap，查找已使用指定 planPath 的条目（返回 [{id, title}] */
+function findPlanPathUsers(rm: RoadmapFile, planPath: string): { id: string; title: string }[] {
+	const users: { id: string; title: string }[] = [];
+	for (const epic of rm.epics) {
+		if (epic.planPath === planPath) users.push({ id: epic.id, title: epic.title });
+		for (const story of epic.stories) {
+			if (story.planPath === planPath) users.push({ id: story.id, title: story.title });
+			for (const task of story.tasks) {
+				if (task.planPath === planPath) users.push({ id: task.id, title: task.title });
+			}
+		}
+	}
+	return users;
+}
+
 // ── Create roadmap ──
 
 export function createRoadmap(
@@ -43,6 +58,16 @@ export function addEpic(
 		return { result: `⚠️ Epic 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/E${rm.epics.length + 1}.md），然后传 planPath 参数。` };
 	}
 
+	// planPath 唯一性检查
+	const planWarning = planPath
+		? (() => {
+			const users = findPlanPathUsers(rm, planPath);
+			return users.length > 0
+				? `⚠️ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。确认是否需要复用？\n`
+				: "";
+		})()
+		: "";
+
 	const epic = {
 		id: `E${rm.epics.length + 1}`,
 		title,
@@ -55,7 +80,7 @@ export function addEpic(
 		...(planPath ? { planPath } : {}),
 	};
 	rm.epics.push(epic);
-	let msg = `✅ Epic ${epic.id}: ${title} 已添加。`;
+	let msg = `${planWarning}✅ Epic ${epic.id}: ${title} 已添加。`;
 	if (planPath) {
 		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
@@ -82,13 +107,27 @@ export function addStory(
 	if (epic.archived) {
 		return { result: `⚠️ Epic "${epicId}" 已归档，无法添加 Story。请先取消归档或使用其他 Epic。` };
 	}
-	if (epic.status === "done" || epic.status === "dropped") {
-		return { result: `⚠️ Epic "${epicId}" 状态为 "${epic.status}"，无法添加 Story。` };
+	if (epic.status === "done") {
+		// done 未归档时允许添加 Story（自动重开为 doing）
+		// 但 dropped 仍不允许
+	}
+	if (epic.status === "dropped") {
+		return { result: `⚠️ Epic "${epicId}" 状态为 "dropped"，无法添加 Story。` };
 	}
 	// 检查同名 Story（不阻止，仅警告）
 	const existing = epic.stories.find((s) => s.title === title);
 	const warning = existing
 		? `⚠️ Epic ${epicId} 下已存在同名 Story "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
+		: "";
+
+	// planPath 唯一性检查
+	const planWarning = planPath
+		? (() => {
+			const users = findPlanPathUsers(rm, planPath);
+			return users.length > 0
+				? `⚠️ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。确认是否需要复用？\n`
+				: "";
+		})()
 		: "";
 
 	const story = {
@@ -102,7 +141,7 @@ export function addStory(
 		tasks: [] as never[],
 	};
 	epic.stories.push(story);
-	let msg = `${warning}✅ Story ${story.id}: ${title} 已添加。`;
+	let msg = `${planWarning}${warning}✅ Story ${story.id}: ${title} 已添加。`;
 	if (planPath) {
 		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
@@ -126,20 +165,32 @@ export function addTask(
 			if (story.archived) {
 				return { result: `⚠️ Story "${storyId}" 已归档，无法添加 Task。` };
 			}
-			if (story.status === "done" || story.status === "dropped") {
-				return { result: `⚠️ Story "${storyId}" 状态为 "${story.status}"，无法添加 Task。` };
+			if (story.status === "dropped") {
+				return { result: `⚠️ Story "${storyId}" 状态为 "dropped"，无法添加 Task。` };
 			}
+			// done 状态允许添加 Task（未归档可继续修改）
 			// 检查所属 epic 是否已归档/已完成
 			if (epic.archived) {
 				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 已归档，无法添加 Task。` };
 			}
-			if (epic.status === "done" || epic.status === "dropped") {
-				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 状态为 "${epic.status}"，无法添加 Task。` };
+			if (epic.status === "dropped") {
+				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 状态为 "dropped"，无法添加 Task。` };
 			}
+			// done 状态允许添加 Task（未归档可继续修改）
 			// 检查同名 Task（不阻止，仅警告）
 			const existing = story.tasks.find((t) => t.title === title);
 			const warning = existing
 				? `⚠️ Story ${storyId} 下已存在同名 Task "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
+				: "";
+
+			// planPath 唯一性检查
+			const planWarning = planPath
+				? (() => {
+					const users = findPlanPathUsers(rm, planPath);
+					return users.length > 0
+						? `⚠️ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。确认是否需要复用？\n`
+						: "";
+				})()
 				: "";
 
 			const task = {
@@ -152,7 +203,7 @@ export function addTask(
 				...(planPath ? { planPath } : {}),
 			};
 			story.tasks.push(task);
-			let msg = `${warning}✅ Task ${task.id}: ${title} 已添加。`;
+			let msg = `${planWarning}${warning}✅ Task ${task.id}: ${title} 已添加。`;
 			if (planPath) {
 				msg += `\n计划文档: .pi/plans/${planPath}`;
 			}

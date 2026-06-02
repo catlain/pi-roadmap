@@ -49,7 +49,7 @@ export function atomicUpdate(
 const VALID_TRANSITIONS: Record<ItemStatus, ReadonlySet<ItemStatus>> = {
 	todo: new Set(["doing", "dropped"]),
 	doing: new Set(["todo", "done", "blocked", "dropped"]),
-	done: new Set(["todo"]), // 仅允许重开
+	done: new Set(["todo", "doing"]), // 允许重开为 todo 或直接 doing
 	blocked: new Set(["doing", "dropped"]),
 	dropped: new Set(["todo"]), // 仅允许重开
 };

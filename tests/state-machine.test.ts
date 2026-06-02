@@ -18,6 +18,7 @@ describe("状态机：合法转换", () => {
 		["doing", "blocked"],
 		["doing", "dropped"],
 		["done", "todo"],
+		["done", "doing"],
 		["blocked", "doing"],
 		["blocked", "dropped"],
 		["dropped", "todo"],
@@ -39,7 +40,6 @@ describe("状态机：非法转换", () => {
 	it.each([
 		["todo", "done"],
 		["todo", "blocked"],
-		["done", "doing"],
 		["done", "blocked"],
 		["done", "dropped"],
 		["blocked", "done"],

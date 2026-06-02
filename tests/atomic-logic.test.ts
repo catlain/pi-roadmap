@@ -177,13 +177,13 @@ describe("addStory", () => {
 		expect(rm.epics[0].stories).toHaveLength(0);
 	});
 
-	it("rejects adding story to done epic", () => {
+	it("allows adding story to done epic (not archived)", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
 		rm.epics[0].status = "done";
 		const { result } = addStory(rm, "E1", "Story", "", undefined, "S.md");
-		expect(result).toContain("done");
-		expect(rm.epics[0].stories).toHaveLength(0);
+		expect(result).toContain("已添加");
+		expect(rm.epics[0].stories).toHaveLength(1);
 	});
 
 	it("rejects adding story to dropped epic", () => {
@@ -251,14 +251,14 @@ describe("addTask", () => {
 		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
 	});
 
-	it("rejects adding task to done story", () => {
+	it("allows adding task to done story (not archived)", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
 		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		rm.epics[0].stories[0].status = "done";
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
-		expect(result).toContain("done");
-		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
+		expect(result).toContain("已添加");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(1);
 	});
 
 	it("rejects adding task when parent epic is archived", () => {
@@ -272,14 +272,14 @@ describe("addTask", () => {
 		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
 	});
 
-	it("rejects adding task when parent epic is done", () => {
+	it("allows adding task when parent epic is done (not archived)", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", "medium", "project", "E.md");
 		addStory(rm, "E1", "Story", "", undefined, "S.md");
 		rm.epics[0].status = "done";
 		const { result } = addTask(rm, "E1.S1", "Task", undefined);
-		expect(result).toContain("done");
-		expect(rm.epics[0].stories[0].tasks).toHaveLength(0);
+		expect(result).toContain("已添加");
+		expect(rm.epics[0].stories[0].tasks).toHaveLength(1);
 	});
 
 	it("warns when adding task with duplicate title", () => {
