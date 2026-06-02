@@ -176,6 +176,46 @@ Creates a new roadmap or updates an existing one. The `content` parameter takes 
 
 ---
 
+### `roadmap_create` — Create a new roadmap
+
+Creates an empty roadmap with a title and optional tags.
+
+**When to use**: When you need a new roadmap that you'll populate with Epics/Stories/Tasks later.
+
+---
+
+### `roadmap_add` — Add Epic/Story/Task
+
+Adds a single item to an existing roadmap. Supports adding Epics (requires `project`), Stories (requires `epic_id`), and Tasks (requires `story_id`).
+
+**When to use**: Incrementally building a roadmap, or adding new items to an existing plan.
+
+---
+
+### `roadmap_update` — Update item properties
+
+Updates title, description, status, priority, or other properties of any Epic/Story/Task. Supports status changes including reverting `done` → `doing`. Automatically cascades completion status up the hierarchy.
+
+**When to use**: When a task's scope changes, priority shifts, or you need to re-open a completed item.
+
+---
+
+### `roadmap_search` — Search across roadmaps
+
+Searches all roadmaps by keyword (case-insensitive) across titles and descriptions. Returns matching items with full context.
+
+**When to use**: When you remember a task topic but don't know which roadmap it's in.
+
+---
+
+### `roadmap_archive` — Archive completed Epics
+
+Archives Epics that are fully completed, moving them out of the active view.
+
+**When to use**: When an Epic is done and you want to declutter the roadmap view.
+
+---
+
 ### `roadmap_next` — Get next actionable tasks
 
 Returns the highest-priority tasks across all active roadmaps. Sort order: `doing` first, then by priority (`high` > `medium` > `low`).
@@ -246,7 +286,7 @@ Synced to projects: my-project
 | Limitation | Detail |
 |------------|--------|
 | ID format | Zero-indexed, manual assignment — no auto-increment |
-| No undo | Once a task is `done`, it can't be reverted via tools |
+| Reversible | `done` tasks can be reverted to `doing` via `roadmap_update` |
 | Single writer | No concurrency control — one agent at a time per roadmap |
 | No due dates | Only priority-based ordering, no calendar scheduling |
 
