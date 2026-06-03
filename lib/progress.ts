@@ -2,6 +2,8 @@
  * Roadmap 进度计算与任务提取
  */
 
+import * as path from "node:path";
+
 import { areDependenciesMet } from "./dependency";
 import type { Epic, Priority, RoadmapFile, Story, Task } from "./types";
 import { comparePriority, getEffectivePriority } from "./types";
@@ -197,7 +199,7 @@ export function getStoriesForProject(
 ): Story[] {
 	const stories: Story[] = [];
 	for (const epic of roadmap.epics) {
-		if (epic.project === projectPath) {
+		if (path.normalize(epic.project) === path.normalize(projectPath)) {
 			stories.push(...epic.stories);
 		}
 	}
