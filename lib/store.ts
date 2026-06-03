@@ -62,7 +62,8 @@ export function readRoadmap(filePath: string): RoadmapFile | null {
 		}
 		// 验证通过，补全可选字段（tags 默认空数组）
 		if (!data.meta.tags) data.meta.tags = [];
-		return data as RoadmapFile;
+		// 归一化 project 路径（修复 Windows 正反斜杠不一致）
+		return normalizeProjectPaths(data as RoadmapFile);
 	} catch { // JSON 损坏或权限异常 → 视为不存在
 		return null;
 	}
@@ -96,7 +97,8 @@ export function filterByProject(
 	rm: RoadmapFile,
 	cwd: string,
 ): RoadmapFile {
-	const matched = rm.epics.filter((e: Epic) => e.project === cwd);
+	const normalizedCwd = path.normalize(cwd);
+	const matched = rm.epics.filter((e: Epic) => path.normalize(e.project) === normalizedCwd);
 	if (matched.length > 0) {
 		return { ...rm, epics: matched };
 	}
@@ -132,4 +134,17 @@ export function unarchiveRoadmap(id: string): boolean {
 		writeRoadmap(dst, data);
 	}
 	return true;
+}
+
+// ── 数据修复 ──
+
+/** 归一化 roadmap 中所有 Epic 的 project 路径（修复 Windows 正反斜杠不一致） */
+export function normalizeProjectPaths(rm: RoadmapFile): RoadmapFile {
+	return {
+		...rm,
+		epics: rm.epics.map((e: Epic) => ({
+				...e,
+				project: path.normalize(e.project),
+			})),
+	};
 }

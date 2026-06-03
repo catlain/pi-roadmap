@@ -87,13 +87,15 @@ export function registerAddTool(pi: ExtensionAPI) {
 					writeRoadmap(rmPath, rm);
 				}
 
+				// 归一化路径分隔符，防止 Windows 下正反斜杠不一致导致 filterByProject 失配
+				const normalizedProject = path.normalize(params.project ?? process.cwd());
 				const result = atomicUpdate(params.roadmapId, (rm) => {
 					return _addEpic(
 						rm,
 						params.title,
 						params.description ?? "",
 						params.priority as Priority | undefined,
-						params.project ?? process.cwd(),
+						normalizedProject,
 						params.planPath,
 					).result;
 				});

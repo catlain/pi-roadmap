@@ -27,9 +27,27 @@ export interface SearchOptions {
 
 // ── 辅助函数 ──
 
+/** 单字段单 query 匹配（向后兼容） */
 function matches(text: string | undefined, query: string): boolean {
 	if (!text) return false;
 	return text.toLowerCase().includes(query.toLowerCase());
+}
+
+/** 分词 AND 匹配：空格分隔的多个关键词必须全部匹配 */
+function matchesTokens(text: string | undefined, query: string): boolean {
+	if (!text) return false;
+	const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+	if (tokens.length === 0) return false;
+	const lower = text.toLowerCase();
+	return tokens.every((t) => lower.includes(t));
+}
+
+/** 合并匹配：分词 AND 匹配 text，或单 query 匹配 id */
+function matchesWithId(text: string | undefined, query: string, id?: string): boolean {
+	if (matchesTokens(text, query)) return true;
+	// ID 匹配：大小写不敏感
+	if (id && id.toLowerCase().includes(query.toLowerCase())) return true;
+	return false;
 }
 
 function formatStoryDetail(epic: Epic, story: Story, includeArchived: boolean): string {
@@ -82,7 +100,7 @@ export function searchRoadmapData(
 			if (epic.archived && !includeArchived) continue;
 
 			if ((scope === "all" || scope === "epic")
-				&& (matches(epic.title, trimmed) || matches(epic.description, trimmed))) {
+				&& (matchesWithId(epic.title, trimmed, epic.id) || matchesWithId(epic.description, trimmed))) {
 				results.push({
 					roadmapId: rm.meta.id,
 					roadmapTitle: rm.meta.title,
@@ -98,7 +116,7 @@ export function searchRoadmapData(
 				if (story.archived && !includeArchived) continue;
 
 				if ((scope === "all" || scope === "story")
-					&& (matches(story.title, trimmed) || matches(story.description, trimmed))) {
+					&& (matchesWithId(story.title, trimmed, story.id) || matchesWithId(story.description, trimmed))) {
 					results.push({
 						roadmapId: rm.meta.id,
 						roadmapTitle: rm.meta.title,
@@ -113,7 +131,7 @@ export function searchRoadmapData(
 					if (task.archived && !includeArchived) continue;
 
 					if ((scope === "all" || scope === "task")
-						&& (matches(task.title, trimmed) || matches(task.note ?? "", trimmed))) {
+						&& (matchesWithId(task.title, trimmed, task.id) || matchesWithId(task.note ?? "", trimmed))) {
 						results.push({
 							roadmapId: rm.meta.id,
 							roadmapTitle: rm.meta.title,

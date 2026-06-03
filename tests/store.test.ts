@@ -186,4 +186,49 @@ describe("filterByProject", () => {
 		expect(result.meta.id).toBe("multi");
 		expect(result.meta.title).toBe("多项目路线图");
 	});
+
+	describe("路径分隔符归一化（Windows 兼容）", () => {
+		it("正斜杠 cwd 匹配反斜杠 project", () => {
+			// Windows: process.cwd() 可能返回 D:/Project/foo
+			// 但 epic.project 存储的是 D:\\Project\\foo
+			const rm: RoadmapFile = {
+				...MULTI_PROJECT_ROADMAP,
+				epics: [
+					{ ...MULTI_PROJECT_ROADMAP.epics[0], project: "D:\\Project\\foo" },
+					{ ...MULTI_PROJECT_ROADMAP.epics[1], project: "D:\\Project\\bar" },
+				],
+			};
+			const result = filterByProject(rm, "D:/Project/foo");
+			expect(result.epics).toHaveLength(1);
+			expect(result.epics[0].id).toBe("E1");
+		});
+
+		it("反斜杠 cwd 匹配正斜杠 project", () => {
+			const rm: RoadmapFile = {
+				...MULTI_PROJECT_ROADMAP,
+				epics: [
+					{ ...MULTI_PROJECT_ROADMAP.epics[0], project: "D:/Project/foo" },
+					{ ...MULTI_PROJECT_ROADMAP.epics[1], project: "D:/Project/bar" },
+				],
+			};
+			const result = filterByProject(rm, "D:\\Project\\foo");
+			expect(result.epics).toHaveLength(1);
+			expect(result.epics[0].id).toBe("E1");
+		});
+
+		it("混合分隔符的 roadmap 能正确过滤", () => {
+			// 模拟真实场景：一些 Epic 用 / 另一些用 \
+			const rm: RoadmapFile = {
+				...MULTI_PROJECT_ROADMAP,
+				epics: [
+					{ ...MULTI_PROJECT_ROADMAP.epics[0], project: "D:\\Project\\foo" }, // 反斜杠
+					{ ...MULTI_PROJECT_ROADMAP.epics[1], project: "D:/Project/foo" },  // 正斜杠
+					{ ...MULTI_PROJECT_ROADMAP.epics[2], project: "D:/Project/bar" },  // 正斜杠，不同项目
+				],
+			};
+			const result = filterByProject(rm, "D:\\Project\\foo");
+			expect(result.epics).toHaveLength(2);
+			expect(result.epics.map((e) => e.id).sort()).toEqual(["E1", "E2"]);
+		});
+	});
 });

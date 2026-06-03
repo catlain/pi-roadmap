@@ -117,4 +117,59 @@ describe("searchRoadmapData 归档项", () => {
 	});
 });
 
+// ── ID 匹配 ──
+
+describe("searchRoadmapData ID 匹配", () => {
+	it("按 Epic ID 匹配（如 E1）", () => {
+		const results = searchRoadmapData([MOCK_RM], "E1");
+		expect(results.some(r => r.matchedId === "E1" && r.matchedType === "epic")).toBe(true);
+	});
+
+	it("按 Story ID 匹配（如 E1.S2）", () => {
+		const results = searchRoadmapData([MOCK_RM], "E1.S2");
+		expect(results.some(r => r.matchedId === "E1.S2" && r.matchedType === "story")).toBe(true);
+	});
+
+	it("按 Task ID 匹配（如 E1.S1.T1）", () => {
+		const results = searchRoadmapData([MOCK_RM], "E1.S1.T1");
+		expect(results.some(r => r.matchedId === "E1.S1.T1" && r.matchedType === "task")).toBe(true);
+	});
+
+	it("ID 匹配大小写不敏感", () => {
+		const results = searchRoadmapData([MOCK_RM], "e1");
+		expect(results.some(r => r.matchedId === "E1")).toBe(true);
+	});
+
+	it("部分 ID 也能匹配（如 E1.S）", () => {
+		const results = searchRoadmapData([MOCK_RM], "E1.S");
+		// 应该匹配 E1.S1 和 E1.S2
+		expect(results.filter(r => r.matchedType === "story").length).toBeGreaterThanOrEqual(2);
+	});
+});
+
+// ── 分词搜索 ──
+
+describe("searchRoadmapData 分词搜索（AND 逻辑）", () => {
+	it("空格分隔的关键词 AND 匹配", () => {
+		// "sync 删除" 应匹配包含两者的 Epic/Story/Task
+		const results = searchRoadmapData([MOCK_RM], "sync 删除");
+		expect(results.some(r => r.matchedId === "E1.S2.T1")).toBe(true);
+	});
+
+	it("分词匹配需要所有词都出现", () => {
+		// "重构 不存在的词" 不应匹配
+		expect(searchRoadmapData([MOCK_RM], "重构 不存在的词xyz")).toHaveLength(0);
+	});
+
+	it("单个词仍然正常工作", () => {
+		const results = searchRoadmapData([MOCK_RM], "重构");
+		expect(results.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("多个空格被正确处理", () => {
+		const results = searchRoadmapData([MOCK_RM], "sync  删除");
+		expect(results.some(r => r.matchedId === "E1.S2.T1")).toBe(true);
+	});
+});
+
 // registerSearchTool 的集成测试由 index.test.ts 覆盖（12 个工具注册验证）
