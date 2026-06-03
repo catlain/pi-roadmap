@@ -12,7 +12,10 @@ import { validateRoadmap } from "./validator";
 /**
  * 格式化 plan 输出：拆解结果 + 下一步 add 操作指南
  */
-export function formatPlanOutput(roadmap: RoadmapFile, action: "create" | "update"): string {
+export function formatPlanOutput(
+	roadmap: RoadmapFile,
+	action: "create" | "update",
+): string {
 	const lines: string[] = [];
 	const actionLabel = action === "create" ? "新建" : "更新";
 
@@ -45,18 +48,24 @@ export function formatPlanOutput(roadmap: RoadmapFile, action: "create" | "updat
 	let stepNum = 1;
 	for (const epic of roadmap.epics) {
 		// Epic 需要计划文档
-		lines.push(`${stepNum}. write .pi/plans/${epic.id}.md → roadmap_add(roadmapId, item_type="epic", title="${epic.title}", project=..., planPath="${epic.id}.md")`);
+		lines.push(
+			`${stepNum}. write .pi/plans/${epic.id}.md → roadmap_add(roadmapId, item_type="epic", title="${epic.title}", project=..., planPath="${epic.id}.md")`,
+		);
 		stepNum++;
 
 		for (const story of epic.stories) {
 			// Story 需要计划文档
-			const storyPlanFile = story.id.replace(".", "-S") + ".md";
-			lines.push(`${stepNum}. write .pi/plans/${storyPlanFile} → roadmap_add(roadmapId, item_type="story", epic_id="${epic.id}", title="${story.title}", planPath="${storyPlanFile}")`);
+			const storyPlanFile = `${story.id.replace(".", "-S")}.md`;
+			lines.push(
+				`${stepNum}. write .pi/plans/${storyPlanFile} → roadmap_add(roadmapId, item_type="story", epic_id="${epic.id}", title="${story.title}", planPath="${storyPlanFile}")`,
+			);
 			stepNum++;
 
 			for (const task of story.tasks) {
 				// Task 不强制计划文档
-				lines.push(`${stepNum}. roadmap_add(roadmapId, item_type="task", story_id="${story.id}", title="${task.title}")`);
+				lines.push(
+					`${stepNum}. roadmap_add(roadmapId, item_type="task", story_id="${story.id}", title="${task.title}")`,
+				);
 				stepNum++;
 			}
 		}
@@ -153,13 +162,17 @@ export function registerPlanTool(pi: ExtensionAPI) {
 
 			// planPath 格式验证
 			const validation = validateRoadmap(roadmap);
-			const planPathErrors = validation.errors.filter((e: string) => e.includes("planPath"));
+			const planPathErrors = validation.errors.filter((e: string) =>
+				e.includes("planPath"),
+			);
 			if (planPathErrors.length > 0) {
 				return {
-					content: [{
-						type: "text" as const,
-						text: `⚠️ 计划文档路径格式错误：\n${planPathErrors.join("\n")}`,
-					}],
+					content: [
+						{
+							type: "text" as const,
+							text: `⚠️ 计划文档路径格式错误：\n${planPathErrors.join("\n")}`,
+						},
+					],
 					details: {},
 				};
 			}

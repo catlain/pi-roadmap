@@ -7,8 +7,8 @@
  * 3. 验证 planPath 格式合法（禁止路径穿越）
  */
 
-import * as path from "node:path";
 import * as os from "node:os";
+import * as path from "node:path";
 
 /**
  * 根据 item ID 生成计划文件名
@@ -20,7 +20,7 @@ export function generatePlanFileName(itemId: string): string {
 	if (!itemId) {
 		throw new Error("itemId 不能为空");
 	}
-	const fileName = itemId.replace(/\./g, "-") + ".md";
+	const fileName = `${itemId.replace(/\./g, "-")}.md`;
 	return fileName;
 }
 
@@ -38,7 +38,7 @@ export interface PlanResolutionContext {
  */
 export function resolveAbsolutePath(
 	planPath: string,
-	context: PlanResolutionContext
+	context: PlanResolutionContext,
 ): string {
 	const { project, roadmapId } = context;
 

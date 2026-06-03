@@ -17,7 +17,6 @@ import {
 import { markTaskDone as _markTaskDone } from "./tools-atomic-logic";
 import { getSessionId } from "./tools-atomic-utils";
 import type { RoadmapFile } from "./types";
-import { GLOBAL_ROADMAP_DIR } from "./types";
 
 export function registerNextTool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -56,9 +55,7 @@ export function registerNextTool(pi: ExtensionAPI) {
 						details: {},
 					};
 				}
-				roadmaps = [
-					filterByProject(rm, process.cwd()),
-				];
+				roadmaps = [filterByProject(rm, process.cwd())];
 			} else {
 				roadmaps = listRoadmapFiles()
 					.map((fp) => readRoadmap(fp))
@@ -185,7 +182,12 @@ export function registerDoneTool(pi: ExtensionAPI) {
 			clearDoing(params.roadmapId, params.taskId);
 
 			return {
-				content: [{ type: "text" as const, text: `✅ 任务 "${params.taskId}" 已标记完成。` }],
+				content: [
+					{
+						type: "text" as const,
+						text: `✅ 任务 "${params.taskId}" 已标记完成。`,
+					},
+				],
 				details: {},
 			};
 		},

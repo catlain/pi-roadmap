@@ -4,11 +4,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import {
-	filterByProject,
-	getRoadmapFilePath,
-	readRoadmap,
-} from "./store";
+import { filterByProject, getRoadmapFilePath, readRoadmap } from "./store";
 import { formatRoadmapDetail } from "./tools-query-format";
 
 export function registerShowTool(pi: ExtensionAPI) {
@@ -24,7 +20,9 @@ export function registerShowTool(pi: ExtensionAPI) {
 				Type.String({ description: "只查看指定 Epic，如 E1" }),
 			),
 			query: Type.Optional(
-				Type.String({ description: "搜索关键词（大小写不敏感），匹配 title/description" }),
+				Type.String({
+					description: "搜索关键词（大小写不敏感），匹配 title/description",
+				}),
 			),
 			show_completed: Type.Optional(
 				Type.Boolean({ description: "显示已完成 Epic 详情，默认 true" }),
@@ -123,7 +121,10 @@ export function registerShowTool(pi: ExtensionAPI) {
 							epicId: params.epic_id,
 							showCompleted,
 							showArchived,
-							planPathCheck: { roadmapId: roadmap.meta.id, project: roadmap.epics[0]?.project },
+							planPathCheck: {
+								roadmapId: roadmap.meta.id,
+								project: roadmap.epics[0]?.project,
+							},
 						}),
 					},
 				],

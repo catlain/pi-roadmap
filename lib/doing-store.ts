@@ -33,7 +33,8 @@ export function readDoing(): DoingEntry[] {
 		if (!fs.existsSync(DOING_FILE)) return [];
 		const raw = fs.readFileSync(DOING_FILE, "utf-8");
 		return JSON.parse(raw) as DoingEntry[];
-	} catch { // ENOENT 或 JSON 损坏 → 视为无 doing 记录
+	} catch {
+		// ENOENT 或 JSON 损坏 → 视为无 doing 记录
 		return [];
 	}
 }
@@ -46,7 +47,7 @@ function writeDoing(entries: DoingEntry[]): void {
 	}
 	fs.writeFileSync(
 		DOING_FILE,
-		JSON.stringify(entries, null, 2) + "\n",
+		`${JSON.stringify(entries, null, 2)}\n`,
 		"utf-8",
 	);
 }

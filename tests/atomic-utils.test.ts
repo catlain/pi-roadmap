@@ -7,11 +7,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	atomicUpdate,
-	getSessionId,
-	today,
-} from "../lib/tools-atomic-utils";
+import { atomicUpdate, getSessionId, today } from "../lib/tools-atomic-utils";
 import type { RoadmapFile } from "../lib/types";
 import { FILE_SUFFIX, GLOBAL_ROADMAP_DIR } from "../lib/types";
 
@@ -170,7 +166,7 @@ describe("atomicUpdate()", () => {
 	});
 
 	it("修改后自动更新 meta.updated", () => {
-		const before = readTestRoadmap()!.meta.updated;
+		const _before = readTestRoadmap()!.meta.updated;
 		atomicUpdate(TEST_RM_ID, () => "done");
 		const after = readTestRoadmap()!.meta.updated;
 		// updated 应该变了（或至少不比之前早）

@@ -50,7 +50,7 @@ const testRoadmap: RoadmapFile = {
 							createdDate: "2026-01-01",
 							doneDate: "2026-01-03",
 							doneBySessionId:
-							"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
+								"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
 						},
 						{
 							id: "E1.S1.T2",
@@ -59,7 +59,7 @@ const testRoadmap: RoadmapFile = {
 							createdDate: "2026-01-01",
 							doingDate: "2026-01-05",
 							doingSessionId:
-							"2026-05-27T03-15-00-000Z_019e6789-1111-2222-ee1c-68348bc0abcd",
+								"2026-05-27T03-15-00-000Z_019e6789-1111-2222-ee1c-68348bc0abcd",
 						},
 						{
 							id: "E1.S1.T3",
@@ -275,10 +275,12 @@ describe("formatRoadmapDetail", () => {
 				created: "2026-01-01",
 				updated: "2026-01-01",
 				tags: [],
+				nextEid: 10,
 			},
 			epics: [
 				{
 					id: "E1",
+					eid: 1,
 					title: "前置 Epic",
 					description: "",
 					status: "done",
@@ -287,12 +289,14 @@ describe("formatRoadmapDetail", () => {
 					stories: [
 						{
 							id: "E1.S1",
+							eid: 2,
 							title: "前置 Story",
 							description: "",
 							status: "done",
 							tasks: [
 								{
 									id: "E1.S1.T1",
+									eid: 3,
 									title: "前置 Task",
 									status: "done",
 								},
@@ -302,25 +306,28 @@ describe("formatRoadmapDetail", () => {
 				},
 				{
 					id: "E2",
+					eid: 4,
 					title: "依赖 Epic",
 					description: "依赖 E1",
 					status: "doing",
 					priority: "high",
 					project: "/test",
-					dependsOn: ["E1"],
+					dependsOn: [1],
 					stories: [
 						{
 							id: "E2.S1",
+							eid: 5,
 							title: "依赖 Story",
 							description: "依赖 E1.S1",
 							status: "doing",
-							dependsOn: ["E1.S1"],
+							dependsOn: [2],
 							tasks: [
 								{
 									id: "E2.S1.T1",
+									eid: 6,
 									title: "依赖 Task",
 									status: "doing",
-									dependsOn: ["E1.S1.T1"],
+									dependsOn: [3],
 								},
 							],
 						},
@@ -333,21 +340,21 @@ describe("formatRoadmapDetail", () => {
 			const text = formatRoadmapDetail(rmWithDeps, {
 				showCompleted: true,
 			});
-			expect(text).toContain("Dependencies: E1(✅)");
+			expect(text).toContain("Dependencies: #1(E1, ✅)");
 		});
 
 		it("Story 依赖展示", () => {
 			const text = formatRoadmapDetail(rmWithDeps, {
 				showCompleted: true,
 			});
-			expect(text).toContain("[deps: E1.S1(✅)]");
+			expect(text).toContain("[deps: #2(E1.S1, ✅)]");
 		});
 
 		it("Task 依赖仍然展示", () => {
 			const text = formatRoadmapDetail(rmWithDeps, {
 				showCompleted: true,
 			});
-			expect(text).toContain("[deps: E1.S1.T1(✅)]");
+			expect(text).toContain("[deps: #3(E1.S1.T1, ✅)]");
 		});
 
 		it("无依赖时不展示依赖信息", () => {

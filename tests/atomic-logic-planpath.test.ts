@@ -2,11 +2,7 @@
  * 测试 addEpic/addStory/addTask 的 planPath 参数
  */
 import { describe, expect, it } from "vitest";
-import {
-	addEpic,
-	addStory,
-	addTask,
-} from "../lib/tools-atomic-logic";
+import { addEpic, addStory, addTask } from "../lib/tools-atomic-logic";
 import type { RoadmapFile } from "../lib/types";
 
 function makeRoadmap(): RoadmapFile {
@@ -28,7 +24,14 @@ function makeRoadmap(): RoadmapFile {
 describe("addEpic planPath", () => {
 	it("stores planPath when provided", () => {
 		const rm = makeRoadmap();
-		const { result, epicId } = addEpic(rm, "Epic", "Desc", undefined, "/proj", "E1.md");
+		const { result, epicId } = addEpic(
+			rm,
+			"Epic",
+			"Desc",
+			undefined,
+			"/proj",
+			"E1.md",
+		);
 		expect(epicId).toBe("E1");
 		expect(rm.epics[0].planPath).toBe("E1.md");
 		expect(result).toContain("E1.md");
@@ -49,7 +52,14 @@ describe("addStory planPath", () => {
 	it("stores planPath when provided", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", undefined, "/p", "E1.md");
-		const { result, storyId } = addStory(rm, "E1", "Story", "Desc", undefined, "E1-S1.md");
+		const { result, storyId } = addStory(
+			rm,
+			"E1",
+			"Story",
+			"Desc",
+			undefined,
+			"E1-S1.md",
+		);
 		expect(storyId).toBe("E1.S1");
 		expect(rm.epics[0].stories[0].planPath).toBe("E1-S1.md");
 		expect(result).toContain("E1-S1.md");
@@ -72,7 +82,14 @@ describe("addTask planPath", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", undefined, "/p", "E1.md");
 		addStory(rm, "E1", "Story", "Desc", undefined, "E1-S1.md");
-		const { result } = addTask(rm, "E1.S1", "Task", undefined, undefined, "E1-S1-T1.md");
+		const { result } = addTask(
+			rm,
+			"E1.S1",
+			"Task",
+			undefined,
+			undefined,
+			"E1-S1-T1.md",
+		);
 		expect(rm.epics[0].stories[0].tasks[0].planPath).toBe("E1-S1-T1.md");
 		expect(result).toContain("E1-S1-T1.md");
 	});

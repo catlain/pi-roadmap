@@ -4,8 +4,8 @@
  * 纯函数，不依赖 typebox / ExtensionAPI，方便测试
  */
 
-import type { Epic, RoadmapFile, Story, Task } from "./types";
 import { formatRoadmapDetail, statusIcon } from "./tools-query-format";
+import type { Epic, RoadmapFile, Story, Task } from "./types";
 
 // ── 类型定义 ──
 
@@ -28,7 +28,7 @@ export interface SearchOptions {
 // ── 辅助函数 ──
 
 /** 单字段单 query 匹配（向后兼容） */
-function matches(text: string | undefined, query: string): boolean {
+function _matches(text: string | undefined, query: string): boolean {
 	if (!text) return false;
 	return text.toLowerCase().includes(query.toLowerCase());
 }
@@ -43,14 +43,22 @@ function matchesTokens(text: string | undefined, query: string): boolean {
 }
 
 /** 合并匹配：分词 AND 匹配 text，或单 query 匹配 id */
-function matchesWithId(text: string | undefined, query: string, id?: string): boolean {
+function matchesWithId(
+	text: string | undefined,
+	query: string,
+	id?: string,
+): boolean {
 	if (matchesTokens(text, query)) return true;
 	// ID 匹配：大小写不敏感
-	if (id && id.toLowerCase().includes(query.toLowerCase())) return true;
+	if (id?.toLowerCase().includes(query.toLowerCase())) return true;
 	return false;
 }
 
-function formatStoryDetail(epic: Epic, story: Story, includeArchived: boolean): string {
+function formatStoryDetail(
+	epic: Epic,
+	story: Story,
+	includeArchived: boolean,
+): string {
 	let out = `## Epic ${epic.id}: ${epic.title} [${epic.status}/${epic.priority}]`;
 	if (epic.planPath) out += ` [plan: ${epic.planPath}]`;
 	out += `\n### Story ${story.id}: ${story.title} [${story.status}]`;
@@ -99,8 +107,11 @@ export function searchRoadmapData(
 		for (const epic of rm.epics) {
 			if (epic.archived && !includeArchived) continue;
 
-			if ((scope === "all" || scope === "epic")
-				&& (matchesWithId(epic.title, trimmed, epic.id) || matchesWithId(epic.description, trimmed))) {
+			if (
+				(scope === "all" || scope === "epic") &&
+				(matchesWithId(epic.title, trimmed, epic.id) ||
+					matchesWithId(epic.description, trimmed))
+			) {
 				results.push({
 					roadmapId: rm.meta.id,
 					roadmapTitle: rm.meta.title,
@@ -108,15 +119,22 @@ export function searchRoadmapData(
 					matchedId: epic.id,
 					matchedTitle: epic.title,
 					// 复用 formatRoadmapDetail，传入 epicId 只展示该 Epic
-					detail: formatRoadmapDetail(rm, { epicId: epic.id, showCompleted: true, showArchived: includeArchived }),
+					detail: formatRoadmapDetail(rm, {
+						epicId: epic.id,
+						showCompleted: true,
+						showArchived: includeArchived,
+					}),
 				});
 			}
 
 			for (const story of epic.stories) {
 				if (story.archived && !includeArchived) continue;
 
-				if ((scope === "all" || scope === "story")
-					&& (matchesWithId(story.title, trimmed, story.id) || matchesWithId(story.description, trimmed))) {
+				if (
+					(scope === "all" || scope === "story") &&
+					(matchesWithId(story.title, trimmed, story.id) ||
+						matchesWithId(story.description, trimmed))
+				) {
 					results.push({
 						roadmapId: rm.meta.id,
 						roadmapTitle: rm.meta.title,
@@ -130,8 +148,11 @@ export function searchRoadmapData(
 				for (const task of story.tasks) {
 					if (task.archived && !includeArchived) continue;
 
-					if ((scope === "all" || scope === "task")
-						&& (matchesWithId(task.title, trimmed, task.id) || matchesWithId(task.note ?? "", trimmed))) {
+					if (
+						(scope === "all" || scope === "task") &&
+						(matchesWithId(task.title, trimmed, task.id) ||
+							matchesWithId(task.note ?? "", trimmed))
+					) {
 						results.push({
 							roadmapId: rm.meta.id,
 							roadmapTitle: rm.meta.title,

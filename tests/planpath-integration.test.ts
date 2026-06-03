@@ -5,31 +5,71 @@
  */
 
 import { describe, expect, it } from "vitest";
+import {
+	generatePlanFileName,
+	resolveAbsolutePath,
+} from "../lib/plan-resolver";
 import { addEpic, addStory, addTask } from "../lib/tools-atomic-logic";
+import { updateItem } from "../lib/tools-atomic-utils";
 import { formatRoadmapDetail } from "../lib/tools-query-format";
-import { updateItem, updateTask } from "../lib/tools-atomic-utils";
-import { validateRoadmap } from "../lib/validator";
-import { resolveAbsolutePath, generatePlanFileName } from "../lib/plan-resolver";
 import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
+import { validateRoadmap } from "../lib/validator";
 
 function makeTask(o: Partial<Task> & { id: string }): Task {
 	return { title: `Task ${o.id}`, status: "todo", ...o };
 }
-function makeStory(o: Partial<Story> & { id: string }, tasks: Task[] = []): Story {
-	return { title: `Story ${o.id}`, description: "", status: "todo", tasks, ...o };
+function makeStory(
+	o: Partial<Story> & { id: string },
+	tasks: Task[] = [],
+): Story {
+	return {
+		title: `Story ${o.id}`,
+		description: "",
+		status: "todo",
+		tasks,
+		...o,
+	};
 }
-function makeEpic(o: Partial<Epic> & { id: string }, stories: Story[] = []): Epic {
-	return { title: `Epic ${o.id}`, description: "", status: "todo", priority: "medium", project: "/test-project", stories, ...o };
+function makeEpic(
+	o: Partial<Epic> & { id: string },
+	stories: Story[] = [],
+): Epic {
+	return {
+		title: `Epic ${o.id}`,
+		description: "",
+		status: "todo",
+		priority: "medium",
+		project: "/test-project",
+		stories,
+		...o,
+	};
 }
 function makeRoadmap(epics: Epic[] = []): RoadmapFile {
-	return { meta: { id: "test-rm", title: "Test", status: "active", created: "2025-01-01", updated: "2025-01-01", tags: [] }, epics };
+	return {
+		meta: {
+			id: "test-rm",
+			title: "Test",
+			status: "active",
+			created: "2025-01-01",
+			updated: "2025-01-01",
+			tags: [],
+		},
+		epics,
+	};
 }
 
 describe("planPath 端到端：创建 → 查看 → doing", () => {
 	it("Epic 创建时传入 planPath → show 展示 📋 → doing 提示读取", () => {
 		// 1. 创建 Epic with planPath
 		const rm = makeRoadmap();
-		const { result } = addEpic(rm, "Epic with plan", "desc", "medium", "/test-project", "E1.md");
+		const { result } = addEpic(
+			rm,
+			"Epic with plan",
+			"desc",
+			"medium",
+			"/test-project",
+			"E1.md",
+		);
 		expect(result).toContain("E1.md");
 		expect(result).toContain("计划文档");
 
@@ -37,7 +77,10 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 		expect(epic.planPath).toBe("E1.md");
 
 		// 2. resolvePlanPath 生成正确绝对路径
-		const absPath = resolveAbsolutePath("E1.md", { project: "/test-project", roadmapId: "test-rm" });
+		const absPath = resolveAbsolutePath("E1.md", {
+			project: "/test-project",
+			roadmapId: "test-rm",
+		});
 		// 跨平台：Unix 返回正斜杠，Windows 返回反斜杠
 		expect(absPath).toMatch(/test-project[\\/]\.pi[\\/]plans[\\/]E1\.md$/);
 
@@ -53,7 +96,14 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 
 	it("Story 创建时传入 planPath → 自动生成正确命名", () => {
 		const rm = makeRoadmap([makeEpic({ id: "E1" })]);
-		const { result } = addStory(rm, "E1", "New Story", "desc", undefined, "E1-S1.md");
+		const { result } = addStory(
+			rm,
+			"E1",
+			"New Story",
+			"desc",
+			undefined,
+			"E1-S1.md",
+		);
 		expect(result).toContain("E1-S1.md");
 
 		const story = rm.epics[0].stories[0];
@@ -62,8 +112,17 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 	});
 
 	it("Task 创建时传入 planPath（可选）", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1" })])]);
-		const { result } = addTask(rm, "E1.S1", "Complex Task", undefined, undefined, "E1-S1-T1.md");
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1" })]),
+		]);
+		const { result } = addTask(
+			rm,
+			"E1.S1",
+			"Complex Task",
+			undefined,
+			undefined,
+			"E1-S1-T1.md",
+		);
 		expect(result).toContain("E1-S1-T1.md");
 
 		const task = rm.epics[0].stories[0].tasks[0];
@@ -118,7 +177,7 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 	});
 
 	it("resolvePlanPath 全局 Epic（无 project）回退到 roadmap plans 目录", () => {
-		const epic = makeEpic({ id: "E1", planPath: "E1.md", project: "" });
+		const _epic = makeEpic({ id: "E1", planPath: "E1.md", project: "" });
 		// project 为空字符串 → 回退到全局路径
 		const absPath = resolveAbsolutePath("E1.md", { roadmapId: "my-roadmap" });
 		// 跨平台：Windows 用反斜杠

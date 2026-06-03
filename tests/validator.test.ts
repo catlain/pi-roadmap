@@ -5,7 +5,6 @@
 import { describe, expect, it } from "vitest";
 import type { RoadmapFile } from "../lib/types";
 import { repairRoadmap, validateRoadmap } from "../lib/validator";
-import { validatePlanPath } from "../lib/plan-resolver";
 
 const VALID_ROADMAP: RoadmapFile = {
 	meta: {
@@ -146,7 +145,11 @@ describe("validateRoadmap 状态一致性", () => {
 		};
 		const result = validateRoadmap(data);
 		expect(result.valid).toBe(false);
-		expect(result.errors.some((e) => e.includes("Story E1.S1") && e.includes("E1.S1.T2(todo)"))).toBe(true);
+		expect(
+			result.errors.some(
+				(e) => e.includes("Story E1.S1") && e.includes("E1.S1.T2(todo)"),
+			),
+		).toBe(true);
 	});
 
 	it("story=done 且所有 task 都是 done/dropped 时通过", () => {
@@ -199,7 +202,11 @@ describe("validateRoadmap 状态一致性", () => {
 		};
 		const result = validateRoadmap(data);
 		expect(result.valid).toBe(false);
-		expect(result.errors.some((e) => e.includes("Epic E1") && e.includes("E1.S2(todo)"))).toBe(true);
+		expect(
+			result.errors.some(
+				(e) => e.includes("Epic E1") && e.includes("E1.S2(todo)"),
+			),
+		).toBe(true);
 	});
 
 	it("epic=done 且所有 story 都是 done/dropped 时通过", () => {
@@ -324,7 +331,14 @@ describe("repairRoadmap", () => {
 					stories: [
 						{
 							...VALID_ROADMAP.epics[0].stories[0],
-							tasks: [{ id: "E1.S1.T1", title: "T1", status: "todo", planPath: "E1-S1-T1.md" }],
+							tasks: [
+								{
+									id: "E1.S1.T1",
+									title: "T1",
+									status: "todo",
+									planPath: "E1-S1-T1.md",
+								},
+							],
 						},
 					],
 				},

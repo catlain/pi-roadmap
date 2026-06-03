@@ -138,7 +138,6 @@ describe("addEpic", () => {
 		addEpic(rm, "E", "", undefined, "/p", "E.md");
 		expect(rm.epics[0].priority).toBe("medium");
 	});
-
 });
 
 // ── addStory ──
@@ -147,7 +146,14 @@ describe("addStory", () => {
 	it("adds story to correct epic", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "", undefined, "/p", "E.md");
-		const { result, storyId } = addStory(rm, "E1", "Story 1", "Desc", undefined, "S.md");
+		const { result, storyId } = addStory(
+			rm,
+			"E1",
+			"Story 1",
+			"Desc",
+			undefined,
+			"S.md",
+		);
 		expect(storyId).toBe("E1.S1");
 		expect(result).toContain("E1.S1");
 		expect(rm.epics[0].stories).toHaveLength(1);
@@ -199,7 +205,14 @@ describe("addStory", () => {
 		const rm = makeRoadmap();
 		addEpic(rm, "Epic", "Desc", "medium", "/p", "E.md");
 		addStory(rm, "E1", "Same Title", "First", undefined, "S1.md");
-		const { result, storyId } = addStory(rm, "E1", "Same Title", "Second", undefined, "S2.md");
+		const { result, storyId } = addStory(
+			rm,
+			"E1",
+			"Same Title",
+			"Second",
+			undefined,
+			"S2.md",
+		);
 		// 警告信息
 		expect(result).toContain("E1 下已存在同名 Story");
 		expect(result).toContain("Same Title");
@@ -208,7 +221,6 @@ describe("addStory", () => {
 		expect(result).toContain("✅");
 		expect(rm.epics[0].stories).toHaveLength(2);
 	});
-
 });
 
 // ── addTask ──
@@ -296,7 +308,6 @@ describe("addTask", () => {
 		expect(result).toContain("✅");
 		expect(rm.epics[0].stories[0].tasks).toHaveLength(2);
 	});
-
 });
 
 // ── archiveEpic ──

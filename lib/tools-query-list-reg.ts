@@ -7,11 +7,7 @@ import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { formatProgress, getOverview } from "./parser";
-import {
-	filterByProject,
-	listRoadmapFiles,
-	readRoadmap,
-} from "./store";
+import { filterByProject, listRoadmapFiles, readRoadmap } from "./store";
 import type { RoadmapFile } from "./types";
 import { ARCHIVE_DIR, GLOBAL_ROADMAP_DIR } from "./types";
 

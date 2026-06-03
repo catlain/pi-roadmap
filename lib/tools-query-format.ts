@@ -7,13 +7,18 @@
 import * as fs from "node:fs";
 import { formatDependencies } from "./dependency";
 import { formatProgress, getOverview } from "./parser";
-import { type PlanResolutionContext, resolveAbsolutePath } from "./plan-resolver";
-import type { Epic, RoadmapFile, Story, Task } from "./types";
+import {
+	type PlanResolutionContext,
+	resolveAbsolutePath,
+} from "./plan-resolver";
+import type { Epic, RoadmapFile } from "./types";
 
 /** 从完整会话 ID 中提取短标识（UUID 最后两段，如 8740-8fce3e7af232） */
 export function shortSessionId(sessionId: string): string {
 	// 格式：2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232
-	const uuid = sessionId.includes("_") ? sessionId.split("_").pop()! : sessionId;
+	const uuid = sessionId.includes("_")
+		? sessionId.split("_").pop()!
+		: sessionId;
 	const parts = uuid.split("-");
 	// UUID v7: time_high-mid-ver-clock_seq-node → 取最后两段
 	if (parts.length >= 2) return parts.slice(-2).join("-");
@@ -70,7 +75,10 @@ export interface FormatOptions {
 
 /** 检查 planPath 文件是否存在（需要解析上下文） */
 /** 解析 planPath 为相对路径（相对于项目根目录） */
-function planPathRelative(planPath: string, project: string | undefined): string {
+function planPathRelative(
+	planPath: string,
+	project: string | undefined,
+): string {
 	return project ? `.pi/plans/${planPath}` : `~/.pi/roadmap/plans/${planPath}`;
 }
 
@@ -81,14 +89,25 @@ function checkPlanPathExists(
 ): { exists: boolean | undefined; relativePath: string } {
 	const relativePath = planPathRelative(planPath, project);
 	if (!ctx) return { exists: undefined, relativePath }; // 无检查上下文时不验证
-	const absPath = resolveAbsolutePath(planPath, { ...ctx, project: project ?? ctx.project });
+	const absPath = resolveAbsolutePath(planPath, {
+		...ctx,
+		project: project ?? ctx.project,
+	});
 	return { exists: fs.existsSync(absPath), relativePath };
 }
 
 /** 格式化路线图详情文本 */
 /** 状态 emoji 映射，统一维护 */
 export function statusIcon(status: string): string {
-	return status === "done" ? "✅" : status === "doing" ? "🔄" : status === "blocked" ? "🚫" : status === "dropped" ? "❌" : "⬜";
+	return status === "done"
+		? "✅"
+		: status === "doing"
+			? "🔄"
+			: status === "blocked"
+				? "🚫"
+				: status === "dropped"
+					? "❌"
+					: "⬜";
 }
 
 export function formatRoadmapDetail(
@@ -125,7 +144,11 @@ export function formatRoadmapDetail(
 		output += `${epicDeps}`;
 		// planPath 标记（验证文件存在性）
 		if (epic.planPath) {
-			const { exists, relativePath } = checkPlanPathExists(opts.planPathCheck, epic.planPath, epic.project);
+			const { exists, relativePath } = checkPlanPathExists(
+				opts.planPathCheck,
+				epic.planPath,
+				epic.project,
+			);
 			if (exists === false) {
 				output += `⚠️ 计划文档: ${relativePath} (文件不存在)\n`;
 			} else {
@@ -152,7 +175,11 @@ export function formatRoadmapDetail(
 			output += `### Story ${story.id}: ${story.title} [${story.status}]${storyArchiveTag}${formatTimestamps(story)}${storyDeps}\n`;
 			output += `${story.description}\n`;
 			if (story.planPath) {
-				const { exists, relativePath } = checkPlanPathExists(opts.planPathCheck, story.planPath, epic.project);
+				const { exists, relativePath } = checkPlanPathExists(
+					opts.planPathCheck,
+					story.planPath,
+					epic.project,
+				);
 				if (exists === false) {
 					output += `  ⚠️ 计划文档: ${relativePath} (文件不存在)\n`;
 				} else {
@@ -181,7 +208,11 @@ export function formatRoadmapDetail(
 					: "";
 				output += `  ${check} ${task.id}: ${task.title}${formatTimestamps(task)}${note}${deps}\n`;
 				if (task.planPath) {
-					const { exists, relativePath } = checkPlanPathExists(opts.planPathCheck, task.planPath, epic.project);
+					const { exists, relativePath } = checkPlanPathExists(
+						opts.planPathCheck,
+						task.planPath,
+						epic.project,
+					);
 					if (exists === false) {
 						output += `    ⚠️ 计划文档: ${relativePath} (文件不存在)\n`;
 					} else {

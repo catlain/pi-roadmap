@@ -1,9 +1,13 @@
 /**
  * Roadmap 数据验证与修复
+ *
+ * 支持新旧两种格式：
+ *   - 旧格式：无 eid，dependsOn 是 string[]
+ *   - 新格式：有 eid，dependsOn 是 number[]
+ * validator 对两种格式都宽容（不因缺少 eid 报错），迁移由 migrate.ts 处理。
  */
 
 import { validatePlanPath } from "./plan-resolver";
-import { detectCycle } from "./dependency";
 import type { RoadmapFile } from "./types";
 
 const VALID_ROADMAP_STATUS = new Set([
@@ -26,7 +30,7 @@ export interface ValidationResult {
 	errors: string[];
 }
 
-/** 验证 roadmap 数据结构 */
+/** 验证 roadmap 数据结构（宽容模式：兼容新旧格式） */
 export function validateRoadmap(data: unknown): ValidationResult {
 	const errors: string[] = [];
 
@@ -57,20 +61,33 @@ export function validateRoadmap(data: unknown): ValidationResult {
 	if (!Array.isArray(d.epics)) {
 		errors.push("缺少 epics 数组");
 	} else {
-		// 先收集所有合法 ID
+		// 收集所有 id（字符串路径）和 eid（数字）
 		const allIds = new Set<string>();
+		const allEids = new Set<number>();
 		for (const epic of d.epics as Record<string, unknown>[]) {
 			if (epic.id) allIds.add(epic.id as string);
+			if (typeof epic.eid === "number") allEids.add(epic.eid);
 			if (Array.isArray(epic.stories)) {
 				for (const story of epic.stories as Record<string, unknown>[]) {
 					if (story.id) allIds.add(story.id as string);
+					if (typeof story.eid === "number") allEids.add(story.eid);
 					if (Array.isArray(story.tasks)) {
 						for (const task of story.tasks as Record<string, unknown>[]) {
 							if (task.id) allIds.add(task.id as string);
+							if (typeof task.eid === "number") allEids.add(task.eid);
 						}
 					}
 				}
 			}
+		}
+
+		// eid 唯一性检查
+		const eidCounts = new Map<number, number>();
+		for (const eid of allEids) {
+			eidCounts.set(eid, (eidCounts.get(eid) ?? 0) + 1);
+		}
+		for (const [eid, count] of eidCounts) {
+			if (count > 1) errors.push(`eid ${eid} 重复出现 ${count} 次`);
 		}
 
 		const epicIds = new Set<string>();
@@ -83,15 +100,13 @@ export function validateRoadmap(data: unknown): ValidationResult {
 
 			// 检查 epic 的 dependsOn
 			if (Array.isArray(epic.dependsOn) && epic.id) {
-				for (const depId of epic.dependsOn as string[]) {
-					if (!allIds.has(depId)) {
-						errors.push(`Epic ${epic.id} dependsOn 引用了不存在的 ID "${depId}"`);
-					}
-				}
-				const cycle = detectCycle(d as unknown as RoadmapFile, epic.id as string, epic.dependsOn as string[]);
-				if (cycle) {
-					errors.push(`Epic ${epic.id} 存在循环依赖：${cycle.join(" → ")}`);
-				}
+				validateDependsOn(
+					epic.dependsOn,
+					allIds,
+					allEids,
+					`Epic ${epic.id}`,
+					errors,
+				);
 			}
 
 			if (!epic.title) errors.push(`epics[${i}].title 缺失`);
@@ -101,7 +116,10 @@ export function validateRoadmap(data: unknown): ValidationResult {
 				errors.push(`epics[${i}].status "${epic.status}" 不合法`);
 			if (!VALID_PRIORITY.has(epic.priority as string))
 				errors.push(`epics[${i}].priority "${epic.priority}" 不合法`);
-			if (epic.planPath !== undefined && !validatePlanPath(epic.planPath as string))
+			if (
+				epic.planPath !== undefined &&
+				!validatePlanPath(epic.planPath as string)
+			)
 				errors.push(`epics[${i}].planPath "${epic.planPath}" 格式不合法`);
 
 			if (!Array.isArray(epic.stories)) {
@@ -117,22 +135,25 @@ export function validateRoadmap(data: unknown): ValidationResult {
 
 					// 检查 story 的 dependsOn
 					if (Array.isArray(story.dependsOn) && story.id) {
-						for (const depId of story.dependsOn as string[]) {
-							if (!allIds.has(depId)) {
-								errors.push(`Story ${story.id} dependsOn 引用了不存在的 ID "${depId}"`);
-							}
-						}
-						const cycle = detectCycle(d as unknown as RoadmapFile, story.id as string, story.dependsOn as string[]);
-						if (cycle) {
-							errors.push(`Story ${story.id} 存在循环依赖：${cycle.join(" → ")}`);
-						}
+						validateDependsOn(
+							story.dependsOn,
+							allIds,
+							allEids,
+							`Story ${story.id}`,
+							errors,
+						);
 					}
 
 					if (!story.title) errors.push(`epics[${i}].stories[${j}].title 缺失`);
 					if (!VALID_ITEM_STATUS.has(story.status as string))
 						errors.push(`epics[${i}].stories[${j}].status 不合法`);
-					if (story.planPath !== undefined && !validatePlanPath(story.planPath as string))
-						errors.push(`epics[${i}].stories[${j}].planPath "${story.planPath}" 格式不合法`);
+					if (
+						story.planPath !== undefined &&
+						!validatePlanPath(story.planPath as string)
+					)
+						errors.push(
+							`epics[${i}].stories[${j}].planPath "${story.planPath}" 格式不合法`,
+						);
 
 					if (!Array.isArray(story.tasks)) {
 						errors.push(`epics[${i}].stories[${j}].tasks 不是数组`);
@@ -147,22 +168,25 @@ export function validateRoadmap(data: unknown): ValidationResult {
 
 							// 检查 task 的 dependsOn
 							if (Array.isArray(task.dependsOn) && task.id) {
-								for (const depId of task.dependsOn as string[]) {
-									if (!allIds.has(depId)) {
-										errors.push(`Task ${task.id} dependsOn 引用了不存在的 ID "${depId}"`);
-									}
-								}
-								const cycle = detectCycle(d as unknown as RoadmapFile, task.id as string, task.dependsOn as string[]);
-								if (cycle) {
-									errors.push(`Task ${task.id} 存在循环依赖：${cycle.join(" → ")}`);
-								}
+								validateDependsOn(
+									task.dependsOn,
+									allIds,
+									allEids,
+									`Task ${task.id}`,
+									errors,
+								);
 							}
 
 							if (!task.title) errors.push(`task[${k}].title 缺失`);
 							if (!VALID_ITEM_STATUS.has(task.status as string))
 								errors.push(`task[${k}].status 不合法`);
-							if (task.planPath !== undefined && !validatePlanPath(task.planPath as string))
-								errors.push(`task[${k}].planPath "${task.planPath}" 格式不合法`);
+							if (
+								task.planPath !== undefined &&
+								!validatePlanPath(task.planPath as string)
+							)
+								errors.push(
+									`task[${k}].planPath "${task.planPath}" 格式不合法`,
+								);
 						}
 					}
 
@@ -175,7 +199,9 @@ export function validateRoadmap(data: unknown): ValidationResult {
 						)
 					) {
 						errors.push(
-							`Story ${story.id} 状态为 done，但有未完成的 task：${(story.tasks as Record<string, unknown>[])
+							`Story ${story.id} 状态为 done，但有未完成的 task：${(
+								story.tasks as Record<string, unknown>[]
+							)
 								.filter((t) => t.status !== "done" && t.status !== "dropped")
 								.map((t) => `${t.id}(${t.status})`)
 								.join(", ")}`,
@@ -193,7 +219,9 @@ export function validateRoadmap(data: unknown): ValidationResult {
 				)
 			) {
 				errors.push(
-					`Epic ${epic.id} 状态为 done，但有未完成的 story：${(epic.stories as Record<string, unknown>[])
+					`Epic ${epic.id} 状态为 done，但有未完成的 story：${(
+						epic.stories as Record<string, unknown>[]
+					)
 						.filter((s) => s.status !== "done" && s.status !== "dropped")
 						.map((s) => `${s.id}(${s.status})`)
 						.join(", ")}`,
@@ -202,7 +230,103 @@ export function validateRoadmap(data: unknown): ValidationResult {
 		}
 	}
 
+	// 循环依赖检测（eid 格式）
+	if (d.epics && errors.length === 0) {
+		const eidDepMap = new Map<number, number[]>(); // eid → dependsOn eids
+		for (const epic of d.epics as Record<string, unknown>[]) {
+			if (typeof epic.eid === "number") {
+				const deps = Array.isArray(epic.dependsOn)
+					? (epic.dependsOn as number[]).filter((d) => typeof d === "number")
+					: [];
+				if (deps.length > 0) eidDepMap.set(epic.eid, deps);
+			}
+			for (const story of (Array.isArray(epic.stories)
+				? epic.stories
+				: []) as Record<string, unknown>[]) {
+				if (typeof story.eid === "number") {
+					const deps = Array.isArray(story.dependsOn)
+						? (story.dependsOn as number[]).filter((d) => typeof d === "number")
+						: [];
+					if (deps.length > 0) eidDepMap.set(story.eid, deps);
+				}
+				for (const task of (Array.isArray(story.tasks)
+					? story.tasks
+					: []) as Record<string, unknown>[]) {
+					if (typeof task.eid === "number") {
+						const deps = Array.isArray(task.dependsOn)
+							? (task.dependsOn as number[]).filter(
+									(d) => typeof d === "number",
+								)
+							: [];
+						if (deps.length > 0) eidDepMap.set(task.eid, deps);
+					}
+				}
+			}
+		}
+
+		// DFS 检测环
+		const visited = new Set<number>();
+		const onStack = new Set<number>();
+		function dfs(eid: number): number[] | null {
+			if (onStack.has(eid)) return [eid]; // found cycle
+			if (visited.has(eid)) return null;
+			visited.add(eid);
+			onStack.add(eid);
+			const deps = eidDepMap.get(eid);
+			if (deps) {
+				for (const dep of deps) {
+					const cycle = dfs(dep);
+					if (cycle) return [eid, ...cycle];
+				}
+			}
+			onStack.delete(eid);
+			return null;
+		}
+		for (const eid of eidDepMap.keys()) {
+			if (!visited.has(eid)) {
+				const cycle = dfs(eid);
+				if (cycle) {
+					errors.push(`循环依赖: ${cycle.map((e) => `#${e}`).join(" → ")}`);
+					break;
+				}
+			}
+		}
+	}
+
 	return { valid: errors.length === 0, errors };
+}
+
+/**
+ * 验证 dependsOn 引用（兼容 string[] 和 number[] 两种格式）
+ *
+ * 旧格式 string[]：检查 allIds 中是否存在
+ * 新格式 number[]：检查 allEids 中是否存在
+ */
+function validateDependsOn(
+	dependsOn: unknown[],
+	allIds: Set<string>,
+	allEids: Set<number>,
+	label: string,
+	errors: string[],
+): void {
+	if (dependsOn.length === 0) return;
+
+	// 判断是旧格式还是新格式
+	if (typeof dependsOn[0] === "string") {
+		// 旧格式：string[]
+		for (const depId of dependsOn as string[]) {
+			if (!allIds.has(depId)) {
+				errors.push(`${label} dependsOn 引用了不存在的 ID "${depId}"`);
+			}
+		}
+	} else if (typeof dependsOn[0] === "number") {
+		// 新格式：number[]（eid）
+		for (const depEid of dependsOn as number[]) {
+			if (!allEids.has(depEid)) {
+				errors.push(`${label} dependsOn 引用了不存在的 eid #${depEid}`);
+			}
+		}
+	}
 }
 
 /** 尝试修复常见问题（轻量修复） */
@@ -216,8 +340,7 @@ export function repairRoadmap(data: unknown): RoadmapFile | null {
 		if (!meta.title) meta.title = meta.id;
 		if (!meta.status || !VALID_ROADMAP_STATUS.has(meta.status as string))
 			meta.status = "active";
-		if (!meta.created)
-			meta.created = new Date().toISOString().slice(0, 10);
+		if (!meta.created) meta.created = new Date().toISOString().slice(0, 10);
 		if (!meta.updated) meta.updated = meta.created;
 		if (!Array.isArray(meta.tags)) meta.tags = [];
 
@@ -225,22 +348,26 @@ export function repairRoadmap(data: unknown): RoadmapFile | null {
 
 		for (const epic of d.epics as Record<string, unknown>[]) {
 			if (!VALID_ITEM_STATUS.has(epic.status as string)) epic.status = "todo";
-			if (!VALID_PRIORITY.has(epic.priority as string)) epic.priority = "medium";
+			if (!VALID_PRIORITY.has(epic.priority as string))
+				epic.priority = "medium";
 			if (!epic.project) epic.project = "";
 			if (!Array.isArray(epic.stories)) epic.stories = [];
 
 			for (const story of epic.stories as Record<string, unknown>[]) {
-				if (!VALID_ITEM_STATUS.has(story.status as string)) story.status = "todo";
+				if (!VALID_ITEM_STATUS.has(story.status as string))
+					story.status = "todo";
 				if (!Array.isArray(story.tasks)) story.tasks = [];
 
 				for (const task of story.tasks as Record<string, unknown>[]) {
-					if (!VALID_ITEM_STATUS.has(task.status as string)) task.status = "todo";
+					if (!VALID_ITEM_STATUS.has(task.status as string))
+						task.status = "todo";
 				}
 			}
 		}
 
 		return d as unknown as RoadmapFile;
-	} catch { // JSON 损坏或格式异常 → 视为无效
+	} catch {
+		// JSON 损坏或格式异常 → 视为无效
 		return null;
 	}
 }

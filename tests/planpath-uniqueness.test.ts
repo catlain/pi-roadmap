@@ -4,9 +4,13 @@
  * 验证 addEpic / addStory / addTask 时，
  * 如果 planPath 已被其他条目使用，硬拒绝（返回错误，不添加）。
  */
-import { describe, it, expect } from "vitest";
-import { addEpic, addStory, addTask } from "../lib/tools-atomic-logic-create";
-import { createRoadmap } from "../lib/tools-atomic-logic-create";
+import { describe, expect, it } from "vitest";
+import {
+	addEpic,
+	addStory,
+	addTask,
+	createRoadmap,
+} from "../lib/tools-atomic-logic-create";
 
 function makeRoadmap() {
 	return createRoadmap("test-rm", "Test Roadmap");
@@ -17,7 +21,14 @@ describe("planPath 唯一性校验", () => {
 		it("rejects when planPath is already used by another epic", () => {
 			const rm = makeRoadmap();
 			addEpic(rm, "Epic A", "Desc", "medium", "/p1", "E1.md");
-			const { result, epicId } = addEpic(rm, "Epic B", "Desc", "medium", "/p2", "E1.md");
+			const { result, epicId } = addEpic(
+				rm,
+				"Epic B",
+				"Desc",
+				"medium",
+				"/p2",
+				"E1.md",
+			);
 			expect(result).toContain("❌");
 			expect(result).toContain("已被以下条目使用");
 			expect(result).toContain("E1(Epic A)");
@@ -32,7 +43,14 @@ describe("planPath 唯一性校验", () => {
 		it("allows unique planPath", () => {
 			const rm = makeRoadmap();
 			addEpic(rm, "Epic A", "Desc", "medium", "/p1", "E1.md");
-			const { result, epicId } = addEpic(rm, "Epic B", "Desc", "medium", "/p2", "E2.md");
+			const { result, epicId } = addEpic(
+				rm,
+				"Epic B",
+				"Desc",
+				"medium",
+				"/p2",
+				"E2.md",
+			);
 			expect(result).not.toContain("已被以下条目使用");
 			expect(result).toContain("✅ Epic E2");
 			expect(epicId).toBe("E2");
@@ -45,7 +63,14 @@ describe("planPath 唯一性校验", () => {
 			addEpic(rm, "Epic A", "Desc", "medium", "/p1", "E1.md");
 			addStory(rm, "E1", "Story A", "", undefined, "shared.md");
 			addEpic(rm, "Epic B", "Desc", "medium", "/p2", "E2.md");
-			const { result, storyId } = addStory(rm, "E2", "Story B", "", undefined, "shared.md");
+			const { result, storyId } = addStory(
+				rm,
+				"E2",
+				"Story B",
+				"",
+				undefined,
+				"shared.md",
+			);
 			expect(result).toContain("❌");
 			expect(result).toContain("已被以下条目使用");
 			expect(result).toContain("E1.S1(Story A)");
@@ -59,7 +84,14 @@ describe("planPath 唯一性校验", () => {
 		it("rejects when planPath is already used by an epic", () => {
 			const rm = makeRoadmap();
 			addEpic(rm, "Epic A", "Desc", "medium", "/p1", "shared.md");
-			const { result, storyId } = addStory(rm, "E1", "Story A", "", undefined, "shared.md");
+			const { result, storyId } = addStory(
+				rm,
+				"E1",
+				"Story A",
+				"",
+				undefined,
+				"shared.md",
+			);
 			expect(result).toContain("❌");
 			expect(result).toContain("已被以下条目使用");
 			expect(result).toContain("E1(Epic A)");
@@ -82,7 +114,14 @@ describe("planPath 唯一性校验", () => {
 			addStory(rm, "E1", "Story A", "", undefined, "S1.md");
 			addTask(rm, "E1.S1", "Task A", undefined, undefined, "shared-task.md");
 			addStory(rm, "E1", "Story B", "", undefined, "S2.md");
-			const { result, taskId } = addTask(rm, "E1.S2", "Task B", undefined, undefined, "shared-task.md");
+			const { result, taskId } = addTask(
+				rm,
+				"E1.S2",
+				"Task B",
+				undefined,
+				undefined,
+				"shared-task.md",
+			);
 			expect(result).toContain("❌");
 			expect(result).toContain("已被以下条目使用");
 			expect(result).toContain("E1.S1.T1(Task A)");
@@ -97,7 +136,14 @@ describe("planPath 唯一性校验", () => {
 			const rm = makeRoadmap();
 			addEpic(rm, "Epic A", "Desc", "medium", "/p1", "E1.md");
 			addStory(rm, "E1", "Story A", "", undefined, "S1.md");
-			const { result } = addTask(rm, "E1.S1", "Task A", undefined, undefined, "T1.md");
+			const { result } = addTask(
+				rm,
+				"E1.S1",
+				"Task A",
+				undefined,
+				undefined,
+				"T1.md",
+			);
 			expect(result).not.toContain("已被以下条目使用");
 			expect(result).toContain("✅ Task E1.S1.T1");
 		});

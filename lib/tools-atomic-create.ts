@@ -6,6 +6,7 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import { resolveToEid } from "./id-utils";
 import { writeRoadmap } from "./store";
 import {
 	addEpic as _addEpic,
@@ -66,7 +67,8 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_add_epic",
 		label: "Roadmap Add Epic",
-		description: "向指定路线图添加一个 Epic。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——目标是否明确、方案是否确定、边界是否清晰。如果不确定，先向用户追问确认，不要假设自己理解了。",
+		description:
+			"向指定路线图添加一个 Epic。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——目标是否明确、方案是否确定、边界是否清晰。如果不确定，先向用户追问确认，不要假设自己理解了。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			title: Type.String({ description: "Epic 标题（动词开头）" }),
@@ -75,7 +77,11 @@ export function registerAddEpicTool(pi: ExtensionAPI) {
 				Type.String({ description: "优先级: high/medium/low" }),
 			),
 			project: Type.String({ description: "对应项目路径" }),
-			planPath: Type.Optional(Type.String({ description: "计划文档文件名，如 E1.md。留空则 AI 自动生成默认路径" })),
+			planPath: Type.Optional(
+				Type.String({
+					description: "计划文档文件名，如 E1.md。留空则 AI 自动生成默认路径",
+				}),
+			),
 		}),
 		async execute(
 			_tc: string,
@@ -110,14 +116,22 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_add_story",
 		label: "Roadmap Add Story",
-		description: "向指定 Epic 添加一个 Story。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——实现方案、验收标准、关键决策是否明确。如果不确定，先向用户追问确认，不要假设自己理解了。",
+		description:
+			"向指定 Epic 添加一个 Story。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——实现方案、验收标准、关键决策是否明确。如果不确定，先向用户追问确认，不要假设自己理解了。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			epic_id: Type.String({ description: "Epic ID，如 E1" }),
 			title: Type.String({ description: "Story 标题" }),
 			description: Type.String({ description: "Story 描述" }),
-			dependsOn: Type.Optional(Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" })),
-			planPath: Type.Optional(Type.String({ description: "计划文档文件名，如 E1-S1.md。留空则 AI 自动生成默认路径" })),
+			dependsOn: Type.Optional(
+				Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" }),
+			),
+			planPath: Type.Optional(
+				Type.String({
+					description:
+						"计划文档文件名，如 E1-S1.md。留空则 AI 自动生成默认路径",
+				}),
+			),
 		}),
 		async execute(
 			_tc: string,
@@ -131,8 +145,16 @@ export function registerAddStoryTool(pi: ExtensionAPI) {
 			},
 		) {
 			const result = atomicUpdate(params.roadmapId, (rm) => {
-				return _addStory(rm, params.epic_id, params.title, params.description, params.dependsOn, params.planPath)
-					.result;
+				return _addStory(
+					rm,
+					params.epic_id,
+					params.title,
+					params.description,
+					params.dependsOn
+						?.map((d) => resolveToEid(rm, d))
+						.filter((x): x is number => x !== null),
+					params.planPath,
+				).result;
 			});
 			return {
 				content: [{ type: "text" as const, text: result }],
@@ -146,7 +168,8 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "roadmap_add_task",
 		label: "Roadmap Add Task",
-		description: "向指定 Story 添加一个 Task。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——具体做什么、预期产出是否明确。如果不确定，先向用户追问确认，不要假设自己理解了。",
+		description:
+			"向指定 Story 添加一个 Task。自动分配 ID 和 createdDate。⚠ 添加前必须确认信息充分——具体做什么、预期产出是否明确。如果不确定，先向用户追问确认，不要假设自己理解了。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			story_id: Type.String({ description: "Story ID，如 E1.S1" }),
@@ -154,8 +177,15 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 			priority: Type.Optional(
 				Type.String({ description: "优先级: high/medium/low" }),
 			),
-			dependsOn: Type.Optional(Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" })),
-			planPath: Type.Optional(Type.String({ description: "计划文档文件名，如 E1-S1-T1.md（可选，仅复杂 Task 需要）" })),
+			dependsOn: Type.Optional(
+				Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" }),
+			),
+			planPath: Type.Optional(
+				Type.String({
+					description:
+						"计划文档文件名，如 E1-S1-T1.md（可选，仅复杂 Task 需要）",
+				}),
+			),
 		}),
 		async execute(
 			_tc: string,
@@ -174,7 +204,9 @@ export function registerAddTaskTool(pi: ExtensionAPI) {
 					params.story_id,
 					params.title,
 					params.priority as Priority | undefined,
-					params.dependsOn,
+					params.dependsOn
+						?.map((d) => resolveToEid(rm, d))
+						.filter((x): x is number => x !== null),
 					params.planPath,
 				).result;
 			});

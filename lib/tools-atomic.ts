@@ -7,18 +7,44 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import { resolveToEid } from "./id-utils";
 import { getRoadmapFilePath, readRoadmap } from "./store";
 import {
 	archiveAllDone as _archiveAllDone,
 	archiveEpic as _archiveEpic,
 	getArchivedEpics as _getArchivedEpics,
 } from "./tools-atomic-logic";
-import {
-	atomicUpdate,
-	getSessionId,
-	updateItem,
-	updateTask,
-} from "./tools-atomic-utils";
+import { updateItem, updateTask } from "./tools-atomic-logic-update";
+import { atomicUpdate, getSessionId } from "./tools-atomic-utils";
+
+/**
+ * 将用户输入的 updates 中的 dependsOn（string[]）转换为 eid number[]
+ *
+ * 支持格式：
+ *   - "#42" → 42
+ *   - "42" → 42
+ *   - "E1.S2.T3" → 查找对应 eid
+ */
+function adaptUpdates(
+	rm: Parameters<typeof updateItem>[0],
+	updates: Record<string, string | string[]>,
+): Record<string, string | number[]> {
+	const result: Record<string, string | number[]> = {};
+	for (const [key, value] of Object.entries(updates)) {
+		if (key === "dependsOn" && Array.isArray(value)) {
+			result[key] = (value as string[]).map((depId) => {
+				const eid = resolveToEid(rm, depId);
+				if (eid === undefined) {
+					throw new Error(`依赖项 "${depId}" 不存在。`);
+				}
+				return eid;
+			});
+		} else {
+			result[key] = value;
+		}
+	}
+	return result;
+}
 
 // ── roadmap_update ──
 
@@ -46,9 +72,16 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 						Type.String({ description: "新优先级: high/medium/low" }),
 					),
 					note: Type.Optional(Type.String({ description: "备注" })),
-					planPath: Type.Optional(Type.String({ description: "计划文档文件名（如 E1-S3.md）。命名规则：Epic=E1.md, Story=E1-S3.md, Task=E1-S3-T2.md" })),
+					planPath: Type.Optional(
+						Type.String({
+							description:
+								"计划文档文件名（如 E1-S3.md）。命名规则：Epic=E1.md, Story=E1-S3.md, Task=E1-S3-T2.md",
+						}),
+					),
 					dependsOn: Type.Optional(
-						Type.Array(Type.String(), { description: "依赖项 ID 列表（替换整个列表）" })
+						Type.Array(Type.String(), {
+							description: "依赖项 ID 列表（支持 #eid 或路径格式如 E1.S2.T3）",
+						}),
 					),
 				},
 				{ description: "要更新的字段（只传需要改的）" },
@@ -66,16 +99,21 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			_ctx: unknown,
 		) {
 			const sessionId = getSessionId(_ctx);
-			let targetItem: { planPath?: string } | undefined;
 			const result = atomicUpdate(params.roadmapId, (rm) => {
 				const parts = params.item_id.split(".");
 				const epicId = parts[0];
 				const epic = rm.epics.find((e) => e.id === epicId);
 				if (!epic) return `错误：Epic "${epicId}" 不存在。`;
 
+				let adaptedUpdates: Record<string, string | number[]>;
+				try {
+					adaptedUpdates = adaptUpdates(rm, params.updates);
+				} catch (e: unknown) {
+					return `❌ ${(e as Error).message}`;
+				}
+
 				if (parts.length === 1) {
-					targetItem = epic;
-					return updateItem(rm, epic, params.updates, sessionId);
+					return updateItem(rm, epic, adaptedUpdates, sessionId);
 				}
 
 				const storyId = `${parts[0]}.${parts[1]}`;
@@ -83,15 +121,13 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				if (!story) return `错误：Story "${storyId}" 不存在。`;
 
 				if (parts.length === 2) {
-					targetItem = story;
-					return updateItem(rm, story, params.updates, sessionId);
+					return updateItem(rm, story, adaptedUpdates, sessionId);
 				}
 
 				const taskId = params.item_id;
 				const task = story.tasks.find((t) => t.id === taskId);
 				if (!task) return `错误：Task "${taskId}" 不存在。`;
-				targetItem = task;
-				return updateTask(rm, task, params.updates, sessionId);
+				return updateTask(rm, task, adaptedUpdates, sessionId);
 			});
 
 			return {

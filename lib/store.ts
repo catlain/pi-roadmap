@@ -6,12 +6,13 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { migrateToEid } from "./migrate";
 import {
 	ARCHIVE_DIR,
+	type Epic,
 	FILE_SUFFIX,
 	GLOBAL_ROADMAP_DIR,
 	type RoadmapFile,
-	type Epic,
 } from "./types";
 import { repairRoadmap, validateRoadmap } from "./validator";
 
@@ -62,9 +63,14 @@ export function readRoadmap(filePath: string): RoadmapFile | null {
 		}
 		// 验证通过，补全可选字段（tags 默认空数组）
 		if (!data.meta.tags) data.meta.tags = [];
+
+		// 迁移到 eid 格式（旧数据无 eid / dependsOn 是 string[]）
+		migrateToEid(data as RoadmapFile);
+
 		// 归一化 project 路径（修复 Windows 正反斜杠不一致）
 		return normalizeProjectPaths(data as RoadmapFile);
-	} catch { // JSON 损坏或权限异常 → 视为不存在
+	} catch {
+		// JSON 损坏或权限异常 → 视为不存在
 		return null;
 	}
 }
@@ -74,8 +80,8 @@ export function writeRoadmap(filePath: string, data: RoadmapFile): void {
 	data.meta.updated = new Date().toISOString().slice(0, 10);
 	const dir = path.dirname(filePath);
 	fs.mkdirSync(dir, { recursive: true });
-	const tmpPath = filePath + ".tmp";
-	fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2) + "\n", "utf-8");
+	const tmpPath = `${filePath}.tmp`;
+	fs.writeFileSync(tmpPath, `${JSON.stringify(data, null, 2)}\n`, "utf-8");
 	fs.renameSync(tmpPath, filePath);
 }
 
@@ -93,12 +99,11 @@ export function readRoadmapById(id: string): RoadmapFile | null {
 /** 按 epic.project 过滤 roadmap，只返回匹配 cwd 的 epic。
  *  无匹配时返回全部（非项目目录场景）。
  *  不修改原始对象。 */
-export function filterByProject(
-	rm: RoadmapFile,
-	cwd: string,
-): RoadmapFile {
+export function filterByProject(rm: RoadmapFile, cwd: string): RoadmapFile {
 	const normalizedCwd = path.normalize(cwd);
-	const matched = rm.epics.filter((e: Epic) => path.normalize(e.project) === normalizedCwd);
+	const matched = rm.epics.filter(
+		(e: Epic) => path.normalize(e.project) === normalizedCwd,
+	);
 	if (matched.length > 0) {
 		return { ...rm, epics: matched };
 	}
@@ -136,6 +141,8 @@ export function unarchiveRoadmap(id: string): boolean {
 	return true;
 }
 
+// ── 迁移 ──
+
 // ── 数据修复 ──
 
 /** 归一化 roadmap 中所有 Epic 的 project 路径（修复 Windows 正反斜杠不一致） */
@@ -143,8 +150,8 @@ export function normalizeProjectPaths(rm: RoadmapFile): RoadmapFile {
 	return {
 		...rm,
 		epics: rm.epics.map((e: Epic) => ({
-				...e,
-				project: path.normalize(e.project),
-			})),
+			...e,
+			project: path.normalize(e.project),
+		})),
 	};
 }

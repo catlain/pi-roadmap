@@ -3,7 +3,7 @@
  */
 
 import { calcEpicProgress, calcProgress } from "./progress";
-import type { Epic, RoadmapFile, RoadmapStatus } from "./types";
+import type { RoadmapFile, RoadmapStatus } from "./types";
 
 // ── 过滤 ──
 

@@ -7,7 +7,19 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vitest";
 
 // 只 mock 基础依赖，让工具注册走真实实现
-vi.mock("@sinclair/typebox", () => ({ Type: { Object: () => ({}), String: () => ({}), Number: () => ({}), Boolean: () => ({}), Any: () => ({}), Optional: (t: any) => t, Union: (t: any[]) => t[0], Literal: (v: any) => ({ type: "literal", value: v }), Array: (t: any) => ({ type: "array", items: t }) } }));
+vi.mock("@sinclair/typebox", () => ({
+	Type: {
+		Object: () => ({}),
+		String: () => ({}),
+		Number: () => ({}),
+		Boolean: () => ({}),
+		Any: () => ({}),
+		Optional: (t: any) => t,
+		Union: (t: any[]) => t[0],
+		Literal: (v: any) => ({ type: "literal", value: v }),
+		Array: (t: any) => ({ type: "array", items: t }),
+	},
+}));
 vi.mock("node:fs");
 vi.mock("../lib/store");
 vi.mock("../lib/doing-store");
@@ -38,9 +50,12 @@ describe("roadmapExtension", () => {
 		const mod = await import("../index");
 		mod.default(pi);
 
-		const agentEndHandler = vi.mocked(pi.on).mock.calls.find(
-			c => c[0] === "agent_end",
-		)?.[1] as (event: any, ctx: any) => Promise<void>;
+		const agentEndHandler = vi
+			.mocked(pi.on)
+			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			event: any,
+			ctx: any,
+		) => Promise<void>;
 
 		// 无 doing 条目
 		const { listRoadmapFiles } = await import("../lib/store");
@@ -48,7 +63,10 @@ describe("roadmapExtension", () => {
 		vi.mocked(listRoadmapFiles).mockReturnValue([]);
 		vi.mocked(readDoing).mockReturnValue([]);
 
-		await agentEndHandler({}, { sessionManager: { getSessionFile: () => "session-abc.jsonl" } });
+		await agentEndHandler(
+			{},
+			{ sessionManager: { getSessionFile: () => "session-abc.jsonl" } },
+		);
 
 		// 无 doing 条目 → 不发提醒
 		expect(pi.sendMessage).not.toHaveBeenCalled();
@@ -64,9 +82,12 @@ describe("roadmapExtension", () => {
 		const mod = await import("../index");
 		mod.default(pi);
 
-		const agentEndHandler = vi.mocked(pi.on).mock.calls.find(
-			c => c[0] === "agent_end",
-		)?.[1] as (event: any, ctx: any) => Promise<void>;
+		const agentEndHandler = vi
+			.mocked(pi.on)
+			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			event: any,
+			ctx: any,
+		) => Promise<void>;
 
 		const { listRoadmapFiles, readRoadmap } = await import("../lib/store");
 		const { readDoing, syncDoing } = await import("../lib/doing-store");
@@ -78,12 +99,18 @@ describe("roadmapExtension", () => {
 		vi.mocked(syncDoing).mockImplementation(() => {});
 		// 当前会话有 doing 条目
 		const doingEntry = {
-			roadmapId: "test", taskId: "E1.S1.T1", taskTitle: "做某事",
-			startedAt: "2026-01-01", sessionId: "session-abc",
+			roadmapId: "test",
+			taskId: "E1.S1.T1",
+			taskTitle: "做某事",
+			startedAt: "2026-01-01",
+			sessionId: "session-abc",
 		};
 		vi.mocked(readDoing).mockReturnValue([doingEntry]);
 
-		await agentEndHandler({}, { sessionManager: { getSessionFile: () => "session-abc.jsonl" } });
+		await agentEndHandler(
+			{},
+			{ sessionManager: { getSessionFile: () => "session-abc.jsonl" } },
+		);
 
 		expect(pi.sendMessage).toHaveBeenCalledWith(
 			expect.objectContaining({ customType: "roadmap-doing-reminder" }),
@@ -100,9 +127,12 @@ describe("roadmapExtension", () => {
 		const mod = await import("../index");
 		mod.default(pi);
 
-		const agentEndHandler = vi.mocked(pi.on).mock.calls.find(
-			c => c[0] === "agent_end",
-		)?.[1] as (event: any, ctx: any) => Promise<void>;
+		const agentEndHandler = vi
+			.mocked(pi.on)
+			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			event: any,
+			ctx: any,
+		) => Promise<void>;
 
 		const { listRoadmapFiles, readRoadmap } = await import("../lib/store");
 		const { readDoing, syncDoing } = await import("../lib/doing-store");
@@ -110,10 +140,19 @@ describe("roadmapExtension", () => {
 		vi.mocked(syncDoing).mockImplementation(() => {});
 		// 其他会话的 doing 条目
 		vi.mocked(readDoing).mockReturnValue([
-			{ roadmapId: "test", taskId: "E1.S1.T1", taskTitle: "做某事", startedAt: "2026-01-01", sessionId: "other-session" },
+			{
+				roadmapId: "test",
+				taskId: "E1.S1.T1",
+				taskTitle: "做某事",
+				startedAt: "2026-01-01",
+				sessionId: "other-session",
+			},
 		]);
 
-		await agentEndHandler({}, { sessionManager: { getSessionFile: () => "session-abc.jsonl" } });
+		await agentEndHandler(
+			{},
+			{ sessionManager: { getSessionFile: () => "session-abc.jsonl" } },
+		);
 
 		expect(pi.sendMessage).not.toHaveBeenCalled();
 	});
@@ -128,9 +167,12 @@ describe("roadmapExtension", () => {
 		const mod = await import("../index");
 		mod.default(pi);
 
-		const agentEndHandler = vi.mocked(pi.on).mock.calls.find(
-			c => c[0] === "agent_end",
-		)?.[1] as (event: any, ctx: any) => Promise<void>;
+		const agentEndHandler = vi
+			.mocked(pi.on)
+			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			event: any,
+			ctx: any,
+		) => Promise<void>;
 
 		const { listRoadmapFiles, readRoadmap } = await import("../lib/store");
 		const { readDoing, syncDoing } = await import("../lib/doing-store");
@@ -138,7 +180,13 @@ describe("roadmapExtension", () => {
 		vi.mocked(syncDoing).mockImplementation(() => {});
 		// 有 doing 条目
 		vi.mocked(readDoing).mockReturnValue([
-			{ roadmapId: "test", taskId: "E1.S1.T1", taskTitle: "做某事", startedAt: "2026-01-01", sessionId: "unknown" },
+			{
+				roadmapId: "test",
+				taskId: "E1.S1.T1",
+				taskTitle: "做某事",
+				startedAt: "2026-01-01",
+				sessionId: "unknown",
+			},
 		]);
 
 		// ctx 没有 sessionManager → currentSessionId = "" → 返回 allDoing → 发提醒
@@ -153,26 +201,40 @@ describe("roadmapExtension", () => {
 		const pi = {
 			registerTool: vi.fn() as any,
 			on: vi.fn() as any,
-			sendMessage: vi.fn(() => { throw new Error("session closed"); }) as any,
+			sendMessage: vi.fn(() => {
+				throw new Error("session closed");
+			}) as any,
 		} as ExtensionAPI;
 
 		const mod = await import("../index");
 		mod.default(pi);
 
-		const agentEndHandler = vi.mocked(pi.on).mock.calls.find(
-			c => c[0] === "agent_end",
-		)?.[1] as (event: any, ctx: any) => Promise<void>;
+		const agentEndHandler = vi
+			.mocked(pi.on)
+			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			event: any,
+			ctx: any,
+		) => Promise<void>;
 
 		const { listRoadmapFiles, readRoadmap } = await import("../lib/store");
 		const { readDoing, syncDoing } = await import("../lib/doing-store");
 		vi.mocked(listRoadmapFiles).mockReturnValue([]);
 		vi.mocked(syncDoing).mockImplementation(() => {});
 		vi.mocked(readDoing).mockReturnValue([
-			{ roadmapId: "test", taskId: "E1.S1.T1", taskTitle: "做某事", startedAt: "2026-01-01", sessionId: "session-abc" },
+			{
+				roadmapId: "test",
+				taskId: "E1.S1.T1",
+				taskTitle: "做某事",
+				startedAt: "2026-01-01",
+				sessionId: "session-abc",
+			},
 		]);
 
 		await expect(
-			agentEndHandler({}, { sessionManager: { getSessionFile: () => "session-abc.jsonl" } }),
+			agentEndHandler(
+				{},
+				{ sessionManager: { getSessionFile: () => "session-abc.jsonl" } },
+			),
 		).resolves.not.toThrow();
 	});
 });

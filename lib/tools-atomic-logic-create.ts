@@ -2,20 +2,28 @@
  * Roadmap 原子操作 — 创建类逻辑（addEpic / addStory / addTask / createRoadmap）
  *
  * 纯函数，不依赖 pi API，只操作数据结构。
+ * 创建时分配 eid（永久数字 ID），id（位置路径）由 rebuildPaths 维护。
  */
 
+import { allocateEid } from "./id-utils";
 import { today } from "./tools-atomic-utils";
 import type { Priority, RoadmapFile } from "./types";
 
 /** 遍历整个 roadmap，查找已使用指定 planPath 的条目（返回 [{id, title}] */
-function findPlanPathUsers(rm: RoadmapFile, planPath: string): { id: string; title: string }[] {
+function findPlanPathUsers(
+	rm: RoadmapFile,
+	planPath: string,
+): { id: string; title: string }[] {
 	const users: { id: string; title: string }[] = [];
 	for (const epic of rm.epics) {
-		if (epic.planPath === planPath) users.push({ id: epic.id, title: epic.title });
+		if (epic.planPath === planPath)
+			users.push({ id: epic.id, title: epic.title });
 		for (const story of epic.stories) {
-			if (story.planPath === planPath) users.push({ id: story.id, title: story.title });
+			if (story.planPath === planPath)
+				users.push({ id: story.id, title: story.title });
 			for (const task of story.tasks) {
-				if (task.planPath === planPath) users.push({ id: task.id, title: task.title });
+				if (task.planPath === planPath)
+					users.push({ id: task.id, title: task.title });
 			}
 		}
 	}
@@ -38,6 +46,7 @@ export function createRoadmap(
 			created: now,
 			updated: now,
 			tags: tags ?? [],
+			nextEid: 1,
 		},
 		epics: [],
 	};
@@ -53,21 +62,30 @@ export function addEpic(
 	project: string,
 	planPath?: string,
 ): { result: string; epicId?: string } {
-
 	if (!planPath) {
-		return { result: `⚠️ Epic 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/E${rm.epics.length + 1}.md），然后传 planPath 参数。` };
+		return {
+			result: `⚠️ Epic 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/E${rm.epics.length + 1}.md），然后传 planPath 参数。`,
+		};
 	}
 
 	// planPath 唯一性检查（硬拒绝）
 	if (planPath) {
 		const users = findPlanPathUsers(rm, planPath);
 		if (users.length > 0) {
-			return { result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。` };
+			return {
+				result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。`,
+			};
 		}
 	}
 
+	// 确保 meta.nextEid 存在（兼容迁移期）
+	if (rm.meta.nextEid === undefined) rm.meta.nextEid = 1;
+
+	const eid = allocateEid(rm.meta);
+	const id = `E${rm.epics.length + 1}`;
 	const epic = {
-		id: `E${rm.epics.length + 1}`,
+		eid,
+		id,
 		title,
 		description,
 		status: "todo" as const,
@@ -78,7 +96,7 @@ export function addEpic(
 		...(planPath ? { planPath } : {}),
 	};
 	rm.epics.push(epic);
-	let msg = `✅ Epic ${epic.id}: ${title} 已添加。`;
+	let msg = `✅ Epic ${epic.id} (#${epic.eid}): ${title} 已添加。`;
 	if (planPath) {
 		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
@@ -92,42 +110,53 @@ export function addStory(
 	epicId: string,
 	title: string,
 	description: string,
-	dependsOn?: string[],
+	dependsOn?: number[],
 	planPath?: string,
 ): { result: string; storyId?: string } {
 	if (!planPath) {
 		const epic = rm.epics.find((e) => e.id === epicId);
 		const storyNum = epic ? epic.stories.length + 1 : 1;
-		return { result: `⚠️ Story 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/${epicId}-S${storyNum}.md），然后传 planPath 参数。` };
+		return {
+			result: `⚠️ Story 必须关联计划文档。请先用 write 创建计划文件（如 .pi/plans/${epicId}-S${storyNum}.md），然后传 planPath 参数。`,
+		};
 	}
 	const epic = rm.epics.find((e) => e.id === epicId);
 	if (!epic) return { result: `错误：Epic "${epicId}" 不存在。` };
 	if (epic.archived) {
-		return { result: `⚠️ Epic "${epicId}" 已归档，无法添加 Story。请先取消归档或使用其他 Epic。` };
+		return {
+			result: `⚠️ Epic "${epicId}" 已归档，无法添加 Story。请先取消归档或使用其他 Epic。`,
+		};
 	}
 	if (epic.status === "done") {
 		// done 未归档时允许添加 Story（自动重开为 doing）
-		// 但 dropped 仍不允许
 	}
 	if (epic.status === "dropped") {
 		return { result: `⚠️ Epic "${epicId}" 状态为 "dropped"，无法添加 Story。` };
 	}
-	// 检查同名 Story（不阻止，仅警告）
+	// 检查同名 Story
 	const existing = epic.stories.find((s) => s.title === title);
 	const warning = existing
 		? `⚠️ Epic ${epicId} 下已存在同名 Story "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
 		: "";
 
-	// planPath 唯一性检查（硬拒绝）
+	// planPath 唯一性检查
 	if (planPath) {
 		const users = findPlanPathUsers(rm, planPath);
 		if (users.length > 0) {
-			return { result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。` };
+			return {
+				result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。`,
+			};
 		}
 	}
 
+	// 确保 meta.nextEid 存在
+	if (rm.meta.nextEid === undefined) rm.meta.nextEid = 1;
+
+	const eid = allocateEid(rm.meta);
+	const id = `${epic.id}.S${epic.stories.length + 1}`;
 	const story = {
-		id: `${epic.id}.S${epic.stories.length + 1}`,
+		eid,
+		id,
 		title,
 		description,
 		status: "todo" as const,
@@ -137,7 +166,7 @@ export function addStory(
 		tasks: [] as never[],
 	};
 	epic.stories.push(story);
-	let msg = `${warning}✅ Story ${story.id}: ${title} 已添加。`;
+	let msg = `${warning}✅ Story ${story.id} (#${story.eid}): ${title} 已添加。`;
 	if (planPath) {
 		msg += `\n计划文档: .pi/plans/${planPath}`;
 	}
@@ -151,44 +180,53 @@ export function addTask(
 	storyId: string,
 	title: string,
 	priority: Priority | undefined,
-	dependsOn?: string[],
+	dependsOn?: number[],
 	planPath?: string,
 ): { result: string; taskId?: string } {
 	for (const epic of rm.epics) {
 		const story = epic.stories.find((s) => s.id === storyId);
 		if (story) {
-			// 检查 story 是否已归档/已完成
 			if (story.archived) {
 				return { result: `⚠️ Story "${storyId}" 已归档，无法添加 Task。` };
 			}
 			if (story.status === "dropped") {
-				return { result: `⚠️ Story "${storyId}" 状态为 "dropped"，无法添加 Task。` };
+				return {
+					result: `⚠️ Story "${storyId}" 状态为 "dropped"，无法添加 Task。`,
+				};
 			}
-			// done 状态允许添加 Task（未归档可继续修改）
-			// 检查所属 epic 是否已归档/已完成
 			if (epic.archived) {
-				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 已归档，无法添加 Task。` };
+				return {
+					result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 已归档，无法添加 Task。`,
+				};
 			}
 			if (epic.status === "dropped") {
-				return { result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 状态为 "dropped"，无法添加 Task。` };
+				return {
+					result: `⚠️ Story "${storyId}" 所属 Epic "${epic.id}" 状态为 "dropped"，无法添加 Task。`,
+				};
 			}
-			// done 状态允许添加 Task（未归档可继续修改）
-			// 检查同名 Task（不阻止，仅警告）
 			const existing = story.tasks.find((t) => t.title === title);
 			const warning = existing
 				? `⚠️ Story ${storyId} 下已存在同名 Task "${title}" (ID: ${existing.id})，确认是否需要重复添加？\n`
 				: "";
 
-			// planPath 唯一性检查（硬拒绝）
+			// planPath 唯一性检查
 			if (planPath) {
 				const users = findPlanPathUsers(rm, planPath);
 				if (users.length > 0) {
-					return { result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。` };
+					return {
+						result: `❌ planPath "${planPath}" 已被以下条目使用：${users.map((u) => `${u.id}(${u.title})`).join(", ")}。请使用不同的 planPath，或为该条目创建新的计划文档。`,
+					};
 				}
 			}
 
+			// 确保 meta.nextEid 存在
+			if (rm.meta.nextEid === undefined) rm.meta.nextEid = 1;
+
+			const eid = allocateEid(rm.meta);
+			const id = `${story.id}.T${story.tasks.length + 1}`;
 			const task = {
-				id: `${story.id}.T${story.tasks.length + 1}`,
+				eid,
+				id,
 				title,
 				status: "todo" as const,
 				priority: priority ?? undefined,
@@ -197,7 +235,7 @@ export function addTask(
 				...(planPath ? { planPath } : {}),
 			};
 			story.tasks.push(task);
-			let msg = `${warning}✅ Task ${task.id}: ${title} 已添加。`;
+			let msg = `${warning}✅ Task ${task.id} (#${task.eid}): ${title} 已添加。`;
 			if (planPath) {
 				msg += `\n计划文档: .pi/plans/${planPath}`;
 			}

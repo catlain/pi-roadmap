@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { writeRoadmap } from "../lib/store";
+import { registerAddTool } from "../lib/tools-add-reg";
 import {
 	addEpic as _addEpic,
 	addStory as _addStory,
@@ -12,7 +13,6 @@ import {
 	createRoadmap as _createRoadmap,
 } from "../lib/tools-atomic-logic";
 import { atomicUpdate } from "../lib/tools-atomic-utils";
-import { registerAddTool } from "../lib/tools-add-reg";
 import type { RoadmapFile } from "../lib/types";
 
 vi.mock("@sinclair/typebox", () => ({
@@ -97,7 +97,7 @@ describe("roadmap_add 统一工具", () => {
 			fn(MOCK_RM),
 		);
 
-		const result = await execute()("", {
+		const _result = await execute()("", {
 			roadmapId: "new-rm",
 			item_type: "epic",
 			title: "新 Epic",
@@ -135,7 +135,10 @@ describe("roadmap_add 统一工具", () => {
 	});
 
 	it("item_type=task 添加 Task", async () => {
-		vi.mocked(_addTask).mockReturnValue({ result: "✅ 已添加", id: "E1.S1.T1" });
+		vi.mocked(_addTask).mockReturnValue({
+			result: "✅ 已添加",
+			id: "E1.S1.T1",
+		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
 		);

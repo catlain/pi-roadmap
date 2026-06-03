@@ -5,7 +5,7 @@
 import * as path from "node:path";
 
 import { areDependenciesMet } from "./dependency";
-import type { Epic, Priority, RoadmapFile, Story, Task } from "./types";
+import type { Epic, RoadmapFile, Story, Task } from "./types";
 import { comparePriority, getEffectivePriority } from "./types";
 
 // ── 进度计算 ──
@@ -97,7 +97,7 @@ export function getNextTasks(roadmap: RoadmapFile, limit = 5): NextTask[] {
 
 			for (const task of story.tasks) {
 				if (task.status === "todo" || task.status === "doing") {
-					const taskPrio = getEffectivePriority(task.priority, storyPrio);
+					const _taskPrio = getEffectivePriority(task.priority, storyPrio);
 					candidates.push({
 						...task,
 						epicId: epic.id,
@@ -120,8 +120,12 @@ export function getNextTasks(roadmap: RoadmapFile, limit = 5): NextTask[] {
 		// 依赖全部满足的排在依赖未满足的前面
 		// 对于 getNextTasks，我们没有 roadmap 对象传给 areDependenciesMet，需要从 candidates 中找到完整的 roadmap
 		// 用 a.roadmapId 来查找
-		const aMet = a.dependsOn ? areDependenciesMet(roadmap, a.dependsOn).met : true;
-		const bMet = b.dependsOn ? areDependenciesMet(roadmap, b.dependsOn).met : true;
+		const aMet = a.dependsOn
+			? areDependenciesMet(roadmap, a.dependsOn).met
+			: true;
+		const bMet = b.dependsOn
+			? areDependenciesMet(roadmap, b.dependsOn).met
+			: true;
 		if (aMet && !bMet) return -1;
 		if (!aMet && bMet) return 1;
 

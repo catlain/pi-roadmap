@@ -6,13 +6,9 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import {
-	filterByProject,
-	listRoadmapFiles,
-	readRoadmap,
-} from "./store";
-import type { RoadmapFile } from "./types";
+import { filterByProject, listRoadmapFiles, readRoadmap } from "./store";
 import { searchRoadmapData } from "./tools-query-search";
+import type { RoadmapFile } from "./types";
 
 export function registerSearchTool(pi: ExtensionAPI) {
 	pi.registerTool({

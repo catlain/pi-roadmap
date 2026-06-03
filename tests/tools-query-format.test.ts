@@ -94,7 +94,10 @@ describe("formatRoadmapDetail — planPath 标记", () => {
 		const t2Idx = output.indexOf("E1.S1.T2");
 		if (t2Idx >= 0) {
 			const nextLine = output.indexOf("\n", t2Idx);
-			const lineAfterT2 = output.substring(t2Idx, nextLine > 0 ? nextLine : t2Idx + 100);
+			const lineAfterT2 = output.substring(
+				t2Idx,
+				nextLine > 0 ? nextLine : t2Idx + 100,
+			);
 			expect(lineAfterT2).not.toContain("计划文档");
 		}
 	});
@@ -113,7 +116,8 @@ describe("formatRoadmapDetail — planPath 标记", () => {
 									id: "E1.S1.T1",
 									title: "正在做某事",
 									status: "doing",
-									doingSessionId: "2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
+									doingSessionId:
+										"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
 									doingDate: "2026-06-02T10:00:00.000Z",
 								},
 							],
@@ -131,10 +135,16 @@ describe("formatRoadmapDetail — planPath 标记", () => {
 
 describe("shortSessionId", () => {
 	it("从完整 session ID 提取短 ID", () => {
-		expect(shortSessionId("2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232")).toBe("8740-8fce3e7af232");
+		expect(
+			shortSessionId(
+				"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
+			),
+		).toBe("8740-8fce3e7af232");
 	});
 	it("纯 UUID 直接取最后两段", () => {
-		expect(shortSessionId("019e6729-77b4-7bb8-8740-8fce3e7af232")).toBe("8740-8fce3e7af232");
+		expect(shortSessionId("019e6729-77b4-7bb8-8740-8fce3e7af232")).toBe(
+			"8740-8fce3e7af232",
+		);
 	});
 	it("短字符串原样返回", () => {
 		expect(shortSessionId("abc")).toBe("abc");

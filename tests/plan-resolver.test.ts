@@ -49,7 +49,9 @@ describe("resolveAbsolutePath", () => {
 			roadmapId: "test-roadmap",
 		});
 		// 跨平台：Unix 返回正斜杠，Windows 返回反斜杠
-		expect(result).toMatch(/[\\/]home[\\/]user[\\/]projects[\\/]my-app[\\/]\.pi[\\/]plans[\\/]E1-S3\.md$/);
+		expect(result).toMatch(
+			/[\\/]home[\\/]user[\\/]projects[\\/]my-app[\\/]\.pi[\\/]plans[\\/]E1-S3\.md$/,
+		);
 	});
 
 	it("无 project 时拼全局路径", () => {
@@ -57,7 +59,9 @@ describe("resolveAbsolutePath", () => {
 			roadmapId: "my-roadmap",
 		});
 		// ~/.pi/roadmap/plans/my-roadmap/E1.md
-		expect(result).toMatch(/[\\/]\.pi[\\/]roadmap[\\/]plans[\\/]my-roadmap[\\/]E1\.md$/);
+		expect(result).toMatch(
+			/[\\/]\.pi[\\/]roadmap[\\/]plans[\\/]my-roadmap[\\/]E1\.md$/,
+		);
 		expect(result).not.toContain("undefined");
 	});
 
@@ -66,13 +70,13 @@ describe("resolveAbsolutePath", () => {
 			project: "",
 			roadmapId: "my-roadmap",
 		});
-		expect(result).toMatch(/[\\/]\.pi[\\/]roadmap[\\/]plans[\\/]my-roadmap[\\/]E1\.md$/);
+		expect(result).toMatch(
+			/[\\/]\.pi[\\/]roadmap[\\/]plans[\\/]my-roadmap[\\/]E1\.md$/,
+		);
 	});
 
 	it("roadmapId 缺失时抛错", () => {
-		expect(() =>
-			resolveAbsolutePath("E1.md", { roadmapId: "" })
-		).toThrow();
+		expect(() => resolveAbsolutePath("E1.md", { roadmapId: "" })).toThrow();
 	});
 });
 

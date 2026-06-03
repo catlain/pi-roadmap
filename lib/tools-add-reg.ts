@@ -13,6 +13,7 @@ import { existsSync } from "node:fs";
 import * as path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import { resolveToEid } from "./id-utils";
 import { writeRoadmap } from "./store";
 import {
 	addEpic as _addEpic,
@@ -20,7 +21,7 @@ import {
 	addTask as _addTask,
 	createRoadmap as _createRoadmap,
 } from "./tools-atomic-logic";
-import { atomicUpdate, getOrCreateRoadmap } from "./tools-atomic-utils";
+import { atomicUpdate } from "./tools-atomic-utils";
 import type { Priority } from "./types";
 import { FILE_SUFFIX, GLOBAL_ROADMAP_DIR } from "./types";
 
@@ -56,7 +57,9 @@ export function registerAddTool(pi: ExtensionAPI) {
 				Type.Array(Type.String(), { description: "依赖的其他项 ID 列表" }),
 			),
 			planPath: Type.Optional(
-				Type.String({ description: "计划文档文件名（Epic/Story 必填，Task 可选）" }),
+				Type.String({
+					description: "计划文档文件名（Epic/Story 必填，Task 可选）",
+				}),
 			),
 		}),
 		async execute(
@@ -88,7 +91,9 @@ export function registerAddTool(pi: ExtensionAPI) {
 				}
 
 				// 归一化路径分隔符，防止 Windows 下正反斜杠不一致导致 filterByProject 失配
-				const normalizedProject = path.normalize(params.project ?? process.cwd());
+				const normalizedProject = path.normalize(
+					params.project ?? process.cwd(),
+				);
 				const result = atomicUpdate(params.roadmapId, (rm) => {
 					return _addEpic(
 						rm,
@@ -123,7 +128,9 @@ export function registerAddTool(pi: ExtensionAPI) {
 						params.epic_id!,
 						params.title,
 						params.description ?? "",
-						params.dependsOn,
+						params.dependsOn
+							?.map((d) => resolveToEid(rm, d))
+							.filter((x): x is number => x !== null),
 						params.planPath,
 					).result;
 				});
@@ -151,7 +158,9 @@ export function registerAddTool(pi: ExtensionAPI) {
 						params.story_id!,
 						params.title,
 						params.priority as Priority | undefined,
-						params.dependsOn,
+						params.dependsOn
+							?.map((d) => resolveToEid(rm, d))
+							.filter((x): x is number => x !== null),
 						params.planPath,
 					).result;
 				});

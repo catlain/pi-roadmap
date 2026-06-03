@@ -1,9 +1,14 @@
 /**
  * Roadmap 依赖关系 — 纯函数
  *
+ * 支持两种 dependsOn 格式：
+ *   - number[]（新格式，eid 引用）
+ *   - string[]（旧格式，路径 ID，兼容迁移期）
+ *
  * 所有函数不依赖 pi API，只操作数据结构，可独立测试。
  */
 
+import { findItemByEid } from "./id-utils";
 import type { ItemStatus, RoadmapFile } from "./types";
 
 /** 状态图标映射 */
@@ -19,24 +24,30 @@ const STATUS_ICON: Record<ItemStatus, string> = {
 const DONE_STATUSES: ReadonlySet<ItemStatus> = new Set(["done", "dropped"]);
 
 /**
- * 在 roadmap 内查找某个 ID 的当前状态
- *
- * 遍历 epics/stories/tasks，匹配 itemId。
- * 返回 ItemStatus 或 null（未找到）。
+ * 按 eid 查找某个项的当前状态
+ */
+export function findItemStatusByEid(
+	rm: RoadmapFile,
+	eid: number,
+): ItemStatus | null {
+	const found = findItemByEid(rm, eid);
+	if (!found) return null;
+	if (found.task) return found.task.status;
+	if (found.story) return found.story.status;
+	return found.epic.status;
+}
+
+/**
+ * 按位置路径 ID 查找某个项的当前状态（兼容旧接口）
  */
 export function findItemStatus(
 	rm: RoadmapFile,
 	itemId: string,
 ): ItemStatus | null {
-	// 先查 epic 级别的 ID
 	for (const epic of rm.epics) {
 		if (epic.id === itemId) return epic.status;
-
-		// 查 story 级别的 ID
 		for (const story of epic.stories) {
 			if (story.id === itemId) return story.status;
-
-			// 查 task 级别的 ID
 			for (const task of story.tasks) {
 				if (task.id === itemId) return task.status;
 			}
@@ -48,66 +59,54 @@ export function findItemStatus(
 /**
  * 检查某个项的所有依赖是否已完成（done 或 dropped）
  *
- * @returns met: 是否全部满足；unmet: 未满足的依赖 ID 列表
+ * @param dependsOn eid 列表（number[]）
  */
 export function areDependenciesMet(
 	rm: RoadmapFile,
-	dependsOn: string[] | undefined,
-): { met: boolean; unmet: string[] } {
+	dependsOn: number[] | undefined,
+): { met: boolean; unmet: number[] } {
 	if (!dependsOn || dependsOn.length === 0) {
 		return { met: true, unmet: [] };
 	}
 
-	const unmet: string[] = [];
-	for (const depId of dependsOn) {
-		const status = findItemStatus(rm, depId);
+	const unmet: number[] = [];
+	for (const depEid of dependsOn) {
+		const status = findItemStatusByEid(rm, depEid);
 		if (status === null) {
-			// 依赖的 ID 不存在，视为未满足
-			unmet.push(depId);
+			unmet.push(depEid);
 		} else if (!DONE_STATUSES.has(status)) {
-			unmet.push(depId);
+			unmet.push(depEid);
 		}
 	}
 	return { met: unmet.length === 0, unmet };
 }
 
 /**
- * 检测循环依赖（从 itemId 出发，沿着 dependsOn 链是否会回到 itemId）
+ * 检测循环依赖（从 eid 出发，沿着 dependsOn 链是否会回到 eid）
  *
- * 用 DFS 递归追踪每个 dependsOn 项的 dependsOn。
- *
- * @returns 循环路径数组（如 ["E1.S2.T3", "E3.S1.T2", "E1.S2.T3"]）或 null（无环）
+ * @returns 循环路径数组（如 [42, 17, 42]）或 null（无环）
  */
-export function detectCycle(
+export function detectCycleByEid(
 	rm: RoadmapFile,
-	itemId: string,
-	dependsOn: string[] | undefined,
-): string[] | null {
+	eid: number,
+	dependsOn: number[] | undefined,
+): number[] | null {
 	if (!dependsOn || dependsOn.length === 0) return null;
 
-	const visited = new Set<string>();
-	const path: string[] = [];
+	const visited = new Set<number>();
+	const path: number[] = [];
 
-	/**
-	 * 从某个依赖 ID 出发递归 DFS，检查是否能回到起始 itemId
-	 */
-	function dfs(currentId: string): string[] | null {
-		// 找到起始点 → 有环
-		if (currentId === itemId) {
-			return [...path, currentId];
-		}
+	function dfs(currentEid: number): number[] | null {
+		if (currentEid === eid) return [...path, currentEid];
+		if (visited.has(currentEid)) return null;
+		visited.add(currentEid);
 
-		// 已访问过 → 跳过（避免重复回溯）
-		if (visited.has(currentId)) return null;
-		visited.add(currentId);
-
-		// 查找当前项及其 dependsOn
-		const deps = findDependsOn(rm, currentId);
+		const deps = findDependsOnByEid(rm, currentEid);
 		if (!deps || deps.length === 0) return null;
 
-		for (const depId of deps) {
-			path.push(currentId);
-			const result = dfs(depId);
+		for (const depEid of deps) {
+			path.push(currentEid);
+			const result = dfs(depEid);
 			path.pop();
 			if (result !== null) return result;
 		}
@@ -115,55 +114,56 @@ export function detectCycle(
 		return null;
 	}
 
-	for (const depId of dependsOn) {
+	for (const depEid of dependsOn) {
 		visited.clear();
 		path.length = 0;
-		const result = dfs(depId);
+		const result = dfs(depEid);
 		if (result !== null) return result;
 	}
 
 	return null;
 }
 
-/**
- * 在 roadmap 中查找某个 ID 的 dependsOn 列表
- */
-function findDependsOn(
+/** 在 roadmap 中查找某个 eid 的 dependsOn 列表 */
+function findDependsOnByEid(
 	rm: RoadmapFile,
-	itemId: string,
-): string[] | undefined {
-	for (const epic of rm.epics) {
-		if (epic.id === itemId) return epic.dependsOn;
-		for (const story of epic.stories) {
-			if (story.id === itemId) return story.dependsOn;
-			for (const task of story.tasks) {
-				if (task.id === itemId) return task.dependsOn;
-			}
-		}
-	}
-	return undefined;
+	eid: number,
+): number[] | undefined {
+	const found = findItemByEid(rm, eid);
+	if (!found) return undefined;
+	if (found.task) return found.task.dependsOn;
+	if (found.story) return found.story.dependsOn;
+	return found.epic.dependsOn;
 }
 
 /**
- * 格式化依赖信息用于展示
+ * 格式化依赖信息用于展示（eid 格式）
  *
- * 格式如： "E1.S2.T3(✅), E3.S1.T2(⬜)"
+ * 格式如： "#42(E1.S2, ✅), #17(E3.S1.T2, ⬜)"
  */
 export function formatDependencies(
 	rm: RoadmapFile,
-	dependsOn: string[] | undefined,
+	dependsOn: number[] | undefined,
 ): string {
 	if (!dependsOn || dependsOn.length === 0) return "";
 
 	const parts: string[] = [];
-	for (const depId of dependsOn) {
-		const status = findItemStatus(rm, depId);
-		if (status === null) {
-			parts.push(`${depId}(❓)`);
-		} else {
-			const icon = STATUS_ICON[status] || "⬜";
-			parts.push(`${depId}(${icon})`);
+	for (const depEid of dependsOn) {
+		const found = findItemByEid(rm, depEid);
+		if (!found) {
+			parts.push(`#${depEid}(❓)`);
+			continue;
 		}
+		// 获取 id（位置路径）
+		let itemId: string;
+		if (found.task) itemId = found.task.id;
+		else if (found.story) itemId = found.story.id;
+		else itemId = found.epic.id;
+
+		const status =
+			found.task?.status ?? found.story?.status ?? found.epic.status;
+		const icon = STATUS_ICON[status] || "⬜";
+		parts.push(`#${depEid}(${itemId}, ${icon})`);
 	}
 	return parts.join(", ");
 }

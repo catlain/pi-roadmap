@@ -11,10 +11,10 @@ import { existsSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { clearDoing } from "./doing-store";
+import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
 import {
 	archiveAllDone as _archiveAllDone,
 	archiveEpic as _archiveEpic,
-	getArchivedEpics as _getArchivedEpics,
 	markTaskDone as _markTaskDone,
 } from "./tools-atomic-logic";
 import {
@@ -23,7 +23,6 @@ import {
 	updateItem,
 	updateTask,
 } from "./tools-atomic-utils";
-import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
 
 export function registerUpdateTool(pi: ExtensionAPI) {
 	pi.registerTool({
@@ -49,9 +48,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				Type.String({ description: "新优先级: high/medium/low" }),
 			),
 			note: Type.Optional(Type.String({ description: "备注" })),
-			planPath: Type.Optional(
-				Type.String({ description: "计划文档文件名" }),
-			),
+			planPath: Type.Optional(Type.String({ description: "计划文档文件名" })),
 			dependsOn: Type.Optional(
 				Type.Array(Type.String(), { description: "依赖项 ID 列表" }),
 			),
@@ -97,7 +94,12 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				const parts = params.item_id.split(".");
 				// 只有 Task 做 done 级联
 				if (parts.length === 3) {
-					return handleTaskDone(params.roadmapId, params.item_id, params.note, _ctx);
+					return handleTaskDone(
+						params.roadmapId,
+						params.item_id,
+						params.note,
+						_ctx,
+					);
 				}
 				// Epic/Story 的 done 走普通 update
 			}

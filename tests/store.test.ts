@@ -6,19 +6,11 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	archiveRoadmap,
-	filterByProject,
-	getArchivePath,
-	getRoadmapFilePath,
-	readRoadmap,
-	unarchiveRoadmap,
-	writeRoadmap,
-} from "../lib/store";
+import { filterByProject, readRoadmap, writeRoadmap } from "../lib/store";
 import type { RoadmapFile } from "../lib/types";
 
 // 临时覆盖全局目录
-const TMP_DIR = path.join(os.tmpdir(), "roadmap-test-" + process.pid);
+const TMP_DIR = path.join(os.tmpdir(), `roadmap-test-${process.pid}`);
 
 // monkey-patch: store.ts 使用 GLOBAL_ROADMAP_DIR，这里用 tmpdir 测试
 // 需要通过路径间接测试
@@ -104,7 +96,7 @@ const MULTI_PROJECT_ROADMAP: RoadmapFile = {
 
 describe("store", () => {
 	const tmpFile = path.join(TMP_DIR, "test.roadmap.json");
-	const archiveFile = path.join(TMP_DIR, "archive", "test.roadmap.json");
+	const _archiveFile = path.join(TMP_DIR, "archive", "test.roadmap.json");
 
 	beforeEach(() => {
 		fs.mkdirSync(TMP_DIR, { recursive: true });
@@ -153,19 +145,28 @@ describe("store", () => {
 
 describe("filterByProject", () => {
 	it("匹配单个项目只返回该项目的 epic", () => {
-		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-a");
+		const result = filterByProject(
+			MULTI_PROJECT_ROADMAP,
+			"/home/user/project-a",
+		);
 		expect(result.epics).toHaveLength(2);
 		expect(result.epics.map((e) => e.id)).toEqual(["E1", "E3"]);
 	});
 
 	it("匹配另一个项目只返回对应的 epic", () => {
-		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-b");
+		const result = filterByProject(
+			MULTI_PROJECT_ROADMAP,
+			"/home/user/project-b",
+		);
 		expect(result.epics).toHaveLength(1);
 		expect(result.epics[0].id).toBe("E2");
 	});
 
 	it("无匹配时返回全部 epic（非项目目录）", () => {
-		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/unrelated");
+		const result = filterByProject(
+			MULTI_PROJECT_ROADMAP,
+			"/home/user/unrelated",
+		);
 		expect(result.epics).toHaveLength(3);
 	});
 
@@ -182,7 +183,10 @@ describe("filterByProject", () => {
 	});
 
 	it("meta 信息保持不变", () => {
-		const result = filterByProject(MULTI_PROJECT_ROADMAP, "/home/user/project-a");
+		const result = filterByProject(
+			MULTI_PROJECT_ROADMAP,
+			"/home/user/project-a",
+		);
 		expect(result.meta.id).toBe("multi");
 		expect(result.meta.title).toBe("多项目路线图");
 	});
@@ -222,8 +226,8 @@ describe("filterByProject", () => {
 				...MULTI_PROJECT_ROADMAP,
 				epics: [
 					{ ...MULTI_PROJECT_ROADMAP.epics[0], project: "D:\\Project\\foo" }, // 反斜杠
-					{ ...MULTI_PROJECT_ROADMAP.epics[1], project: "D:/Project/foo" },  // 正斜杠
-					{ ...MULTI_PROJECT_ROADMAP.epics[2], project: "D:/Project/bar" },  // 正斜杠，不同项目
+					{ ...MULTI_PROJECT_ROADMAP.epics[1], project: "D:/Project/foo" }, // 正斜杠
+					{ ...MULTI_PROJECT_ROADMAP.epics[2], project: "D:/Project/bar" }, // 正斜杠，不同项目
 				],
 			};
 			const result = filterByProject(rm, "D:\\Project\\foo");

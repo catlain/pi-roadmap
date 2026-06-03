@@ -126,7 +126,12 @@ describe("状态机：字段清理", () => {
 			doingDate: "2026-01-01",
 			doingSessionId: "session-1",
 		};
-		const result = updateTask({} as any, task, { status: "doing" }, "session-2");
+		const result = updateTask(
+			{} as any,
+			task,
+			{ status: "doing" },
+			"session-2",
+		);
 		expect(result).not.toContain("不合法");
 		expect(task.doingDate).toBe("2026-01-01"); // 未变
 	});

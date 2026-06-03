@@ -146,7 +146,8 @@ describe("generateInjection", () => {
 									id: "E1.S1.T1",
 									title: "做某事",
 									status: "doing",
-									doingSessionId: "2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
+									doingSessionId:
+										"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
 									doingDate: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
 								},
 							],
@@ -171,9 +172,7 @@ describe("generateInjection", () => {
 						{
 							...ACTIVE_ROADMAP.epics[0].stories[0],
 							status: "todo",
-							tasks: [
-								{ id: "E1.S1.T1", title: "做某事", status: "todo" },
-							],
+							tasks: [{ id: "E1.S1.T1", title: "做某事", status: "todo" }],
 						},
 					],
 				},
@@ -189,13 +188,19 @@ describe("timeSince", () => {
 		expect(timeSince(new Date(Date.now() - 30_000).toISOString())).toBe("刚刚");
 	});
 	it("分钟前", () => {
-		expect(timeSince(new Date(Date.now() - 5 * 60_000).toISOString())).toBe("5分钟前");
+		expect(timeSince(new Date(Date.now() - 5 * 60_000).toISOString())).toBe(
+			"5分钟前",
+		);
 	});
 	it("小时前", () => {
-		expect(timeSince(new Date(Date.now() - 3 * 3600_000).toISOString())).toBe("3小时前");
+		expect(timeSince(new Date(Date.now() - 3 * 3600_000).toISOString())).toBe(
+			"3小时前",
+		);
 	});
 	it("天前", () => {
-		expect(timeSince(new Date(Date.now() - 2 * 86400_000).toISOString())).toBe("2天前");
+		expect(timeSince(new Date(Date.now() - 2 * 86400_000).toISOString())).toBe(
+			"2天前",
+		);
 	});
 	it("无效日期返回空", () => {
 		expect(timeSince("not-a-date")).toBe("");

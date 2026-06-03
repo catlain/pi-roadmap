@@ -2,10 +2,10 @@
  * planPath update 端到端测试 — 不 mock，验证真实数据流
  * 覆盖：updateItem/updateTask 真正写入 planPath + format 展示
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { updateItem, updateTask } from "../lib/tools-atomic-utils";
 import { formatRoadmapDetail } from "../lib/tools-query-format";
-import type { RoadmapFile, Epic, Story, Task } from "../lib/types";
+import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
 
 const BASE_EPIC: Epic = {
 	id: "E1",
@@ -70,7 +70,12 @@ describe("planPath update 端到端（不 mock）", () => {
 	it("updateTask 为 Task 设置 planPath 后，task.planPath 被修改", () => {
 		const rm = makeRM();
 		const task = rm.epics[0].stories[0].tasks[0];
-		const result = updateTask(rm, task, { planPath: "E1-S1-T1.md" }, "session-1");
+		const result = updateTask(
+			rm,
+			task,
+			{ planPath: "E1-S1-T1.md" },
+			"session-1",
+		);
 		expect(result).toContain("planPath: E1-S1-T1.md");
 		expect(task.planPath).toBe("E1-S1-T1.md");
 	});

@@ -2,16 +2,11 @@
  * Roadmap 原子操作 — 公共辅助函数
  */
 
-import { areDependenciesMet, detectCycle, findItemStatus } from "./dependency";
 import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
-import type {
-	Epic,
-	ItemStatus,
-	Priority,
-	RoadmapFile,
-	Story,
-	Task,
-} from "./types";
+import type { RoadmapFile } from "./types";
+
+// Re-export update functions (moved to tools-atomic-logic-update.ts)
+export { updateItem, updateTask } from "./tools-atomic-logic-update";
 
 /** 获取当前日期 YYYY-MM-DD */
 export function today(): string {
@@ -44,181 +39,23 @@ export function atomicUpdate(
 	return result;
 }
 
-/** 更新通用字段（Epic/Story） */
-/** 合法状态转换表（from → Set<to>） */
-const VALID_TRANSITIONS: Record<ItemStatus, ReadonlySet<ItemStatus>> = {
-	todo: new Set(["doing", "dropped"]),
-	doing: new Set(["todo", "done", "blocked", "dropped"]),
-	done: new Set(["todo", "doing"]), // 允许重开为 todo 或直接 doing
-	blocked: new Set(["doing", "dropped"]),
-	dropped: new Set(["todo"]), // 仅允许重开
-};
-
-export function updateItem(
+/** 遍历整个 roadmap，查找已使用指定 planPath 的条目 */
+export function findPlanPathUsers(
 	rm: RoadmapFile,
-	item: Epic | Story,
-	updates: Record<string, string | string[]>,
-	sessionId: string,
-): string {
-	const changed: string[] = [];
-	if (updates.title !== undefined) {
-		item.title = updates.title as string;
-		changed.push("title");
-	}
-	if (updates.description !== undefined) {
-		item.description = updates.description as string;
-		changed.push("description");
-	}
-	if (updates.priority !== undefined) {
-		item.priority = updates.priority as Priority;
-		changed.push("priority");
-	}
-	if (updates.dependsOn !== undefined) {
-		const newDependsOn = updates.dependsOn as string[];
-		// 验证依赖 ID 是否存在
-		for (const depId of newDependsOn) {
-			const status = findItemStatus(rm, depId);
-			if (status === null) {
-				return `❌ 依赖项 "${depId}" 不存在。`;
+	planPath: string,
+): { id: string; title: string }[] {
+	const users: { id: string; title: string }[] = [];
+	for (const epic of rm.epics) {
+		if (epic.planPath === planPath)
+			users.push({ id: epic.id, title: epic.title });
+		for (const story of epic.stories) {
+			if (story.planPath === planPath)
+				users.push({ id: story.id, title: story.title });
+			for (const task of story.tasks) {
+				if (task.planPath === planPath)
+					users.push({ id: task.id, title: task.title });
 			}
 		}
-		// 验证循环依赖
-		const cycle = detectCycle(rm, item.id, newDependsOn);
-		if (cycle) {
-			return `❌ 检测到循环依赖：${cycle.join(" → ")}`;
-		}
-		item.dependsOn = newDependsOn;
-		changed.push(`dependsOn: [${newDependsOn.join(", ")}]`);
 	}
-	if (updates.planPath !== undefined) {
-		item.planPath = updates.planPath as string;
-		changed.push(`planPath: ${item.planPath}`);
-	}
-	if (updates.status !== undefined) {
-		const newStatus = updates.status as ItemStatus;
-		const oldStatus = item.status;
-		if (oldStatus === newStatus) {
-			// 状态未变，不做任何处理
-		} else if (VALID_TRANSITIONS[oldStatus]?.has(newStatus)) {
-			item.status = newStatus;
-			if (newStatus === "doing") {
-				item.doingDate = today();
-				// 检查依赖是否满足
-				const deps = areDependenciesMet(rm, item.dependsOn);
-				if (!deps.met) {
-					const depNames: string[] = [];
-					for (const depId of deps.unmet) {
-						const s = findItemStatus(rm, depId);
-						depNames.push(`${depId}(${s ? statusIcon(s) + " " + s : "❓"})`);
-					}
-					return `⚠️ ${item.id} 依赖未完成：${depNames.join(", ")}。建议先完成上游任务。`;
-				}
-			} else {
-				// 离开 doing 时清除 doingDate
-				delete item.doingDate;
-			}
-			if (newStatus === "done") {
-				item.doneDate = today();
-			} else if (oldStatus === "done") {
-				// 从 done 重开时清除 doneDate
-				delete item.doneDate;
-			}
-		} else {
-			return `⚠️ ${item.id} 状态转换不合法：${oldStatus} → ${newStatus}（允许：${[...VALID_TRANSITIONS[oldStatus]].join(",")}）`;
-		}
-		changed.push(`status: ${oldStatus} → ${item.status}`);
-	}
-	return `✅ ${item.id} 已更新：${changed.join(", ")}。`;
-}
-
-/** 更新 Task（支持 note 和 doingSessionId） */
-export function updateTask(
-	rm: RoadmapFile,
-	task: Task,
-	updates: Record<string, string | string[]>,
-	sessionId: string,
-): string {
-	const changed: string[] = [];
-	if (updates.title !== undefined) {
-		task.title = updates.title as string;
-		changed.push("title");
-	}
-	if (updates.priority !== undefined) {
-		task.priority = updates.priority as Priority;
-		changed.push("priority");
-	}
-	if (updates.note !== undefined) {
-		task.note = updates.note as string;
-		changed.push("note");
-	}
-	if (updates.dependsOn !== undefined) {
-		const newDependsOn = updates.dependsOn as string[];
-		// 验证依赖 ID 是否存在
-		for (const depId of newDependsOn) {
-			const status = findItemStatus(rm, depId);
-			if (status === null) {
-				return `❌ 依赖项 "${depId}" 不存在。`;
-			}
-		}
-		// 验证循环依赖
-		const cycle = detectCycle(rm, task.id, newDependsOn);
-		if (cycle) {
-			return `❌ 检测到循环依赖：${cycle.join(" → ")}`;
-		}
-		task.dependsOn = newDependsOn;
-		changed.push(`dependsOn: [${newDependsOn.join(", ")}]`);
-	}
-	if (updates.planPath !== undefined) {
-		task.planPath = updates.planPath as string;
-		changed.push(`planPath: ${task.planPath}`);
-	}
-	if (updates.status !== undefined) {
-		const newStatus = updates.status as ItemStatus;
-		const oldStatus = task.status;
-		if (oldStatus === newStatus) {
-			// 状态未变
-		} else if (VALID_TRANSITIONS[oldStatus]?.has(newStatus)) {
-			task.status = newStatus;
-			if (newStatus === "doing") {
-				task.doingDate = today();
-				task.doingSessionId = sessionId;
-				// 检查依赖是否满足
-				const deps = areDependenciesMet(rm, task.dependsOn);
-				if (!deps.met) {
-					const depNames: string[] = [];
-					for (const depId of deps.unmet) {
-						const s = findItemStatus(rm, depId);
-						depNames.push(`${depId}(${s ? statusIcon(s) + " " + s : "❓"})`);
-					}
-					return `⚠️ ${task.id} 依赖未完成：${depNames.join(", ")}。建议先完成上游任务。`;
-				}
-			} else {
-				delete task.doingDate;
-				delete task.doingSessionId;
-			}
-			if (newStatus === "done") {
-				task.doneDate = today();
-				task.doneBySessionId = sessionId;
-			} else if (oldStatus === "done") {
-				delete task.doneDate;
-				delete task.doneBySessionId;
-			}
-		} else {
-			return `⚠️ ${task.id} 状态转换不合法：${oldStatus} → ${newStatus}（允许：${[...VALID_TRANSITIONS[oldStatus]].join(",")}）`;
-		}
-		changed.push(`status: ${oldStatus} → ${task.status}`);
-	}
-	return `✅ ${task.id} 已更新：${changed.join(", ")}。`;
-}
-
-/** 状态对应的图标 */
-function statusIcon(s: ItemStatus): string {
-	const icons: Record<ItemStatus, string> = {
-		todo: "⬜",
-		doing: "🔄",
-		done: "✅",
-		blocked: "🚫",
-		dropped: "❌",
-	};
-	return icons[s];
+	return users;
 }

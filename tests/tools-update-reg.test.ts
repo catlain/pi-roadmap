@@ -10,7 +10,12 @@ import {
 	archiveEpic as _archiveEpic,
 	markTaskDone as _markTaskDone,
 } from "../lib/tools-atomic-logic";
-import { atomicUpdate, getSessionId, updateItem, updateTask } from "../lib/tools-atomic-utils";
+import {
+	atomicUpdate,
+	getSessionId,
+	updateItem,
+	updateTask,
+} from "../lib/tools-atomic-utils";
 import { registerUpdateTool } from "../lib/tools-update-reg";
 import type { RoadmapFile } from "../lib/types";
 
@@ -151,7 +156,10 @@ describe("roadmap_update 统一工具", () => {
 		mockGetFilePath.mockReturnValue("/tmp/test.json");
 		vi.mocked(existsSync).mockReturnValue(true);
 		mockReadRoadmap.mockReturnValue(MOCK_RM);
-		vi.mocked(_markTaskDone).mockReturnValue({ result: "✅ 已完成", roadmap: MOCK_RM });
+		vi.mocked(_markTaskDone).mockReturnValue({
+			result: "✅ 已完成",
+			roadmap: MOCK_RM,
+		});
 		vi.mocked(writeRoadmap).mockImplementation(() => {});
 		vi.mocked(getSessionId).mockReturnValue("sess1");
 
@@ -165,7 +173,10 @@ describe("roadmap_update 统一工具", () => {
 	});
 
 	it("归档指定 Epic", async () => {
-		vi.mocked(_archiveEpic).mockReturnValue({ result: "✅ 已归档", roadmap: MOCK_RM });
+		vi.mocked(_archiveEpic).mockReturnValue({
+			result: "✅ 已归档",
+			roadmap: MOCK_RM,
+		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
 		);
@@ -179,7 +190,10 @@ describe("roadmap_update 统一工具", () => {
 	});
 
 	it("归档所有已完成 Epic", async () => {
-		vi.mocked(_archiveAllDone).mockReturnValue({ result: "✅ 已归档全部", roadmap: MOCK_RM });
+		vi.mocked(_archiveAllDone).mockReturnValue({
+			result: "✅ 已归档全部",
+			roadmap: MOCK_RM,
+		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
 		);

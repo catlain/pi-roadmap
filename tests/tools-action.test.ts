@@ -5,7 +5,7 @@
  */
 import { existsSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearDoing } from "../lib/doing-store";
 import { getNextTasks } from "../lib/progress";
 import {
@@ -21,7 +21,24 @@ import { getSessionId } from "../lib/tools-atomic-utils";
 import type { RoadmapFile } from "../lib/types";
 
 // ── mock 模块 ──
-vi.mock("@sinclair/typebox", () => ({ Type: { Object: () => ({}), String: () => ({}), Number: () => ({}), Boolean: () => ({}), Optional: (t: any) => t, Union: (t: any[]) => t[0], Literal: (v: any) => ({ type: "literal", value: v }), Array: (t: any) => ({ type: "array", items: t }), Record: (k: any, v: any) => ({ type: "record", key: k, value: v }), Enum: (e: any) => ({ type: "enum", values: e }), Null: () => ({ type: "null" }), Integer: () => ({ type: "integer" }), Any: () => ({ type: "any" }), Unknown: () => ({ type: "unknown" }) } }));
+vi.mock("@sinclair/typebox", () => ({
+	Type: {
+		Object: () => ({}),
+		String: () => ({}),
+		Number: () => ({}),
+		Boolean: () => ({}),
+		Optional: (t: any) => t,
+		Union: (t: any[]) => t[0],
+		Literal: (v: any) => ({ type: "literal", value: v }),
+		Array: (t: any) => ({ type: "array", items: t }),
+		Record: (k: any, v: any) => ({ type: "record", key: k, value: v }),
+		Enum: (e: any) => ({ type: "enum", values: e }),
+		Null: () => ({ type: "null" }),
+		Integer: () => ({ type: "integer" }),
+		Any: () => ({ type: "any" }),
+		Unknown: () => ({ type: "unknown" }),
+	},
+}));
 vi.mock("node:fs");
 vi.mock("../lib/store");
 vi.mock("../lib/progress");
@@ -54,9 +71,7 @@ const MOCK_ROADMAP: RoadmapFile = {
 					title: "Story 1",
 					description: "",
 					status: "todo",
-					tasks: [
-						{ id: "E1.S1.T1", title: "Task 1", status: "todo" },
-					],
+					tasks: [{ id: "E1.S1.T1", title: "Task 1", status: "todo" }],
 				},
 			],
 		},
@@ -107,7 +122,13 @@ describe("registerNextTool", () => {
 			} as any,
 		]);
 
-		const result = await execute("call-1", { roadmapId: "test-rm" }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "test-rm" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("Task 1");
 		expect(result.content[0].text).toContain("测试路线图");
 	});
@@ -116,13 +137,22 @@ describe("registerNextTool", () => {
 		vi.mocked(getRoadmapFilePath).mockReturnValue("/fake/path");
 		vi.mocked(readRoadmap).mockReturnValue(null);
 
-		const result = await execute("call-1", { roadmapId: "nonexistent" }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "nonexistent" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("不存在");
 	});
 
 	it("未指定 roadmapId 时遍历所有活跃路线图", async () => {
 		vi.mocked(listRoadmapFiles).mockReturnValue(["/fake/rm1.roadmap.json"]);
-		const activeRm = { ...MOCK_ROADMAP, meta: { ...MOCK_ROADMAP.meta, status: "active" as const } };
+		const activeRm = {
+			...MOCK_ROADMAP,
+			meta: { ...MOCK_ROADMAP.meta, status: "active" as const },
+		};
 		vi.mocked(readRoadmap).mockReturnValue(activeRm);
 		vi.mocked(filterByProject).mockImplementation((rm) => rm);
 		vi.mocked(getNextTasks).mockReturnValue([]);
@@ -155,14 +185,24 @@ describe("registerNextTool", () => {
 		}));
 		vi.mocked(getNextTasks).mockReturnValue(mockNext);
 
-		const result = await execute("call-1", { roadmapId: "test-rm", limit: 3 }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "test-rm", limit: 3 },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("Task 0");
 		expect(result.content[0].text).toContain("Task 2");
 	});
 
 	it("活跃 roadmap 但无匹配 epic 的，filterByProject 处理后 epics 为空", async () => {
 		vi.mocked(listRoadmapFiles).mockReturnValue(["/fake/rm1.roadmap.json"]);
-		const noEpicRm = { ...MOCK_ROADMAP, epics: [], meta: { ...MOCK_ROADMAP.meta, status: "active" as const } };
+		const noEpicRm = {
+			...MOCK_ROADMAP,
+			epics: [],
+			meta: { ...MOCK_ROADMAP.meta, status: "active" as const },
+		};
 		vi.mocked(readRoadmap).mockReturnValue(noEpicRm);
 		vi.mocked(filterByProject).mockImplementation((rm) => rm);
 		vi.mocked(getNextTasks).mockReturnValue([]);
@@ -190,7 +230,13 @@ describe("registerNextTool", () => {
 			} as any,
 		]);
 
-		const result = await execute("call-1", { roadmapId: "test-rm" }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "test-rm" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("session-abc");
 	});
 });
@@ -233,7 +279,13 @@ describe("registerDoneTool", () => {
 		vi.mocked(getRoadmapFilePath).mockReturnValue("/fake/path");
 		vi.mocked(existsSync).mockReturnValue(false);
 
-		const result = await execute("call-1", { roadmapId: "nonexistent", taskId: "T1" }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "nonexistent", taskId: "T1" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("不存在");
 	});
 
@@ -242,22 +294,36 @@ describe("registerDoneTool", () => {
 		vi.mocked(existsSync).mockReturnValue(true);
 		vi.mocked(readRoadmap).mockReturnValue(null);
 
-		const result = await execute("call-1", { roadmapId: "test-rm", taskId: "T1" }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "test-rm", taskId: "T1" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("读取失败");
 	});
 
 	it("markTaskDone 返回错误时不继续执行", async () => {
 		vi.mocked(getRoadmapFilePath).mockReturnValue("/fake/path");
 		vi.mocked(existsSync).mockReturnValue(true);
-		vi.mocked(readRoadmap).mockReturnValue(JSON.parse(JSON.stringify(MOCK_ROADMAP)));
+		vi.mocked(readRoadmap).mockReturnValue(
+			JSON.parse(JSON.stringify(MOCK_ROADMAP)),
+		);
 		vi.mocked(getSessionId).mockReturnValue("session-123");
 		vi.mocked(markTaskDone).mockReturnValue({
-			result: "错误：Task \"T999\" 不存在。",
+			result: '错误：Task "T999" 不存在。',
 			doneTaskId: "",
 			cascadeInfo: [],
 		});
 
-		const result = await execute("call-1", { roadmapId: "test-rm", taskId: "T999" }, undefined, undefined, undefined);
+		const result = await execute(
+			"call-1",
+			{ roadmapId: "test-rm", taskId: "T999" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(result.content[0].text).toContain("错误");
 		expect(writeRoadmap).not.toHaveBeenCalled();
 	});
@@ -276,7 +342,13 @@ describe("registerDoneTool", () => {
 		vi.mocked(writeRoadmap).mockImplementation(() => {});
 		vi.mocked(clearDoing).mockImplementation(() => {});
 
-		await execute("call-1", { roadmapId: "test-rm", taskId: "E1.S1.T1", note: "已提交 PR" }, undefined, undefined, undefined);
+		await execute(
+			"call-1",
+			{ roadmapId: "test-rm", taskId: "E1.S1.T1", note: "已提交 PR" },
+			undefined,
+			undefined,
+			undefined,
+		);
 		expect(writeRoadmap).toHaveBeenCalled();
 		// 验证 note 写入了
 		const writtenRm = vi.mocked(writeRoadmap).mock.calls[0][1];

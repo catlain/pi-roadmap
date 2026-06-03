@@ -72,7 +72,9 @@ export function generateInjection(
 		lines.push("## 🔄 进行中");
 		lines.push("");
 		for (const dt of doingTasks) {
-			const session = dt.sessionId ? `session: ${shortSessionId(dt.sessionId)}` : "";
+			const session = dt.sessionId
+				? `session: ${shortSessionId(dt.sessionId)}`
+				: "";
 			const timeAgo = dt.doingDate ? timeSince(dt.doingDate) : "";
 			const meta = [session, timeAgo].filter(Boolean).join(", ");
 			const metaStr = meta ? ` (${meta})` : "";
@@ -102,7 +104,9 @@ export function generateInjection(
 			const nextHint =
 				nextForEpic.length > 0 ? ` — 下一步: ${nextForEpic[0].title}` : "";
 			const planMark = epic.planPath ? ` [plan: ${epic.planPath}]` : "";
-			lines.push(`  Epic ${epic.id} ${epic.title} [${statusLabel}]${planMark}${nextHint}`);
+			lines.push(
+				`  Epic ${epic.id} ${epic.title} [${statusLabel}]${planMark}${nextHint}`,
+			);
 		}
 		lines.push("");
 	}
@@ -122,7 +126,7 @@ export function generateInjection(
 export function timeSince(isoDate: string): string {
 	const now = Date.now();
 	const then = new Date(isoDate).getTime();
-	if (isNaN(then)) return "";
+	if (Number.isNaN(then)) return "";
 	const diffMs = now - then;
 	if (diffMs < 0) return "刚刚";
 

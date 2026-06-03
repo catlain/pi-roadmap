@@ -8,31 +8,72 @@ import { describe, expect, it } from "vitest";
 import { today, updateItem, updateTask } from "../lib/tools-atomic-utils";
 import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
 
-function makeTask(o: Partial<Task> & { id: string }): Task {
+function makeTask(o: Partial<Task> & { id: string; eid: number }): Task {
 	return { title: `Task ${o.id}`, status: "todo", ...o };
 }
-function makeStory(o: Partial<Story> & { id: string }, tasks: Task[] = []): Story {
-	return { title: `Story ${o.id}`, description: "", status: "todo", tasks, ...o };
+function makeStory(
+	o: Partial<Story> & { id: string; eid: number },
+	tasks: Task[] = [],
+): Story {
+	return {
+		title: `Story ${o.id}`,
+		description: "",
+		status: "todo",
+		tasks,
+		...o,
+	};
 }
-function makeEpic(o: Partial<Epic> & { id: string }, stories: Story[] = []): Epic {
-	return { title: `Epic ${o.id}`, description: "", status: "todo", priority: "medium", project: "/test", stories, ...o };
+function makeEpic(
+	o: Partial<Epic> & { id: string; eid: number },
+	stories: Story[] = [],
+): Epic {
+	return {
+		title: `Epic ${o.id}`,
+		description: "",
+		status: "todo",
+		priority: "medium",
+		project: "/test",
+		stories,
+		...o,
+	};
 }
 function makeRoadmap(epics: Epic[] = []): RoadmapFile {
-	return { meta: { id: "test", title: "Test", status: "active", created: "2025-01-01", updated: "2025-01-01", tags: [] }, epics };
+	return {
+		meta: {
+			id: "test",
+			title: "Test",
+			status: "active",
+			created: "2025-01-01",
+			updated: "2025-01-01",
+			tags: [],
+			nextEid: 100,
+		},
+		epics,
+	};
 }
 
 // ── updateTask() ──
 
 describe("updateTask()", () => {
 	it("更新 title", () => {
-		const task = { id: "E1.S1.T1", title: "Old", status: "todo" as const };
+		const task = {
+			id: "E1.S1.T1",
+			eid: 3,
+			title: "Old",
+			status: "todo" as const,
+		};
 		const result = updateTask({} as any, task, { title: "New" }, "session-1");
 		expect(result).toContain("title");
 		expect(task.title).toBe("New");
 	});
 
 	it("status→doing 填 doingDate 和 doingSessionId", () => {
-		const task = { id: "E1.S1.T1", title: "T1", status: "todo" as const };
+		const task = {
+			id: "E1.S1.T1",
+			eid: 3,
+			title: "T1",
+			status: "todo" as const,
+		};
 		updateTask({} as any, task, { status: "doing" }, "session-123");
 		expect(task.doingDate).toBe(today());
 		expect(task.doingSessionId).toBe("session-123");
@@ -41,6 +82,7 @@ describe("updateTask()", () => {
 	it("status→done 填 doneDate 和 doneBySessionId，清 doingSessionId", () => {
 		const task = {
 			id: "E1.S1.T1",
+			eid: 3,
 			title: "T1",
 			status: "doing" as const,
 			doingDate: "2026-01-01",
@@ -53,7 +95,12 @@ describe("updateTask()", () => {
 	});
 
 	it("更新 note", () => {
-		const task = { id: "E1.S1.T1", title: "T1", status: "todo" as const };
+		const task = {
+			id: "E1.S1.T1",
+			eid: 3,
+			title: "T1",
+			status: "todo" as const,
+		};
 		updateTask({} as any, task, { note: "测试备注" }, "session-1");
 		expect(task.note).toBe("测试备注");
 	});
@@ -65,6 +112,7 @@ describe("updateItem()", () => {
 	it("更新 Epic title", () => {
 		const epic = {
 			id: "E1",
+			eid: 1,
 			title: "Old",
 			description: "",
 			status: "todo" as const,
@@ -79,6 +127,7 @@ describe("updateItem()", () => {
 	it("status→doing 填 doingDate", () => {
 		const story = {
 			id: "E1.S1",
+			eid: 2,
 			title: "S1",
 			description: "",
 			status: "todo" as const,
@@ -91,6 +140,7 @@ describe("updateItem()", () => {
 	it("status→done 填 doneDate", () => {
 		const epic = {
 			id: "E1",
+			eid: 1,
 			title: "E1",
 			description: "",
 			status: "doing" as const,
@@ -108,46 +158,47 @@ describe("updateItem()", () => {
 describe("updateItem() dependsOn", () => {
 	it("设置 Epic 的 dependsOn", () => {
 		const rm = makeRoadmap([
-			makeEpic({ id: "E1" }),
-			makeEpic({ id: "E2", status: "done" }),
+			makeEpic({ id: "E1", eid: 1 }),
+			makeEpic({ id: "E2", eid: 2, status: "done" }),
 		]);
 		const epic = rm.epics[0];
-		const result = updateItem(rm, epic, { dependsOn: ["E2"] }, "s1");
+		const result = updateItem(rm, epic, { dependsOn: [2] }, "s1");
 		expect(result).toContain("dependsOn");
-		expect(epic.dependsOn).toEqual(["E2"]);
+		expect(epic.dependsOn).toEqual([2]);
 	});
 
 	it("设置 Story 的 dependsOn", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [
-			makeStory({ id: "E1.S1" }),
-			makeStory({ id: "E1.S2", status: "done" }),
-		])]);
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1", eid: 1 }, [
+				makeStory({ id: "E1.S1", eid: 2 }),
+				makeStory({ id: "E1.S2", eid: 3, status: "done" }),
+			]),
+		]);
 		const story = rm.epics[0].stories[0];
-		const result = updateItem(rm, story, { dependsOn: ["E1.S2"] }, "s1");
+		const result = updateItem(rm, story, { dependsOn: [3] }, "s1");
 		expect(result).toContain("dependsOn");
-		expect(story.dependsOn).toEqual(["E1.S2"]);
+		expect(story.dependsOn).toEqual([3]);
 	});
 
 	it("拒绝不存在的依赖 ID", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [
-			makeStory({ id: "E1.S1" }),
-		])]);
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1", eid: 1 }, [makeStory({ id: "E1.S1", eid: 2 })]),
+		]);
 		const epic = rm.epics[0];
-		const result = updateItem(rm, epic, { dependsOn: ["NONEXISTENT"] }, "s1");
+		const result = updateItem(rm, epic, { dependsOn: [999] }, "s1");
 		expect(result).toContain("不存在");
 		expect(epic.dependsOn).toBeUndefined();
 	});
 
 	it("拒绝循环依赖", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [
-			makeStory({ id: "E1.S1" }),
-		])]);
-		// E1 依赖 E1.S1, E1.S1 依赖 E1 → 循环
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1", eid: 1 }, [makeStory({ id: "E1.S1", eid: 2 })]),
+		]);
+		// E1(eid=1) 依赖 E1.S1(eid=2), E1.S1(eid=2) 依赖 E1(eid=1) → 循环
 		const story = rm.epics[0].stories[0];
-		// 先给 Story 设置 dependsOn E1
-		story.dependsOn = ["E1"];
+		story.dependsOn = [1]; // story depends on epic
 		const epic = rm.epics[0];
-		const result = updateItem(rm, epic, { dependsOn: ["E1.S1"] }, "s1");
+		const result = updateItem(rm, epic, { dependsOn: [2] }, "s1");
 		expect(result).toContain("循环依赖");
 		expect(epic.dependsOn).toBeUndefined();
 	});
@@ -157,35 +208,47 @@ describe("updateItem() dependsOn", () => {
 
 describe("updateTask() dependsOn", () => {
 	it("设置 Task 的 dependsOn", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1" }, [
-			makeTask({ id: "E1.S1.T1" }),
-			makeTask({ id: "E1.S1.T2", status: "done" }),
-		])])]);
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1", eid: 1 }, [
+				makeStory({ id: "E1.S1", eid: 2 }, [
+					makeTask({ id: "E1.S1.T1", eid: 3 }),
+					makeTask({ id: "E1.S1.T2", eid: 4, status: "done" }),
+				]),
+			]),
+		]);
 		const task = rm.epics[0].stories[0].tasks[0];
-		const result = updateTask(rm, task, { dependsOn: ["E1.S1.T2"] }, "s1");
+		const result = updateTask(rm, task, { dependsOn: [4] }, "s1");
 		expect(result).toContain("dependsOn");
-		expect(task.dependsOn).toEqual(["E1.S1.T2"]);
+		expect(task.dependsOn).toEqual([4]);
 	});
 
 	it("拒绝不存在的依赖 ID", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1" }, [
-			makeTask({ id: "E1.S1.T1" }),
-		])])]);
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1", eid: 1 }, [
+				makeStory({ id: "E1.S1", eid: 2 }, [
+					makeTask({ id: "E1.S1.T1", eid: 3 }),
+				]),
+			]),
+		]);
 		const task = rm.epics[0].stories[0].tasks[0];
-		const result = updateTask(rm, task, { dependsOn: ["NONEXISTENT"] }, "s1");
+		const result = updateTask(rm, task, { dependsOn: [999] }, "s1");
 		expect(result).toContain("不存在");
 		expect(task.dependsOn).toBeUndefined();
 	});
 
 	it("拒绝循环依赖", () => {
-		const rm = makeRoadmap([makeEpic({ id: "E1" }, [makeStory({ id: "E1.S1" }, [
-			makeTask({ id: "E1.S1.T1" }),
-			makeTask({ id: "E1.S1.T2" }),
-		])])]);
-		// E1.S1.T1 依赖 E1.S1.T2, E1.S1.T2 依赖 E1.S1.T1 → 循环
-		rm.epics[0].stories[0].tasks[1].dependsOn = ["E1.S1.T1"];
+		const rm = makeRoadmap([
+			makeEpic({ id: "E1", eid: 1 }, [
+				makeStory({ id: "E1.S1", eid: 2 }, [
+					makeTask({ id: "E1.S1.T1", eid: 3 }),
+					makeTask({ id: "E1.S1.T2", eid: 4 }),
+				]),
+			]),
+		]);
+		// T2(eid=4) 依赖 T1(eid=3), T1 依赖 T2 → 循环
+		rm.epics[0].stories[0].tasks[1].dependsOn = [3];
 		const task = rm.epics[0].stories[0].tasks[0];
-		const result = updateTask(rm, task, { dependsOn: ["E1.S1.T2"] }, "s1");
+		const result = updateTask(rm, task, { dependsOn: [4] }, "s1");
 		expect(result).toContain("循环依赖");
 		expect(task.dependsOn).toBeUndefined();
 	});
