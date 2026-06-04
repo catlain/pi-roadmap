@@ -1,22 +1,21 @@
 /**
- * Roadmap 工具 — roadmap_update（合并 update + done + archive）
+ * Roadmap 工具 — roadmap_update（合并 update + done + archive + move）
  *
  * 统一操作入口：
  * - 更新属性（title/description/priority/note/planPath/dependsOn）
  * - 标记完成（status=done，支持级联）
  * - 归档（archive=true）
+ * - 移动（move_to，Task 跨 Story / Story 跨 Epic）
  */
 
-import { existsSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { clearDoing } from "./doing-store";
-import { getRoadmapFilePath, readRoadmap, writeRoadmap } from "./store";
 import {
 	archiveAllDone as _archiveAllDone,
 	archiveEpic as _archiveEpic,
-	markTaskDone as _markTaskDone,
 } from "./tools-atomic-logic";
+import { handleTaskDone } from "./tools-atomic-logic-done";
+import { moveItem } from "./tools-atomic-logic-move";
 import {
 	atomicUpdate,
 	getSessionId,
@@ -55,6 +54,12 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			archive: Type.Optional(
 				Type.Boolean({ description: "归档该 Epic（仅 Epic 有效）" }),
 			),
+			move_to: Type.Optional(
+				Type.String({
+					description:
+						"将 Task/Story 移动到新容器。Task → Story（如 E1.S2），Story → Epic（如 E2）。移动后路径自动重建，依赖引用（eid）不受影响。",
+				}),
+			),
 		}),
 		async execute(
 			_toolCallId: string,
@@ -89,6 +94,17 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				};
 			}
 
+			// ── Move 操作 ──
+			if (params.move_to) {
+				const result = atomicUpdate(params.roadmapId, (rm) => {
+					return moveItem(rm, params.item_id, params.move_to!);
+				});
+				return {
+					content: [{ type: "text" as const, text: result }],
+					details: {},
+				};
+			}
+
 			// ── Done 操作（带级联 + doing 清理） ──
 			if (params.status === "done") {
 				const parts = params.item_id.split(".");
@@ -115,6 +131,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			if (params.planPath !== undefined) updates.planPath = params.planPath;
 			if (params.dependsOn !== undefined) updates.dependsOn = params.dependsOn;
 			if (params.status !== undefined) updates.status = params.status;
+			if (params.move_to !== undefined) updates.move_to = params.move_to;
 
 			if (Object.keys(updates).length === 0) {
 				return {
@@ -158,69 +175,4 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			};
 		},
 	});
-}
-
-/** Task done 处理（带级联 + doing 清理） */
-function handleTaskDone(
-	roadmapId: string,
-	taskId: string,
-	note: string | undefined,
-	_ctx: unknown,
-) {
-	const filePath = getRoadmapFilePath(roadmapId);
-	if (!filePath || !existsSync(filePath)) {
-		return {
-			content: [
-				{ type: "text" as const, text: `路线图 "${roadmapId}" 不存在。` },
-			],
-			details: {},
-		};
-	}
-
-	const roadmap = readRoadmap(filePath);
-	if (!roadmap) {
-		return {
-			content: [
-				{ type: "text" as const, text: `路线图 "${roadmapId}" 读取失败。` },
-			],
-			details: {},
-		};
-	}
-
-	const sessionId = getSessionId(_ctx);
-	const { result: doneResult } = _markTaskDone(roadmap, taskId, sessionId);
-
-	if (doneResult.includes("错误")) {
-		return {
-			content: [{ type: "text" as const, text: doneResult }],
-			details: {},
-		};
-	}
-
-	// 补充 note
-	if (note) {
-		for (const epic of roadmap.epics) {
-			for (const story of epic.stories) {
-				const task = story.tasks.find((t) => t.id === taskId);
-				if (task) {
-					task.note = note;
-					break;
-				}
-			}
-		}
-	}
-
-	roadmap.meta.updated = new Date().toISOString().slice(0, 10);
-	writeRoadmap(filePath, roadmap);
-	clearDoing(roadmapId, taskId);
-
-	return {
-		content: [
-			{
-				type: "text" as const,
-				text: `✅ 任务 "${taskId}" 已标记完成。`,
-			},
-		],
-		details: {},
-	};
 }
