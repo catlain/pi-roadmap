@@ -100,9 +100,9 @@ export function readRoadmapById(id: string): RoadmapFile | null {
  *  无匹配时返回全部（非项目目录场景）。
  *  不修改原始对象。 */
 export function filterByProject(rm: RoadmapFile, cwd: string): RoadmapFile {
-	const normalizedCwd = path.normalize(cwd);
+	const normalizedCwd = path.normalize(cwd).toLowerCase();
 	const matched = rm.epics.filter(
-		(e: Epic) => path.normalize(e.project) === normalizedCwd,
+		(e: Epic) => path.normalize(e.project).toLowerCase() === normalizedCwd,
 	);
 	if (matched.length > 0) {
 		return { ...rm, epics: matched };
