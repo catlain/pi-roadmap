@@ -53,8 +53,8 @@ function handleStatusTransition(
 	},
 	newStatus: ItemStatus,
 	_sessionId: string | undefined,
-	extraDoingFields?: (item: any) => void,
-	extraDoneFields?: (item: any) => void,
+	extraDoingFields?: (item: Task) => void,
+	extraDoneFields?: (item: Task) => void,
 ): { changed: string; warning: string | null } | null {
 	const oldStatus = item.status;
 	if (oldStatus === newStatus) {
@@ -203,12 +203,12 @@ export function updateTask(
 			updates.status as ItemStatus,
 			sessionId,
 			// doing 时设置 doingSessionId，非 doing 时清除
-			(t: any) => {
+			(t) => {
 				if (t.status === "doing") t.doingSessionId = sessionId;
 				else delete t.doingSessionId;
 			},
 			// done 时设置 doneBySessionId，非 done 时清除
-			(t: any) => {
+			(t) => {
 				if (t.status === "done") t.doneBySessionId = sessionId;
 				else delete t.doneBySessionId;
 			},
