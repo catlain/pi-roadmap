@@ -10,12 +10,14 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import type { RoadmapStatus } from "./types";
 import {
 	archiveAllDone as _archiveAllDone,
 	archiveEpic as _archiveEpic,
 } from "./tools-atomic-logic";
 import { handleTaskDone } from "./tools-atomic-logic-done";
 import { moveItem } from "./tools-atomic-logic-move";
+import { archiveRoadmap, readRoadmapById, writeRoadmapById } from "./store";
 import {
 	atomicUpdate,
 	getSessionId,
@@ -30,11 +32,15 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 		description:
 			"更新路线图中的 Epic/Story/Task。支持：属性更新（title/description 等）、" +
 			"标记完成（status=done）、归档（archive=true）。" +
-			"Task 标记 done 时自动级联检查 Story/Epic 是否全部完成。",
+			"Task 标记 done 时自动级联检查 Story/Epic 是否全部完成。\n" +
+			"特殊用法：item_id 等于 roadmapId 时，更新整个路线图的 status（如 completed/archived）。" +
+			"status=archived 会将文件移入 archive 目录。",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			item_id: Type.String({
-				description: "项目 ID，如 E1、E1.S2、E1.S1.T3",
+				description:
+					"项目 ID，如 E1、E1.S2、E1.S1.T3。" +
+					"传 roadmapId 本身（或 \"*\"）可更新整个路线图的 status。",
 			}),
 			status: Type.Optional(
 				Type.String({
@@ -79,6 +85,14 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			_onUpdate: unknown,
 			_ctx: unknown,
 		) {
+			// ── Roadmap 级别更新 ──
+			if (
+				params.item_id === params.roadmapId ||
+				params.item_id === "*"
+			) {
+				return handleRoadmapLevelUpdate(params);
+			}
+
 			// ── 归档操作 ──
 			if (params.archive) {
 				const result = atomicUpdate(params.roadmapId, (rm) => {
@@ -175,4 +189,120 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			};
 		},
 	});
+}
+
+const VALID_ROADMAP_STATUSES = new Set<string>([
+	"active",
+	"paused",
+	"completed",
+	"archived",
+]);
+
+/** 处理 roadmap 级别的 status 更新 */
+function handleRoadmapLevelUpdate(params: {
+	roadmapId: string;
+	item_id: string;
+	status?: string;
+	title?: string;
+	description?: string;
+}) {
+	// 归档操作：移动文件到 archive 目录
+	if (params.status === "archived") {
+		const ok = archiveRoadmap(params.roadmapId);
+		if (!ok) {
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: `错误：路线图 "${params.roadmapId}" 不存在。`,
+					},
+				],
+				details: {},
+			};
+		}
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: `✅ 路线图 "${params.roadmapId}" 已归档。`,
+				},
+			],
+			details: {},
+		};
+	}
+
+	// 校验 status 合法性
+	if (params.status && !VALID_ROADMAP_STATUSES.has(params.status)) {
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: `错误：status 必须是 ${[...VALID_ROADMAP_STATUSES].join("/")} 之一。`,
+				},
+			],
+			details: {},
+		};
+	}
+
+	// 先检查有没有字段可改
+	const hasStatus = !!params.status;
+	const hasTitle = !!params.title;
+	if (!hasStatus && !hasTitle) {
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: "没有指定任何要更新的字段。",
+				},
+			],
+			details: {},
+		};
+	}
+
+	const rm = readRoadmapById(params.roadmapId);
+	if (!rm) {
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: `错误：路线图 "${params.roadmapId}" 不存在。`,
+				},
+			],
+			details: {},
+		};
+	}
+
+	let changed = false;
+	if (params.status) {
+		rm.meta.status = params.status as RoadmapStatus;
+		changed = true;
+	}
+	if (params.title) {
+		rm.meta.title = params.title;
+		changed = true;
+	}
+
+	if (!changed) {
+		return {
+			content: [
+				{
+					type: "text" as const,
+					text: "没有指定任何要更新的字段。",
+				},
+			],
+			details: {},
+		};
+	}
+
+	writeRoadmapById(params.roadmapId, rm);
+
+	return {
+		content: [
+			{
+				type: "text" as const,
+					text: `✅ 路线图 "${params.roadmapId}" 已更新（status=${rm.meta.status}）。`,
+			},
+		],
+		details: {},
+	};
 }

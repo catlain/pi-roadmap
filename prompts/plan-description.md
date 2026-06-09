@@ -41,8 +41,38 @@
 
 差异分析要特别注意保留已有的 done 状态任务。
 
+### 第 3.5 步：Roadmap vs Epic 判断
+在创建新内容之前，先判断该用 Roadmap 还是 Epic：
+
+**Roadmap 是「方向」**——长期存在、持续接收新 Epic 的工作方向。判断标准：
+- ✅ 是持续性的工作流（如 Bug 修复、性能优化、用户体验）
+- ✅ 会不断有新 Epic 加入
+- ✅ 没有明确的「完成」终点
+- ❌ 不是一次性任务（如"拆分发布"、"迁移工具链"→ 应该是 Epic）
+- ❌ 不是某个更大方向下的一项具体工作
+
+**创建新 Roadmap 的时机**：
+1. 用户提出了一个全新的工作方向，现有 Roadmap 里没有对应的
+2. 现有 Roadmap 的方向和用户需求完全不同
+
+**往现有 Roadmap 添加 Epic 的时机**：
+1. 用户的需求属于某个已有方向的范畴
+2. 比如新 bug → 加到 Bug 修复 Roadmap
+3. 比如新功能 → 加到对应项目/方向的 Roadmap
+
+**合并/归档 Roadmap 的时机**：
+1. 一个 Roadmap 的所有 Epic 都已完成或归档 → 用 `roadmap_update(roadmapId, status=completed)` 标记完成
+2. 一个 Roadmap 实际上是另一个 Roadmap 的子集 → 合并为 Epic
+3. 一个 Roadmap 已经过时不再维护 → `status=archived`
+
 ### 第 4 步：拆解
 将新增/修改的部分按以下规则拆解：
+
+**Roadmap 层**（方向 → Roadmap）：
+- 每个方向对应一个长期存在的工作流
+- ID 用 slug 格式（小写+短横线），如 "pi-extensions-bugs"、"quant-three-lines"
+- 标题清晰表达方向，如"扩展包 Bug 跟踪"、"量化交易三线系统"、"拼豆游戏"
+- ⚠️ 轻易不要新建 Roadmap——先检查现有 Roadmap 是否能容纳
 
 **Epic 层**（大方向 → Epic）：
 - 每个 Epic 对应一个项目，有独立交付价值

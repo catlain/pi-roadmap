@@ -4,7 +4,7 @@
 import { existsSync } from "node:fs";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { writeRoadmap } from "../lib/store";
+import { archiveRoadmap, readRoadmapById, writeRoadmap, writeRoadmapById } from "../lib/store";
 import {
 	archiveAllDone as _archiveAllDone,
 	archiveEpic as _archiveEpic,
@@ -39,6 +39,9 @@ vi.mock("../lib/store", () => ({
 	getRoadmapFilePath: (...args: any[]) => mockGetFilePath(...args),
 	readRoadmap: (...args: any[]) => mockReadRoadmap(...args),
 	writeRoadmap: vi.fn(),
+	archiveRoadmap: vi.fn(),
+	readRoadmapById: vi.fn(),
+	writeRoadmapById: vi.fn(),
 }));
 vi.mock("../lib/tools-atomic-logic");
 vi.mock("../lib/tools-atomic-utils");
@@ -226,5 +229,110 @@ describe("roadmap_update 统一工具", () => {
 			title: "不存在",
 		});
 		expect(result.content[0].text).toContain("不存在");
+	});
+
+	describe("roadmap 级别更新", () => {
+		it("item_id 等于 roadmapId 时走 roadmap 级别更新", async () => {
+			vi.mocked(readRoadmapById).mockReturnValue({ ...MOCK_RM });
+			vi.mocked(writeRoadmapById).mockReturnValue(true);
+
+			const result = await getExecute()("", {
+				roadmapId: "test",
+				item_id: "test",
+				status: "completed",
+			});
+			expect(result.content[0].text).toContain("已更新");
+			expect(result.content[0].text).toContain("completed");
+			expect(writeRoadmapById).toHaveBeenCalledWith(
+				"test",
+				expect.objectContaining({
+					meta: expect.objectContaining({ status: "completed" }),
+				}),
+			);
+		});
+
+		it("item_id 为 \"*\" 时也走 roadmap 级别更新", async () => {
+			vi.mocked(readRoadmapById).mockReturnValue({ ...MOCK_RM });
+			vi.mocked(writeRoadmapById).mockReturnValue(true);
+
+			const result = await getExecute()("", {
+				roadmapId: "test",
+				item_id: "*",
+				status: "paused",
+			});
+			expect(result.content[0].text).toContain("已更新");
+			expect(writeRoadmapById).toHaveBeenCalled();
+		});
+
+		it("status=archived 时调用 archiveRoadmap 移动文件", async () => {
+			vi.mocked(archiveRoadmap).mockReturnValue(true);
+
+			const result = await getExecute()("", {
+				roadmapId: "test",
+				item_id: "test",
+				status: "archived",
+			});
+			expect(result.content[0].text).toContain("已归档");
+			expect(archiveRoadmap).toHaveBeenCalledWith("test");
+			// 不应调用 writeRoadmapById
+			expect(writeRoadmapById).not.toHaveBeenCalled();
+		});
+
+		it("roadmap 不存在时报错", async () => {
+			vi.mocked(readRoadmapById).mockReturnValue(null);
+
+			const result = await getExecute()("", {
+				roadmapId: "nonexist",
+				item_id: "nonexist",
+				status: "completed",
+			});
+			expect(result.content[0].text).toContain("不存在");
+		});
+
+		it("archive 不存在的 roadmap 报错", async () => {
+			vi.mocked(archiveRoadmap).mockReturnValue(false);
+
+			const result = await getExecute()("", {
+				roadmapId: "nonexist",
+				item_id: "nonexist",
+				status: "archived",
+			});
+			expect(result.content[0].text).toContain("不存在");
+		});
+
+		it("无效 status 报错", async () => {
+			const result = await getExecute()("", {
+				roadmapId: "test",
+				item_id: "test",
+				status: "invalid",
+			});
+			expect(result.content[0].text).toContain("status 必须");
+		});
+
+		it("没有指定任何字段时报错", async () => {
+			const result = await getExecute()("", {
+				roadmapId: "test",
+				item_id: "test",
+			});
+			expect(result.content[0].text).toContain("没有指定任何要更新的字段");
+		});
+
+		it("更新 roadmap 标题", async () => {
+			vi.mocked(readRoadmapById).mockReturnValue({ ...MOCK_RM });
+			vi.mocked(writeRoadmapById).mockReturnValue(true);
+
+			const result = await getExecute()("", {
+				roadmapId: "test",
+				item_id: "test",
+				title: "新标题",
+			});
+			expect(result.content[0].text).toContain("已更新");
+			expect(writeRoadmapById).toHaveBeenCalledWith(
+				"test",
+				expect.objectContaining({
+					meta: expect.objectContaining({ title: "新标题" }),
+				}),
+			);
+		});
 	});
 });

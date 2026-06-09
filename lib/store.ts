@@ -85,6 +85,24 @@ export function writeRoadmap(filePath: string, data: RoadmapFile): void {
 	fs.renameSync(tmpPath, filePath);
 }
 
+/** 按 ID 写入（活跃文件优先，找不到返回 false） */
+export function writeRoadmapById(
+	id: string,
+	data: RoadmapFile,
+): boolean {
+	const activePath = getRoadmapFilePath(id);
+	if (fs.existsSync(activePath)) {
+		writeRoadmap(activePath, data);
+		return true;
+	}
+	const archivePath = getArchivePath(id);
+	if (fs.existsSync(archivePath)) {
+		writeRoadmap(archivePath, data);
+		return true;
+	}
+	return false;
+}
+
 /** 按 ID 读取（先找活跃，再找归档） */
 export function readRoadmapById(id: string): RoadmapFile | null {
 	const activePath = getRoadmapFilePath(id);
