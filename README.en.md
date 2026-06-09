@@ -174,17 +174,11 @@ Creates a new roadmap or updates an existing one. The `content` parameter takes 
 
 ---
 
-### `roadmap_create` — Create a new roadmap
 
-Creates an empty roadmap with a title and optional tags.
-
-**When to use**: When you need a new roadmap that you'll populate with Epics/Stories/Tasks later.
-
----
 
 ### `roadmap_add` — Add Epic/Story/Task
 
-Adds a single item to an existing roadmap. Supports adding Epics (requires `project`), Stories (requires `epic_id`), and Tasks (requires `story_id`).
+Adds a single item to an existing roadmap. Supports adding Epics (requires `project`), Stories (requires `epic_id`), and Tasks (requires `story_id`). Optional `dependsOn` array declares dependencies on other items.
 
 **When to use**: Incrementally building a roadmap, or adding new items to an existing plan.
 
@@ -192,9 +186,13 @@ Adds a single item to an existing roadmap. Supports adding Epics (requires `proj
 
 ### `roadmap_update` — Update item properties
 
-Updates title, description, status, priority, or other properties of any Epic/Story/Task. Supports status changes including reverting `done` → `doing`. Automatically cascades completion status up the hierarchy.
+Updates title, description, status, priority, or other properties of any Epic/Story/Task. Key capabilities:
+- **Status changes** — Including reverting `done` → `doing`. Automatically cascades completion status up the hierarchy.
+- **Move** — `move_to` re-parents a Task to a different Story, or a Story to a different Epic (paths auto-rebuild).
+- **Archive** — `archive: true` on an Epic moves it out of the active view.
+- **Dependencies** — `dependsOn` / `addBlockedBy` / `removeBlockedBy` manage task dependencies.
 
-**When to use**: When a task's scope changes, priority shifts, or you need to re-open a completed item.
+**When to use**: When a task's scope changes, priority shifts, you need to re-open a completed item, or reorganize the hierarchy.
 
 ---
 
@@ -206,70 +204,21 @@ Searches all roadmaps by keyword (case-insensitive) across titles and descriptio
 
 ---
 
-### `roadmap_archive` — Archive completed Epics
 
-Archives Epics that are fully completed, moving them out of the active view.
-
-**When to use**: When an Epic is done and you want to declutter the roadmap view.
-
----
-
-### `roadmap_next` — Get next actionable tasks
-
-Returns the highest-priority tasks across all active roadmaps. Sort order: `doing` first, then by priority (`high` > `medium` > `low`).
-
-**Parameters**:
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `roadmapId` | string | No | Limit to one roadmap; omit to search all active roadmaps |
-| `limit`     | number | No | Max tasks to return (default: 5) |
-
-**Example output**:
-```
-## My Project Roadmap
-- [doing] E1.S0.T2: Implement storage (Epic: Build core)
-- [todo] E1.S1.T0: Write API docs (Epic: Polish & docs)
-```
-
-**When to use**: When you start working and want to know what to pick up next.
-
----
-
-### `roadmap_done` — Mark task complete
-
-Marks a task as `done`, cascades status to parent Story/Epic if all siblings are done, and syncs to the associated project.
-
-**Parameters**:
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `roadmapId` | string | Yes | Roadmap ID |
-| `taskId`    | string | Yes | Task ID, e.g. `"E1.S2.T3"` |
-| `note`      | string | No | Completion note or output link |
-
-**Example output**:
-```
-✅ Task "E1.S2.T3" marked as done.
-Synced to projects: my-project
-```
-
-**When to use**: When you finish a task and want to record progress.
 
 ## Storage
 
 | Location | Path | Purpose |
 |----------|------|---------|
 | Global   | `~/.pi/roadmap/<id>.roadmap.json` | Full roadmap data |
-| Project  | `<project>/.pi/roadmap/roadmap.json` | Filtered view for one project |
-| Archive  | `~/.pi/roadmap/archive/<id>.roadmap.json` | Completed/archived roadmaps |
 | Doing    | `~/.pi/roadmap/doing.json` | Tracks in-progress tasks for session-end reminders |
+| Plans    | `<project>/.pi/plans/*.md` or `~/.pi/roadmap/plans/<id>/` | Plan documents linked via planPath |
 
 ## Best Practices
 
 ### ✅ Recommended
 - Let the agent propose a plan with `roadmap_plan`, then confirm before executing
-- Use `roadmap_next` at session start to pick up where you left off
+- Use `roadmap_show` to inspect and find next tasks
 - Tag roadmaps for easy filtering (e.g. `v2`, `docs`, `infra`)
 - Keep tasks small (30 min–2 hours) for meaningful progress tracking
 - Add completion notes via the `note` parameter for future reference
@@ -283,7 +232,7 @@ Synced to projects: my-project
 
 | Limitation | Detail |
 |------------|--------|
-| ID format | Zero-indexed, manual assignment — no auto-increment |
+| ID format | Auto-incremented numeric IDs, paths auto-rebuilt on move |
 | Reversible | `done` tasks can be reverted to `doing` via `roadmap_update` |
 | Single writer | No concurrency control — one agent at a time per roadmap |
 | No due dates | Only priority-based ordering, no calendar scheduling |
@@ -292,27 +241,46 @@ Synced to projects: my-project
 
 ```
 pi-roadmap/
-├── index.ts              # Entry: register tools + agent_end hook
+├── index.ts                          # Entry: register tools + agent_end hook
 ├── lib/
-│   ├── types.ts          # Type definitions, constants, priority helpers
-│   ├── store.ts          # File I/O: read/write roadmap JSON
-│   ├── parser.ts         # Formatting: progress bars, overview text
-│   ├── progress.ts       # Logic: progress calc, next-task extraction
-│   ├── validator.ts      # JSON schema validation
-│   ├── planner.ts        # Plan creation/update orchestration
-│   ├── sync.ts           # Global → project-level sync
-│   ├── injector.ts       # before_agent_start context injection
-│   ├── doing-store.ts    # In-progress task persistence
-│   ├── tools-query.ts    # roadmap_list + roadmap_show
-│   ├── tools-plan.ts     # roadmap_plan
-│   └── tools-action.ts   # roadmap_next + roadmap_done
+│   ├── types.ts                      # Type definitions, constants, priority helpers
+│   ├── store.ts                      # File I/O: read/write roadmap JSON
+│   ├── parser.ts                     # Formatting: progress bars, overview text
+│   ├── progress.ts                   # Logic: progress calc, next-task extraction
+│   ├── validator.ts                  # JSON schema validation
+│   ├── validator-deps.ts             # Dependency cycle detection
+│   ├── planner.ts                    # Plan creation/update orchestration
+│   ├── plan-resolver.ts              # Plan path resolution & validation
+│   ├── dependency.ts                 # Dependency lookup, cycle detection, formatting
+│   ├── id-utils.ts                   # Auto-increment ID allocation & path rebuild
+│   ├── migrate.ts                    # Data format migration
+│   ├── injector.ts                   # before_agent_start context injection
+│   ├── doing-store.ts                # In-progress task persistence
+│   ├── tools-query.ts                # roadmap_list + roadmap_show core logic
+│   ├── tools-query-format.ts         # Output formatting for show/list
+│   ├── tools-query-list-reg.ts       # roadmap_list tool registration
+│   ├── tools-query-show-reg.ts       # roadmap_show tool registration
+│   ├── tools-query-search.ts         # roadmap_search core logic
+│   ├── tools-query-search-reg.ts     # roadmap_search tool registration
+│   ├── tools-plan.ts                 # roadmap_plan tool
+│   ├── tools-add-reg.ts              # roadmap_add tool registration
+│   ├── tools-update-reg.ts           # roadmap_update tool registration
+│   ├── tools-atomic-logic.ts         # Shared atomic operation dispatch
+│   ├── tools-atomic-logic-create.ts  # createItem logic
+│   ├── tools-atomic-logic-update.ts  # updateItem logic
+│   ├── tools-atomic-logic-done.ts    # doneItem logic
+│   ├── tools-atomic-logic-move.ts    # moveItem logic
+│   └── tools-atomic-utils.ts         # Shared helpers for atomic operations
 ├── prompts/
-│   ├── plan-description.md    # Tool description for roadmap_plan
-│   ├── plan-output-format.md  # JSON format spec (appended to description)
-│   ├── plan-diff.md           # Diff analysis guidance
-│   ├── decompose-epic.md      # Epic decomposition rules
-│   ├── decompose-story.md     # Story decomposition rules
-│   └── decompose-task.md      # Task decomposition rules
+│   ├── plan-description.md           # Tool description for roadmap_plan
+│   ├── plan-output-format.md         # JSON format spec (appended to description)
+│   ├── plan-diff.md                  # Diff analysis guidance
+│   ├── plan-template-epic.md         # Epic plan document template
+│   ├── plan-template-story.md        # Story plan document template
+│   ├── plan-template-task.md         # Task plan document template
+│   ├── decompose-epic.md             # Epic decomposition rules
+│   ├── decompose-story.md            # Story decomposition rules
+│   └── decompose-task.md             # Task decomposition rules
 └── package.json
 ```
 
