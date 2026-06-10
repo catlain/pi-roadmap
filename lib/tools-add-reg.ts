@@ -44,9 +44,6 @@ export function registerAddTool(pi: ExtensionAPI) {
 			priority: Type.Optional(
 				Type.String({ description: "优先级: high/medium/low" }),
 			),
-			project: Type.Optional(
-				Type.String({ description: "项目路径（epic 必填）" }),
-			),
 			epic_id: Type.Optional(
 				Type.String({ description: "Epic ID（story/task 必填，如 E1）" }),
 			),
@@ -70,7 +67,6 @@ export function registerAddTool(pi: ExtensionAPI) {
 				title: string;
 				description?: string;
 				priority?: string;
-				project?: string;
 				epic_id?: string;
 				story_id?: string;
 				dependsOn?: string[];
@@ -90,10 +86,8 @@ export function registerAddTool(pi: ExtensionAPI) {
 					writeRoadmap(rmPath, rm);
 				}
 
-				// 归一化路径分隔符，防止 Windows 下正反斜杠不一致导致 filterByProject 失配
-				const normalizedProject = path.normalize(
-					params.project ?? process.cwd(),
-				);
+				// 直接取 CWD，防止 AI 填写错误的 project 路径导致 filterByProject 失配
+				const normalizedProject = path.normalize(process.cwd());
 				const result = atomicUpdate(params.roadmapId, (rm) => {
 					return _addEpic(
 						rm,

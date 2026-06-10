@@ -49,7 +49,7 @@ export function formatPlanOutput(
 	for (const epic of roadmap.epics) {
 		// Epic 需要计划文档
 		lines.push(
-			`${stepNum}. write .pi/plans/${epic.id}.md → roadmap_add(roadmapId, item_type="epic", title="${epic.title}", project=..., planPath="${epic.id}.md")`,
+			`${stepNum}. write .pi/plans/${epic.id}.md → roadmap_add(roadmapId, item_type="epic", title="${epic.title}", planPath="${epic.id}.md")`,
 		);
 		stepNum++;
 
