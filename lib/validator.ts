@@ -120,7 +120,7 @@ export function validateRoadmap(data: unknown): ValidationResult {
 				epic.planPath !== undefined &&
 				!validatePlanPath(epic.planPath as string)
 			)
-				errors.push(`epics[${i}].planPath "${epic.planPath}" 格式不合法`);
+				errors.push(`epics[${i}].planPath "${epic.planPath}" 格式不合法（应为 E{N}.md 或 E{N}-S{M}.md，纯文件名，无目录/路径）`);
 
 			if (!Array.isArray(epic.stories)) {
 				errors.push(`epics[${i}].stories 不是数组`);
@@ -152,7 +152,7 @@ export function validateRoadmap(data: unknown): ValidationResult {
 						!validatePlanPath(story.planPath as string)
 					)
 						errors.push(
-							`epics[${i}].stories[${j}].planPath "${story.planPath}" 格式不合法`,
+							`epics[${i}].stories[${j}].planPath "${story.planPath}" 格式不合法（应为 E{N}-S{M}.md，纯文件名，无目录/路径）`,
 						);
 
 					if (!Array.isArray(story.tasks)) {
@@ -185,7 +185,7 @@ export function validateRoadmap(data: unknown): ValidationResult {
 								!validatePlanPath(task.planPath as string)
 							)
 								errors.push(
-									`task[${k}].planPath "${task.planPath}" 格式不合法`,
+									`task[${k}].planPath "${task.planPath}" 格式不合法（应为 E{N}-S{M}-T{K}.md，纯文件名，无目录/路径）`,
 								);
 						}
 					}
