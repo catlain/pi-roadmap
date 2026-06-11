@@ -49,7 +49,11 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 				.pop()
 				?.replace(/\.jsonl$/, "") ?? "";
 
-		// 先 syncDoing：清理已 done/dropped/孤儿条目
+		// 快速检查：如果 doing.json 为空则跳过
+		const allDoing = readDoing();
+		if (allDoing.length === 0) return;
+
+		// 有 doing 条目才遍历 roadmap 文件
 		const rmFiles = listRoadmapFiles();
 		const rms = rmFiles
 			.map((f) => readRoadmap(f))
@@ -57,7 +61,6 @@ export default function roadmapExtension(pi: ExtensionAPI) {
 		syncDoing(rms);
 
 		// 只提醒当前会话的 doing 条目
-		const allDoing = readDoing();
 		const doingEntries = currentSessionId
 			? allDoing.filter((e) => e.sessionId === currentSessionId)
 			: allDoing;
