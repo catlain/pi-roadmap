@@ -102,6 +102,7 @@ export function registerPlanTool(pi: ExtensionAPI) {
 		description:
 			planDescription ||
 			"路线图拆解沙盘。讨论结论拆解为 Epic→Story→Task 结构，输出拆解方案和下一步操作指南。不写入数据，AI 需用 add_epic/add_story/add_task 逐个写入。",
+		promptSnippet: "路线图拆解沙盘（不写入数据）",
 		parameters: Type.Object({
 			roadmapId: Type.String({
 				description: "路线图 ID（slug 格式，如 pi-atelier-split）",

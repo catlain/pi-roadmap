@@ -33,6 +33,7 @@ export function registerAddTool(pi: ExtensionAPI) {
 			"向路线图添加 Epic/Story/Task。Epic/Story 必须关联计划文档（planPath），Task 可选。" +
 			"如果目标路线图不存在，添加 Epic 时会自动创建。" +
 			"⚠ 添加前必须确认信息充分——如果不确定要做什么，先向用户追问确认。",
+		promptSnippet: "向路线图添加 Epic/Story/Task",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			item_type: Type.String({

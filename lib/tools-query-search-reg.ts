@@ -16,6 +16,7 @@ export function registerSearchTool(pi: ExtensionAPI) {
 		label: "Roadmap Search",
 		description:
 			"搜索路线图内容。根据关键词在所有路线图的 Epic/Story/Task 中搜索 title 和 description，返回匹配项的完整详情（含子级上下文）。支持 scope 指定搜索层级。",
+		promptSnippet: "搜索路线图内容",
 		parameters: Type.Object({
 			query: Type.String({ description: "搜索关键词（大小写不敏感）" }),
 			scope: Type.Optional(

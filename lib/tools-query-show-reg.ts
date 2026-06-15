@@ -14,6 +14,7 @@ export function registerShowTool(pi: ExtensionAPI) {
 		description:
 			"查看路线图详情或搜索内容。不传 query 显示完整详情，传 query 搜索匹配的 Epic/Story/Task。" +
 			"默认隐藏已完成和已归档项。可用 epic_id 查看指定 Epic。",
+		promptSnippet: "查看路线图详情",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			epic_id: Type.Optional(

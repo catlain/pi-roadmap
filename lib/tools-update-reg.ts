@@ -35,6 +35,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 			"Task 标记 done 时自动级联检查 Story/Epic 是否全部完成。\n" +
 			"特殊用法：item_id 等于 roadmapId 时，更新整个路线图的 status（如 completed/archived）。" +
 			"status=archived 会将文件移入 archive 目录。",
+		promptSnippet: "更新路线图中的 Epic/Story/Task",
 		parameters: Type.Object({
 			roadmapId: Type.String({ description: "路线图 ID" }),
 			item_id: Type.String({

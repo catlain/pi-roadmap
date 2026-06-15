@@ -17,6 +17,7 @@ export function registerListTool(pi: ExtensionAPI) {
 		label: "Roadmap List",
 		description:
 			"列出所有路线图及进度概览。默认隐藏已完成和已归档的 Epic 详情，只显示统计行。",
+		promptSnippet: "列出所有路线图及进度概览",
 		parameters: Type.Object({
 			status: Type.Optional(
 				Type.String({
