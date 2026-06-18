@@ -58,10 +58,12 @@ const MOCK_RM: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: [],
+		nextEid: 1,
 	},
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "Epic 1",
 			description: "",
 			status: "todo",
@@ -71,6 +73,7 @@ const MOCK_RM: RoadmapFile = {
 			stories: [
 				{
 					id: "E1.S1",
+					eid: 2,
 					title: "Story 1",
 					description: "",
 					status: "todo",
@@ -78,6 +81,7 @@ const MOCK_RM: RoadmapFile = {
 					tasks: [
 						{
 							id: "E1.S1.T1",
+							eid: 3,
 							title: "Task 1",
 							status: "todo",
 							createdDate: "2026-01-01",
@@ -161,7 +165,8 @@ describe("roadmap_update 统一工具", () => {
 		mockReadRoadmap.mockReturnValue(MOCK_RM);
 		vi.mocked(_markTaskDone).mockReturnValue({
 			result: "✅ 已完成",
-			roadmap: MOCK_RM,
+			doneTaskId: "E1.S1.T1",
+			cascadeInfo: [],
 		});
 		vi.mocked(writeRoadmap).mockImplementation(() => {});
 		vi.mocked(getSessionId).mockReturnValue("sess1");
@@ -178,7 +183,7 @@ describe("roadmap_update 统一工具", () => {
 	it("归档指定 Epic", async () => {
 		vi.mocked(_archiveEpic).mockReturnValue({
 			result: "✅ 已归档",
-			roadmap: MOCK_RM,
+			archivedIds: ["E1"],
 		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
@@ -195,7 +200,7 @@ describe("roadmap_update 统一工具", () => {
 	it("归档所有已完成 Epic", async () => {
 		vi.mocked(_archiveAllDone).mockReturnValue({
 			result: "✅ 已归档全部",
-			roadmap: MOCK_RM,
+			archivedIds: ["E1"],
 		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),

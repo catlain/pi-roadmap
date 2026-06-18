@@ -19,7 +19,7 @@ describe("normalizeProjectPaths", () => {
 		const rm: RoadmapFile = {
 			meta: {
 				id: "t", title: "T", status: "active",
-				created: "", updated: "",
+				created: "", updated: "", tags: [], nextEid: 1,
 			},
 			epics: [{
 				id: "E1", eid: 1, title: "E", description: "",

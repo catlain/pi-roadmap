@@ -2,7 +2,7 @@
  * Move 操作 — 共享 fixture
  */
 
-import type { RoadmapFile } from "../lib/types";
+import type { RoadmapFile } from "../../lib/types";
 
 export function makeMoveRoadmap(): RoadmapFile {
 	return {

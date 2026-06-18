@@ -6,6 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 import { today, updateItem, updateTask } from "../lib/tools-atomic-utils";
+import { makeTask, makeEpic } from "./helpers/test-factories.js";
 
 // ── 合法转换 ──
 
@@ -23,11 +24,12 @@ describe("状态机：合法转换", () => {
 		["blocked", "dropped"],
 		["dropped", "todo"],
 	] as [string, string][])("%s → %s 应成功", (from, to) => {
-		const task = {
+		const task = makeTask({
 			id: "E1.S1.T1",
+			eid: 1,
 			title: "T1",
 			status: from as any,
-		};
+		});
 		const result = updateTask({} as any, task, { status: to }, "session-1");
 		expect(result).not.toContain("不合法");
 		expect(task.status).toBe(to);
@@ -48,11 +50,12 @@ describe("状态机：非法转换", () => {
 		["dropped", "done"],
 		["dropped", "blocked"],
 	] as [string, string][])("%s → %s 应被拒绝", (from, to) => {
-		const task = {
+		const task = makeTask({
 			id: "E1.S1.T1",
+			eid: 1,
 			title: "T1",
 			status: from as any,
-		};
+		});
 		const result = updateTask({} as any, task, { status: to }, "session-1");
 		expect(result).toContain("不合法");
 		expect(task.status).toBe(from); // 状态未变
@@ -63,13 +66,14 @@ describe("状态机：非法转换", () => {
 
 describe("状态机：字段清理", () => {
 	it("doing→done 清除 doingDate/doingSessionId，填 doneDate/doneBySessionId", () => {
-		const task = {
+		const task = makeTask({
 			id: "E1.S1.T1",
+			eid: 1,
 			title: "T1",
 			status: "doing" as const,
 			doingDate: "2026-01-01",
 			doingSessionId: "old-session",
-		};
+		});
 		updateTask({} as any, task, { status: "done" }, "session-1");
 		expect(task.doingDate).toBeUndefined();
 		expect(task.doingSessionId).toBeUndefined();
@@ -77,34 +81,37 @@ describe("状态机：字段清理", () => {
 	});
 
 	it("done→todo 清除 doneDate/doneBySessionId", () => {
-		const task = {
+		const task = makeTask({
 			id: "E1.S1.T1",
+			eid: 1,
 			title: "T1",
 			status: "done" as const,
 			doneDate: "2026-01-01",
 			doneBySessionId: "old-session",
-		};
+		});
 		updateTask({} as any, task, { status: "todo" }, "session-1");
 		expect(task.doneDate).toBeUndefined();
 		expect(task.doneBySessionId).toBeUndefined();
 	});
 
 	it("doing→blocked 清除 doingDate", () => {
-		const task = {
+		const task = makeTask({
 			id: "E1.S1.T1",
+			eid: 1,
 			title: "T1",
 			status: "doing" as const,
 			doingDate: "2026-01-01",
 			doingSessionId: "session-1",
-		};
+		});
 		updateTask({} as any, task, { status: "blocked" }, "session-1");
 		expect(task.doingDate).toBeUndefined();
 		expect(task.doingSessionId).toBeUndefined();
 	});
 
 	it("Epic doing→done 清除 doingDate，填 doneDate", () => {
-		const epic = {
+		const epic = makeEpic({
 			id: "E1",
+			eid: 1,
 			title: "E1",
 			description: "",
 			status: "doing" as const,
@@ -112,20 +119,21 @@ describe("状态机：字段清理", () => {
 			project: "/test",
 			stories: [],
 			doingDate: "2026-01-01",
-		};
+		});
 		updateItem({} as any, epic, { status: "done" }, "session-1");
 		expect(epic.doingDate).toBeUndefined();
 		expect(epic.doneDate).toBe(today());
 	});
 
 	it("相同状态不报错也不改字段", () => {
-		const task = {
+		const task = makeTask({
 			id: "E1.S1.T1",
+			eid: 1,
 			title: "T1",
 			status: "doing" as const,
 			doingDate: "2026-01-01",
 			doingSessionId: "session-1",
-		};
+		});
 		const result = updateTask(
 			{} as any,
 			task,

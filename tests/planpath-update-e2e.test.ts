@@ -9,6 +9,7 @@ import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
 
 const BASE_EPIC: Epic = {
 	id: "E1",
+	eid: 1,
 	title: "测试Epic",
 	description: "测试",
 	status: "todo",
@@ -20,6 +21,7 @@ const BASE_EPIC: Epic = {
 
 const BASE_STORY: Story = {
 	id: "E1.S1",
+	eid: 2,
 	title: "测试Story",
 	description: "测试",
 	status: "todo",
@@ -29,6 +31,7 @@ const BASE_STORY: Story = {
 
 const BASE_TASK: Task = {
 	id: "E1.S1.T1",
+	eid: 3,
 	title: "测试Task",
 	status: "todo",
 	createdDate: "2026-05-30",
@@ -45,6 +48,7 @@ function makeRM(): RoadmapFile {
 			created: "2026-05-30",
 			updated: "2026-05-30",
 			tags: [],
+			nextEid: 4,
 		},
 		epics: [epic],
 	};

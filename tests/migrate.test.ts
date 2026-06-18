@@ -9,21 +9,41 @@ import type { RoadmapFile } from "../lib/types";
 function makeLegacyRm(): RoadmapFile {
 	return {
 		meta: {
-			id: "test", title: "Test", status: "active",
-			created: "2025-01-01", updated: "2025-01-01",
+			id: "test",
+			title: "Test",
+			status: "active",
+			created: "2025-01-01",
+			updated: "2025-01-01",
+			tags: [] as unknown as string[],
+			nextEid: undefined as unknown as number,
 		},
-		epics: [{
-			id: "E1", title: "Epic 1", description: "",
-			status: "todo", priority: "high", project: "p",
-			stories: [{
-				id: "E1.S1", title: "Story 1", description: "", status: "todo",
-				dependsOn: ["E1"],  // string[] — 旧格式
-				tasks: [{
-					id: "E1.S1.T1", title: "Task 1", status: "todo",
-					dependsOn: ["E1.S1"],  // string[] — 旧格式
-				}],
-			}],
-		}],
+		epics: [
+			{
+				id: "E1",
+				title: "Epic 1",
+				description: "",
+				status: "todo",
+				priority: "high",
+				project: "p",
+				stories: [
+					{
+						id: "E1.S1",
+						title: "Story 1",
+						description: "",
+						status: "todo",
+						dependsOn: ["E1"] as unknown as number[], // 旧格式
+						tasks: [
+							{
+								id: "E1.S1.T1",
+								title: "Task 1",
+								status: "todo",
+								dependsOn: ["E1.S1"] as unknown as number[], // 旧格式
+							},
+						],
+					} as unknown as any,
+				],
+			} as unknown as any,
+		],
 	};
 }
 
@@ -63,17 +83,35 @@ describe("migrateToEid — 完整迁移路径", () => {
 	it("空 dependsOn 不报错", () => {
 		const rm: RoadmapFile = {
 			meta: {
-				id: "test", title: "Test", status: "active",
-				created: "", updated: "",
+				id: "test",
+				title: "Test",
+				status: "active",
+				created: "",
+				updated: "",
+				tags: [] as unknown as string[],
+				nextEid: undefined as unknown as number,
 			},
-			epics: [{
-				id: "E1", title: "E", description: "",
-				status: "todo", priority: "high", project: "p",
-				stories: [{
-					id: "E1.S1", title: "S", description: "", status: "todo",
-					tasks: [{ id: "E1.S1.T1", title: "T", status: "todo" }],
-				}],
-			}],
+			epics: [
+				{
+					id: "E1",
+					title: "E",
+					description: "",
+					status: "todo",
+					priority: "high",
+					project: "p",
+					stories: [
+						{
+							id: "E1.S1",
+							title: "S",
+							description: "",
+							status: "todo",
+							tasks: [
+								{ id: "E1.S1.T1", title: "T", status: "todo" },
+							],
+						} as unknown as any,
+					],
+				} as unknown as any,
+			],
 		};
 		migrateToEid(rm);
 		expect(rm.epics[0].stories[0].tasks[0].dependsOn).toBeUndefined();
@@ -82,18 +120,34 @@ describe("migrateToEid — 完整迁移路径", () => {
 	it("dependsOn 引用不存在路径时过滤掉", () => {
 		const rm: RoadmapFile = {
 			meta: {
-				id: "test", title: "Test", status: "active",
-				created: "", updated: "",
+				id: "test",
+				title: "Test",
+				status: "active",
+				created: "",
+				updated: "",
+				tags: [] as unknown as string[],
+				nextEid: undefined as unknown as number,
 			},
-			epics: [{
-				id: "E1", title: "E", description: "",
-				status: "todo", priority: "high", project: "p",
-				stories: [{
-					id: "E1.S1", title: "S", description: "", status: "todo",
-					dependsOn: ["E99"] as unknown as number[],  // 不存在的引用
-					tasks: [],
-				}],
-			}],
+			epics: [
+				{
+					id: "E1",
+					title: "E",
+					description: "",
+					status: "todo",
+					priority: "high",
+					project: "p",
+					stories: [
+						{
+							id: "E1.S1",
+							title: "S",
+							description: "",
+							status: "todo",
+							dependsOn: ["E99"] as unknown as number[], // 不存在的引用
+							tasks: [],
+						} as unknown as any,
+					],
+				} as unknown as any,
+			],
 		};
 		migrateToEid(rm);
 		// 不存在的引用被过滤掉

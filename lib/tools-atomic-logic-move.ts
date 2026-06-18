@@ -6,7 +6,7 @@
  */
 
 import { rebuildPaths, resolveItemId } from "./id-utils";
-import type { RoadmapFile } from "./types";
+import type { Epic, RoadmapFile, Story, Task } from "./types";
 
 /**
  * 移动一个项到新容器
@@ -36,6 +36,9 @@ export function moveItem(
 		if (!target.story) {
 			return `❌ Task 只能移动到 Story 级别，"${targetPath}" 不是 Story。`;
 		}
+		if (!source.story) {
+			return `❌ 内部错误：找不到 Task 的源 Story。`;
+		}
 		return moveTask(rm, source.task, source.story, target.story);
 	}
 
@@ -54,9 +57,9 @@ export function moveItem(
 /** 移动 Task 到另一个 Story */
 function moveTask(
 	rm: RoadmapFile,
-	task: { id: string; eid: number; title: string },
-	sourceStory: { id: string; eid: number; tasks: Array<{ id: string; eid: number; title: string }> },
-	targetStory: { id: string; eid: number; tasks: Array<{ id: string; eid: number; title: string }> },
+	task: Task,
+	sourceStory: Story,
+	targetStory: Story,
 ): string {
 	// 自身检查
 	if (sourceStory.eid === targetStory.eid) {
@@ -93,9 +96,9 @@ function moveTask(
 /** 移动 Story 到另一个 Epic */
 function moveStory(
 	rm: RoadmapFile,
-	story: { id: string; eid: number; title: string; tasks: unknown[] },
-	sourceEpic: { id: string; eid: number; stories: Array<{ id: string; eid: number; title: string; tasks: unknown[] }> },
-	targetEpic: { id: string; eid: number; stories: Array<{ id: string; eid: number; title: string; tasks: unknown[] }> },
+	story: Story,
+	sourceEpic: Epic,
+	targetEpic: Epic,
 ): string {
 	// 自身检查
 	if (sourceEpic.eid === targetEpic.eid) {
@@ -116,10 +119,10 @@ function moveStory(
 	rebuildPaths(rm);
 
 	const remaining = sourceEpic.stories.length;
-	const taskCount = (removed as { tasks: unknown[] }).tasks.length;
+	const taskCount = removed.tasks.length;
 	const result = [
 		`✅ 移动完成：`,
-		`  "${(removed as { title: string }).title}" (#${(removed as { eid: number }).eid}): ${oldPath} → ${(removed as { id: string }).id}（含 ${taskCount} 个 Task）`,
+		`  "${removed.title}" (#${removed.eid}): ${oldPath} → ${removed.id}（含 ${taskCount} 个 Task）`,
 		``,
 		`源 Epic ${sourceEpic.id} 剩余 ${remaining} 个 Story`,
 	];

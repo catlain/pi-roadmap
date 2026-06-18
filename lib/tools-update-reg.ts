@@ -81,6 +81,7 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 				planPath?: string;
 				dependsOn?: string[];
 				archive?: boolean;
+				move_to?: string;
 			},
 			_signal: AbortSignal | undefined,
 			_onUpdate: unknown,
@@ -137,14 +138,19 @@ export function registerUpdateTool(pi: ExtensionAPI) {
 
 			// ── 普通属性更新 ──
 			const sessionId = getSessionId(_ctx);
-			const updates: Record<string, string | string[]> = {};
+			const updates: Record<string, string | number[]> = {};
 			if (params.title !== undefined) updates.title = params.title;
 			if (params.description !== undefined)
 				updates.description = params.description;
 			if (params.priority !== undefined) updates.priority = params.priority;
 			if (params.note !== undefined) updates.note = params.note;
 			if (params.planPath !== undefined) updates.planPath = params.planPath;
-			if (params.dependsOn !== undefined) updates.dependsOn = params.dependsOn;
+			if (params.dependsOn !== undefined) {
+				// 将 string[] 转为 number[]
+				updates.dependsOn = params.dependsOn
+					.map((s) => parseInt(s, 10))
+					.filter((n) => !Number.isNaN(n));
+			}
 			if (params.status !== undefined) updates.status = params.status;
 			if (params.move_to !== undefined) updates.move_to = params.move_to;
 

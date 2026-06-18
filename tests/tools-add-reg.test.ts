@@ -44,6 +44,7 @@ const MOCK_RM: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: [],
+		nextEid: 1,
 	},
 	epics: [],
 };
@@ -72,7 +73,7 @@ describe("roadmap_add 统一工具", () => {
 	});
 
 	it("item_type=epic 添加 Epic", async () => {
-		vi.mocked(_addEpic).mockReturnValue({ result: "✅ 已添加", id: "E1" });
+		vi.mocked(_addEpic).mockReturnValue({ result: "✅ 已添加", epicId: "E1" });
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
 		);
@@ -92,7 +93,7 @@ describe("roadmap_add 统一工具", () => {
 		vi.mocked(existsSync).mockReturnValue(false);
 		vi.mocked(_createRoadmap).mockReturnValue(MOCK_RM);
 		vi.mocked(writeRoadmap).mockImplementation(() => {});
-		vi.mocked(_addEpic).mockReturnValue({ result: "✅ 已添加", id: "E1" });
+		vi.mocked(_addEpic).mockReturnValue({ result: "✅ 已添加", epicId: "E1" });
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
 		);
@@ -109,7 +110,7 @@ describe("roadmap_add 统一工具", () => {
 	});
 
 	it("item_type=story 添加 Story", async () => {
-		vi.mocked(_addStory).mockReturnValue({ result: "✅ 已添加", id: "E1.S2" });
+		vi.mocked(_addStory).mockReturnValue({ result: "✅ 已添加", storyId: "E1.S2" });
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
 		);
@@ -137,7 +138,7 @@ describe("roadmap_add 统一工具", () => {
 	it("item_type=task 添加 Task", async () => {
 		vi.mocked(_addTask).mockReturnValue({
 			result: "✅ 已添加",
-			id: "E1.S1.T1",
+			taskId: "E1.S1.T1",
 		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),
@@ -155,7 +156,7 @@ describe("roadmap_add 统一工具", () => {
 	it("item_type=task 可选传 planPath", async () => {
 		vi.mocked(_addTask).mockReturnValue({
 			result: "✅ 已添加",
-			id: "E1.S1.T2",
+			taskId: "E1.S1.T2",
 		});
 		vi.mocked(atomicUpdate).mockImplementation((_id: string, fn: any) =>
 			fn(MOCK_RM),

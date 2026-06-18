@@ -13,10 +13,12 @@ const BASE_RM: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: ["test"],
+		nextEid: 1,
 	},
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "Epic 有计划",
 			description: "这是一个有计划的 Epic",
 			status: "doing",
@@ -26,6 +28,7 @@ const BASE_RM: RoadmapFile = {
 			stories: [
 				{
 					id: "E1.S1",
+					eid: 2,
 					title: "Story 有计划",
 					description: "有计划的 Story",
 					status: "todo",
@@ -33,12 +36,14 @@ const BASE_RM: RoadmapFile = {
 					tasks: [
 						{
 							id: "E1.S1.T1",
+							eid: 3,
 							title: "Task 有计划",
 							status: "todo",
 							planPath: "E1-S1-T1.md",
 						},
 						{
 							id: "E1.S1.T2",
+							eid: 4,
 							title: "Task 无计划",
 							status: "todo",
 						},
@@ -46,6 +51,7 @@ const BASE_RM: RoadmapFile = {
 				},
 				{
 					id: "E1.S2",
+					eid: 5,
 					title: "Story 无计划",
 					description: "没有计划",
 					status: "todo",
@@ -55,6 +61,7 @@ const BASE_RM: RoadmapFile = {
 		},
 		{
 			id: "E2",
+			eid: 2,
 			title: "Epic 无计划",
 			description: "没有计划的 Epic",
 			status: "todo",
@@ -114,6 +121,7 @@ describe("formatRoadmapDetail — planPath 标记", () => {
 							tasks: [
 								{
 									id: "E1.S1.T1",
+									eid: 3,
 									title: "正在做某事",
 									status: "doing",
 									doingSessionId:

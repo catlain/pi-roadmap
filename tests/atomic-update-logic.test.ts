@@ -73,7 +73,7 @@ describe("updateTask()", () => {
 			eid: 3,
 			title: "T1",
 			status: "todo" as const,
-		};
+		} as unknown as Task;
 		updateTask({} as any, task, { status: "doing" }, "session-123");
 		expect(task.doingDate).toBe(today());
 		expect(task.doingSessionId).toBe("session-123");
@@ -87,7 +87,7 @@ describe("updateTask()", () => {
 			status: "doing" as const,
 			doingDate: "2026-01-01",
 			doingSessionId: "old",
-		};
+		} as unknown as Task;
 		updateTask({} as any, task, { status: "done" }, "session-456");
 		expect(task.doneDate).toBe(today());
 		expect(task.doneBySessionId).toBe("session-456");
@@ -100,7 +100,7 @@ describe("updateTask()", () => {
 			eid: 3,
 			title: "T1",
 			status: "todo" as const,
-		};
+		} as unknown as Task;
 		updateTask({} as any, task, { note: "测试备注" }, "session-1");
 		expect(task.note).toBe("测试备注");
 	});
@@ -132,7 +132,8 @@ describe("updateItem()", () => {
 			description: "",
 			status: "todo" as const,
 			tasks: [],
-		};
+			...({ doingDate: undefined, doneDate: undefined, doingSessionId: undefined, doneBySessionId: undefined } as Partial<Story>),
+		} as unknown as Story;
 		updateItem({} as any, story, { status: "doing" }, "session-1");
 		expect(story.doingDate).toBe(today());
 	});
@@ -147,7 +148,8 @@ describe("updateItem()", () => {
 			priority: "high" as const,
 			project: "/test",
 			stories: [],
-		};
+			...({ doingDate: "2026-01-01", doneDate: undefined, doingSessionId: undefined, doneBySessionId: undefined } as Partial<Epic>),
+		} as unknown as Epic;
 		updateItem({} as any, epic, { status: "done" }, "session-1");
 		expect(epic.doneDate).toBe(today());
 	});

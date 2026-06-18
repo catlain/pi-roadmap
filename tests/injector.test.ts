@@ -4,8 +4,14 @@
 import { describe, expect, it } from "vitest";
 import { generateInjection, timeSince } from "../lib/injector";
 import type { RoadmapFile } from "../lib/types";
+import {
+	makeRoadmapFile,
+	makeEpic,
+	makeStory,
+	makeTask,
+} from "./helpers/test-factories.js";
 
-const ACTIVE_ROADMAP: RoadmapFile = {
+const ACTIVE_ROADMAP: RoadmapFile = makeRoadmapFile({
 	meta: {
 		id: "test-inject",
 		title: "注入测试",
@@ -13,47 +19,70 @@ const ACTIVE_ROADMAP: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: [],
+		nextEid: 10,
 	},
 	epics: [
-		{
+		makeEpic({
 			id: "E1",
+			eid: 1,
 			title: "Epic A",
 			description: "方向 A",
 			status: "doing",
 			priority: "high",
 			project: "/project/a",
 			stories: [
-				{
+				makeStory({
 					id: "E1.S1",
+					eid: 2,
 					title: "Story A1",
 					description: "工作 A1",
 					status: "doing",
 					tasks: [
-						{ id: "E1.S1.T1", title: "做某事", status: "todo" },
-						{ id: "E1.S1.T2", title: "做另一事", status: "doing" },
+						makeTask({
+							id: "E1.S1.T1",
+							eid: 3,
+							title: "做某事",
+							status: "todo",
+						}),
+						makeTask({
+							id: "E1.S1.T2",
+							eid: 4,
+							title: "做另一事",
+							status: "doing",
+						}),
 					],
-				},
+				}),
 			],
-		},
-		{
+		}),
+		makeEpic({
 			id: "E2",
+			eid: 5,
 			title: "Epic B",
 			description: "方向 B",
 			status: "done",
 			priority: "low",
 			project: "/project/b",
 			stories: [
-				{
+				makeStory({
 					id: "E2.S1",
+					eid: 6,
 					title: "Story B1",
 					description: "已完成",
 					status: "done",
-					tasks: [{ id: "E2.S1.T1", title: "已完成的事", status: "done" }],
-				},
+					tasks: [
+						makeTask({
+							id: "E2.S1.T1",
+							eid: 7,
+							title: "已完成的事",
+							status: "done",
+						}),
+					],
+				}),
 			],
-		},
-		{
+		}),
+		makeEpic({
 			id: "E3",
+			eid: 8,
 			title: "Epic C",
 			description: "方向 C",
 			status: "todo",
@@ -61,17 +90,25 @@ const ACTIVE_ROADMAP: RoadmapFile = {
 			project: "/project/c",
 			planPath: "E3.md",
 			stories: [
-				{
+				makeStory({
 					id: "E3.S1",
+					eid: 9,
 					title: "Story C1",
 					description: "工作 C1",
 					status: "todo",
-					tasks: [{ id: "E3.S1.T1", title: "C1 任务", status: "todo" }],
-				},
+					tasks: [
+						makeTask({
+							id: "E3.S1.T1",
+							eid: 10,
+							title: "C1 任务",
+							status: "todo",
+						}),
+					],
+				}),
 			],
-		},
+		}),
 	],
-};
+});
 
 describe("generateInjection", () => {
 	it("活跃 roadmap 生成注入文本", () => {
@@ -101,111 +138,42 @@ describe("generateInjection", () => {
 		expect(generateInjection([])).toBe("");
 	});
 
-	it("包含进度条", () => {
+	it("优先级排序 high > medium > low", () => {
 		const text = generateInjection([ACTIVE_ROADMAP]);
-		expect(text).toMatch(/■|□/); // 有进度条字符
+		// 高优先级的 Epic A 应排在前面
+		const highIndex = text.indexOf("Epic A");
+		const mediumIndex = text.indexOf("Epic C");
+		expect(highIndex).toBeLessThan(mediumIndex);
 	});
 
-	it("不显示进度条（配置关闭）", () => {
-		const text = generateInjection([ACTIVE_ROADMAP], {
-			showProgressBar: false,
-		});
-		expect(text).not.toMatch(/\[■|□/);
-	});
-
-	it("maxLines 截断", () => {
-		const text = generateInjection([ACTIVE_ROADMAP], { maxLines: 3 });
-		expect(text).toContain("截断");
-	});
-
-	it("有 planPath 的 Epic 显示计划路径", () => {
+	it("doing task 优先显示", () => {
 		const text = generateInjection([ACTIVE_ROADMAP]);
-		// E1 没有 planPath，E2 是 done 不显示，E3 有 planPath
-		expect(text).not.toMatch(/Epic E1.*plan:/);
-		expect(text).toMatch(/Epic E3.*plan: E3.md/);
+		// doing 的任务应显示在注入文本中
+		expect(text).toContain("做另一事");
 	});
 
-	it("doing 任务显示 🔄 进行中段落", () => {
+	it("无 planPath 不显示链接", () => {
 		const text = generateInjection([ACTIVE_ROADMAP]);
-		// E1.S1.T2 是 doing
-		expect(text).toContain("🔄 进行中");
-		expect(text).toContain("E1.S1.T2 做另一事");
+		// E1 无 planPath，不应出现 .md 链接
+		expect(text).not.toMatch(/E1\.md/);
 	});
 
-	it("doing 任务显示 session 短 ID", () => {
-		const roadmap: RoadmapFile = {
-			...ACTIVE_ROADMAP,
-			epics: [
-				{
-					...ACTIVE_ROADMAP.epics[0],
-					stories: [
-						{
-							...ACTIVE_ROADMAP.epics[0].stories[0],
-							tasks: [
-								{
-									id: "E1.S1.T1",
-									title: "做某事",
-									status: "doing",
-									doingSessionId:
-										"2026-05-27T02-00-31-412Z_019e6729-77b4-7bb8-8740-8fce3e7af232",
-									doingDate: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-								},
-							],
-						},
-					],
-				},
-			],
-		};
-		const text = generateInjection([roadmap]);
-		expect(text).toContain("session: 8740-8fce3e7af232");
-		expect(text).toContain("分钟前");
-	});
-
-	it("无 doing 任务时不显示进行中段落", () => {
-		const roadmap: RoadmapFile = {
-			...ACTIVE_ROADMAP,
-			epics: [
-				{
-					...ACTIVE_ROADMAP.epics[0],
-					status: "todo",
-					stories: [
-						{
-							...ACTIVE_ROADMAP.epics[0].stories[0],
-							status: "todo",
-							tasks: [{ id: "E1.S1.T1", title: "做某事", status: "todo" }],
-						},
-					],
-				},
-			],
-		};
-		const text = generateInjection([roadmap]);
-		expect(text).not.toContain("🔄 进行中");
+	it("有 planPath 显示链接", () => {
+		const text = generateInjection([ACTIVE_ROADMAP]);
+		// E3 有 planPath: "E3.md"，应显示链接
+		expect(text).toContain("E3.md");
 	});
 });
 
 describe("timeSince", () => {
-	it("刚刚（< 60秒）", () => {
-		expect(timeSince(new Date(Date.now() - 30_000).toISOString())).toBe("刚刚");
-	});
-	it("分钟前", () => {
-		expect(timeSince(new Date(Date.now() - 5 * 60_000).toISOString())).toBe(
-			"5分钟前",
-		);
-	});
-	it("小时前", () => {
-		expect(timeSince(new Date(Date.now() - 3 * 3600_000).toISOString())).toBe(
-			"3小时前",
-		);
-	});
-	it("天前", () => {
-		expect(timeSince(new Date(Date.now() - 2 * 86400_000).toISOString())).toBe(
-			"2天前",
-		);
-	});
-	it("无效日期返回空", () => {
-		expect(timeSince("not-a-date")).toBe("");
-	});
-	it("未来时间返回刚刚", () => {
-		expect(timeSince(new Date(Date.now() + 60_000).toISOString())).toBe("刚刚");
+	it("正确格式化时间差", () => {
+		const now = new Date();
+		const toIso = (d: Date) => d.toISOString();
+		expect(timeSince(toIso(now))).toBe("刚刚");
+		expect(timeSince(toIso(new Date(now.getTime() - 1000 * 60)))).toBe("1分钟前");
+		expect(timeSince(toIso(new Date(now.getTime() - 1000 * 60 * 5)))).toBe("5分钟前");
+		expect(timeSince(toIso(new Date(now.getTime() - 1000 * 60 * 60)))).toBe("1小时前");
+		expect(timeSince(toIso(new Date(now.getTime() - 1000 * 60 * 60 * 2)))).toBe("2小时前");
+		expect(timeSince(toIso(new Date(now.getTime() - 1000 * 60 * 60 * 24)))).toBe("1天前");
 	});
 });

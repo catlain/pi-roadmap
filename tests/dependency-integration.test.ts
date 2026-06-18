@@ -49,6 +49,7 @@ function makeRoadmap(epics: Epic[] = []): RoadmapFile {
 			created: "2025-01-01",
 			updated: "2025-01-01",
 			tags: [],
+			nextEid: 1,
 		},
 		epics,
 	};
@@ -71,7 +72,7 @@ describe("addTask with dependsOn", () => {
 		const rm = makeRoadmap([
 			makeEpic({ id: "E1", eid: 1 }, [makeStory({ id: "E1.S1", eid: 2 })]),
 		]);
-		addTask(rm, "E1.S1", "新Task");
+		addTask(rm, "E1.S1", "新Task", undefined);
 		expect(rm.epics[0].stories[0].tasks[0].dependsOn).toBeUndefined();
 	});
 });

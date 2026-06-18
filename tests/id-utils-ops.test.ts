@@ -3,13 +3,13 @@
  */
 import { describe, it, expect } from "vitest";
 import { allocateEid, rebuildPaths, buildEidPathIndex, ensureNextEid } from "../lib/id-utils";
-import type { RoadmapFile } from "../lib/types";
+import type { RoadmapFile, Epic } from "../lib/types";
 
 function makeRm(overrides?: Partial<RoadmapFile>): RoadmapFile {
 	return {
 		meta: {
 			id: "test", title: "Test", status: "active",
-			created: "2025-01-01", updated: "2025-01-01", nextEid: 10,
+			created: "2025-01-01", updated: "2025-01-01", tags: [], nextEid: 10,
 		},
 		epics: [
 			{
@@ -63,7 +63,7 @@ describe("rebuildPaths", () => {
 		const rm: RoadmapFile = {
 			meta: {
 				id: "test", title: "Test", status: "active",
-				created: "2025-01-01", updated: "2025-01-01", nextEid: 5,
+				created: "2025-01-01", updated: "2025-01-01", tags: [], nextEid: 5,
 			},
 			epics: [{
 				id: "WRONG", eid: 1, title: "Epic", description: "",
@@ -84,7 +84,7 @@ describe("rebuildPaths", () => {
 		const rm: RoadmapFile = {
 			meta: {
 				id: "test", title: "Test", status: "active",
-				created: "2025-01-01", updated: "2025-01-01", nextEid: 10,
+				created: "2025-01-01", updated: "2025-01-01", tags: [], nextEid: 10,
 			},
 			epics: [
 				{
@@ -126,6 +126,17 @@ describe("buildEidPathIndex", () => {
 		expect(index.get("E1.S2.T1")).toBe(6);
 		expect(index.get("E2")).toBe(7);
 	});
+
+	it("无 eid 的项不包含在索引中", () => {
+		const rm = makeRm({
+			epics: [{
+				...({ id: "E1", eid: undefined, title: "No Eid", description: "",
+				status: "todo", priority: "high", project: "p", stories: [] } as any),
+				// eid 删除以测试无 eid 情况
+			} as unknown as Epic],
+		});
+		expect(buildEidPathIndex(rm).size).toBe(0);
+	});
 });
 
 describe("ensureNextEid", () => {
@@ -138,26 +149,5 @@ describe("ensureNextEid", () => {
 		const meta = { id: "t", title: "T", status: "active", created: "", updated: "", nextEid: 42 } as any;
 		ensureNextEid(meta);
 		expect(meta.nextEid).toBe(42);
-	});
-});
-
-describe("buildEidPathIndex", () => {
-	it("构建正确的 path→eid 映射", () => {
-		const rm = makeRm();
-		const index = buildEidPathIndex(rm);
-		expect(index.get("E1")).toBe(1);
-		expect(index.get("E1.S1")).toBe(2);
-		expect(index.get("E1.S1.T1")).toBe(3);
-		expect(index.get("E2")).toBe(7);
-	});
-
-	it("无 eid 的项不包含在索引中", () => {
-		const rm = makeRm({
-			epics: [{
-				id: "E1", title: "No Eid", description: "",
-				status: "todo", priority: "high", project: "p", stories: [],
-			}],
-		});
-		expect(buildEidPathIndex(rm).size).toBe(0);
 	});
 });

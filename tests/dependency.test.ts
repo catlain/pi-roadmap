@@ -52,6 +52,7 @@ function makeRoadmap(epics: Epic[] = []): RoadmapFile {
 			created: "2025-01-01",
 			updated: "2025-01-01",
 			tags: [],
+			nextEid: 1,
 		},
 		epics,
 	};
@@ -66,6 +67,7 @@ const DEP_RM: RoadmapFile = {
 		created: "2025-01-01",
 		updated: "2025-01-01",
 		tags: [],
+		nextEid: 10,
 	},
 	epics: [
 		{

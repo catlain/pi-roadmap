@@ -3,7 +3,7 @@
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { vi } from "vitest";
-import type { RoadmapFile } from "../lib/types";
+import type { RoadmapFile } from "../../lib/types";
 
 export const MOCK_RM: RoadmapFile = {
 	meta: {
@@ -13,6 +13,7 @@ export const MOCK_RM: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: [],
+		nextEid: 4,
 	},
 	epics: [
 		{

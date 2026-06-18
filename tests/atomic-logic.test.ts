@@ -15,9 +15,15 @@ import {
 	markTaskDone,
 } from "../lib/tools-atomic-logic";
 import type { RoadmapFile } from "../lib/types";
+import {
+	makeRoadmapFile,
+	makeEpic,
+	makeStory,
+	makeTask,
+} from "./helpers/test-factories.js";
 
 function makeRoadmap(): RoadmapFile {
-	return {
+	return makeRoadmapFile({
 		meta: {
 			id: "test",
 			title: "Test",
@@ -25,65 +31,81 @@ function makeRoadmap(): RoadmapFile {
 			created: "2025-01-01T00:00:00Z",
 			updated: "2025-01-01T00:00:00Z",
 			tags: [],
+			nextEid: 1,
 		},
 		epics: [],
-	};
+	});
 }
 
 function makeRoadmapWithDoneTasks(): RoadmapFile {
-	const rm = makeRoadmap();
-	rm.epics.push({
-		id: "E1",
-		title: "Done Epic",
-		description: "",
-		status: "todo",
-		priority: "medium",
-		project: "/test",
-		createdDate: "2025-01-01",
-		stories: [
-			{
-				id: "E1.S1",
-				title: "Done Story",
+	return makeRoadmapFile({
+		epics: [
+			makeEpic({
+				id: "E1",
+				eid: 1,
+				title: "Done Epic",
 				description: "",
 				status: "todo",
+				priority: "medium",
+				project: "/test",
 				createdDate: "2025-01-01",
-				tasks: [
-					{
-						id: "E1.S1.T1",
-						title: "Done Task",
-						status: "done",
-						doneDate: "2025-01-02",
-					},
-					{
-						id: "E1.S1.T2",
-						title: "Done Task 2",
-						status: "done",
-						doneDate: "2025-01-02",
-					},
-				],
-			},
-		],
-	});
-	rm.epics.push({
-		id: "E2",
-		title: "Active Epic",
-		description: "",
-		status: "doing",
-		priority: "high",
-		project: "/test",
-		createdDate: "2025-01-01",
-		stories: [
-			{
-				id: "E2.S1",
-				title: "Active Story",
+				stories: [
+					makeStory({
+						id: "E1.S1",
+						eid: 2,
+						title: "Done Story",
+						description: "",
+						status: "todo",
+						createdDate: "2025-01-01",
+						tasks: [
+							makeTask({
+								id: "E1.S1.T1",
+								eid: 3,
+								title: "Done Task",
+								status: "done",
+								doneDate: "2025-01-02",
+							}),
+							makeTask({
+								id: "E1.S1.T2",
+								eid: 4,
+								title: "Done Task 2",
+								status: "done",
+								doneDate: "2025-01-02",
+							}),
+					],
+				}),
+			],
+			}),
+			makeEpic({
+				id: "E2",
+				eid: 5,
+				title: "Active Epic",
 				description: "",
-				status: "todo",
+				status: "doing",
+				priority: "high",
+				project: "/test",
 				createdDate: "2025-01-01",
-				tasks: [{ id: "E2.S1.T1", title: "Active Task", status: "todo" }],
-			},
+				stories: [
+					makeStory({
+						id: "E2.S1",
+						eid: 6,
+						title: "Active Story",
+						description: "",
+						status: "todo",
+						createdDate: "2025-01-01",
+						tasks: [
+							makeTask({
+								id: "E2.S1.T1",
+								eid: 7,
+								title: "Active Task",
+								status: "todo",
+							}),
+						],
+				}),
+			],
+			}),
 		],
 	});
-	return rm;
 }
 
 // ── createRoadmap ──
@@ -443,6 +465,7 @@ describe("markTaskDone", () => {
 describe("checkArchiveableEpics", () => {
 	const baseEpic2 = {
 		id: "E1",
+		eid: 1,
 		title: "Test Epic",
 		description: "",
 		status: "todo" as const,
@@ -452,6 +475,7 @@ describe("checkArchiveableEpics", () => {
 	};
 	const baseStory2 = {
 		id: "E1.S1",
+		eid: 2,
 		title: "Test Story",
 		description: "",
 		status: "todo" as const,
@@ -459,6 +483,7 @@ describe("checkArchiveableEpics", () => {
 	};
 	const baseTask2 = {
 		id: "E1.S1.T1",
+		eid: 3,
 		title: "Test Task",
 		status: "todo" as const,
 	};

@@ -9,8 +9,14 @@ import {
 	getOverview,
 } from "../lib/parser";
 import type { RoadmapFile } from "../lib/types";
+import {
+	makeRoadmapFile,
+	makeEpic,
+	makeStory,
+	makeTask,
+} from "./helpers/test-factories.js";
 
-const SAMPLE_ROADMAP: RoadmapFile = {
+const SAMPLE_ROADMAP: RoadmapFile = makeRoadmapFile({
 	meta: {
 		id: "test-plan",
 		title: "测试计划",
@@ -18,68 +24,107 @@ const SAMPLE_ROADMAP: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-15",
 		tags: ["pi", "开源"],
+		nextEid: 15,
 	},
 	epics: [
-		{
+		makeEpic({
 			id: "E1",
+			eid: 1,
 			title: "Epic A",
 			description: "大方向 A",
 			status: "doing",
 			priority: "high",
 			project: "/project/a",
 			stories: [
-				{
+				makeStory({
 					id: "E1.S1",
+					eid: 2,
 					title: "Story A1",
 					description: "工作块 A1",
 					status: "doing",
 					tasks: [
-						{ id: "E1.S1.T1", title: "Task A1-1", status: "done" },
-						{ id: "E1.S1.T2", title: "Task A1-2", status: "doing" },
-						{ id: "E1.S1.T3", title: "Task A1-3", status: "todo" },
+						makeTask({
+							id: "E1.S1.T1",
+							eid: 3,
+							title: "Task A1-1",
+							status: "done",
+						}),
+						makeTask({
+							id: "E1.S1.T2",
+							eid: 4,
+							title: "Task A1-2",
+							status: "doing",
+						}),
+						makeTask({
+							id: "E1.S1.T3",
+							eid: 5,
+							title: "Task A1-3",
+							status: "todo",
+						}),
 					],
-				},
-				{
+				}),
+				makeStory({
 					id: "E1.S2",
+					eid: 6,
 					title: "Story A2",
 					description: "工作块 A2",
 					status: "todo",
 					tasks: [
-						{ id: "E1.S2.T1", title: "Task A2-1", status: "todo" },
-						{ id: "E1.S2.T2", title: "Task A2-2", status: "todo" },
+						makeTask({
+							id: "E1.S2.T1",
+							eid: 7,
+							title: "Task A2-1",
+							status: "todo",
+						}),
+						makeTask({
+							id: "E1.S2.T2",
+							eid: 8,
+							title: "Task A2-2",
+							status: "todo",
+						}),
 					],
-				},
+				}),
 			],
-		},
-		{
+		}),
+		makeEpic({
 			id: "E2",
+			eid: 9,
 			title: "Epic B",
 			description: "大方向 B",
 			status: "todo",
 			priority: "medium",
 			project: "/project/b",
 			stories: [
-				{
+				makeStory({
 					id: "E2.S1",
+					eid: 10,
 					title: "Story B1",
 					description: "工作块 B1",
 					status: "todo",
-					tasks: [{ id: "E2.S1.T1", title: "Task B1-1", status: "todo" }],
-				},
+					tasks: [
+						makeTask({
+							id: "E2.S1.T1",
+							eid: 11,
+							title: "Task B1-1",
+							status: "todo",
+						}),
+					],
+				}),
 			],
-		},
+		}),
 	],
-};
+});
 
-const PAUSED_ROADMAP: RoadmapFile = {
-	...SAMPLE_ROADMAP,
+const PAUSED_ROADMAP: RoadmapFile = makeRoadmapFile({
 	meta: {
 		...SAMPLE_ROADMAP.meta,
 		id: "paused-plan",
 		status: "paused",
 		tags: ["量化"],
+		nextEid: 15,
 	},
-};
+	epics: [...SAMPLE_ROADMAP.epics],
+});
 
 // ── filterByStatus ──
 
@@ -131,7 +176,7 @@ describe("getOverview", () => {
 	});
 
 	it("空 roadmap 进度为 0", () => {
-		const empty: RoadmapFile = {
+		const empty: RoadmapFile = makeRoadmapFile({
 			meta: {
 				id: "empty",
 				title: "空",
@@ -139,9 +184,10 @@ describe("getOverview", () => {
 				created: "2026-01-01",
 				updated: "2026-01-01",
 				tags: [],
+				nextEid: 1,
 			},
 			epics: [],
-		};
+		});
 		const overview = getOverview(empty);
 		expect(overview.totalTasks).toBe(0);
 		expect(overview.doneTasks).toBe(0);

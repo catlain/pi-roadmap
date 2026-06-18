@@ -51,10 +51,12 @@ const MOCK_RM: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: ["test"],
+		nextEid: 1,
 	},
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "Epic 1",
 			description: "",
 			status: "doing",
@@ -63,15 +65,17 @@ const MOCK_RM: RoadmapFile = {
 			stories: [
 				{
 					id: "E1.S1",
+					eid: 2,
 					title: "Story 1",
 					description: "",
 					status: "doing",
-					tasks: [{ id: "E1.S1.T1", title: "T1", status: "todo" }],
+					tasks: [{ id: "E1.S1.T1", eid: 3, title: "T1", status: "todo" }],
 				},
 			],
 		},
 		{
 			id: "E2",
+			eid: 2,
 			title: "Epic 2",
 			description: "",
 			status: "done",
@@ -80,15 +84,17 @@ const MOCK_RM: RoadmapFile = {
 			stories: [
 				{
 					id: "E2.S1",
+					eid: 3,
 					title: "Story done",
 					description: "",
 					status: "done",
-					tasks: [{ id: "E2.S1.T1", title: "T1", status: "done" }],
+					tasks: [{ id: "E2.S1.T1", eid: 4, title: "T1", status: "done" }],
 				},
 			],
 		},
 		{
 			id: "E3",
+			eid: 3,
 			title: "Archived Epic",
 			description: "",
 			status: "done",
@@ -98,12 +104,13 @@ const MOCK_RM: RoadmapFile = {
 			stories: [
 				{
 					id: "E3.S1",
+					eid: 4,
 					title: "Archived",
 					description: "",
 					status: "done",
 					archived: true,
 					tasks: [
-						{ id: "E3.S1.T1", title: "T1", status: "done", archived: true },
+						{ id: "E3.S1.T1", eid: 5, title: "T1", status: "done", archived: true },
 					],
 				},
 			],

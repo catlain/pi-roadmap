@@ -5,6 +5,7 @@
 import * as fs from "node:fs";
 import { homedir } from "node:os";
 import * as path from "node:path";
+import type { RoadmapFile } from "../lib/types";
 
 export const DOING_FILE = path.join(homedir(), ".pi", "roadmap", "doing.json");
 export const ROADMAP_DIR = path.join(homedir(), ".pi", "roadmap");
@@ -13,7 +14,7 @@ export const ROADMAP_DIR = path.join(homedir(), ".pi", "roadmap");
 export function makeRoadmap(
 	id: string,
 	tasks: { id: string; status: string; title?: string }[][],
-) {
+): RoadmapFile {
 	return {
 		meta: {
 			id,
@@ -22,8 +23,10 @@ export function makeRoadmap(
 			created: "2026-01-01",
 			updated: "2026-01-01",
 			tags: [],
+			nextEid: 1,
 		},
 		epics: tasks.map((epicTasks, ei) => ({
+			eid: ei,
 			id: `E${ei}`,
 			title: `Epic ${ei}`,
 			description: `Epic ${ei}`,
@@ -32,11 +35,13 @@ export function makeRoadmap(
 			project: "/tmp/test",
 			stories: [
 				{
+					eid: ei * 10,
 					id: `E${ei}.S0`,
 					title: `Story ${ei}.0`,
 					description: `Story`,
 					status: "todo",
 					tasks: epicTasks.map((t, ti) => ({
+						eid: ei * 100 + ti,
 						id: t.id || `E${ei}.S0.T${ti}`,
 						title: t.title || `Task ${ei}.0.${ti}`,
 						status: t.status,
@@ -44,7 +49,7 @@ export function makeRoadmap(
 				},
 			],
 		})),
-	};
+	} as unknown as RoadmapFile;
 }
 
 /** 在 beforeEach 中调用：用 fs 直接清空 doing.json（避免 ESM import 缓存问题） */

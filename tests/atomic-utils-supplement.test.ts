@@ -8,7 +8,7 @@ import type { RoadmapFile } from "../lib/types";
 const rm: RoadmapFile = {
 	meta: {
 		id: "test", title: "T", status: "active",
-		created: "", updated: "", nextEid: 10,
+		created: "", updated: "", tags: [], nextEid: 10,
 	},
 	epics: [{
 		id: "E1", eid: 1, title: "Epic", description: "",

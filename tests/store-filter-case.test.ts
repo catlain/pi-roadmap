@@ -17,10 +17,12 @@ const BASE_RM: RoadmapFile = {
 		created: "2026-06-05",
 		updated: "2026-06-05",
 		tags: [],
+		nextEid: 1,
 	},
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "Epic A",
 			description: "",
 			status: "todo",
@@ -30,6 +32,7 @@ const BASE_RM: RoadmapFile = {
 		},
 		{
 			id: "E2",
+			eid: 2,
 			title: "Epic B",
 			description: "",
 			status: "todo",

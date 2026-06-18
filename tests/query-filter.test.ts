@@ -23,10 +23,12 @@ const testRoadmap: RoadmapFile = {
 		created: "2026-01-01",
 		updated: "2026-01-01",
 		tags: [],
+		nextEid: 10,
 	},
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "活跃 Epic",
 			description: "进行中",
 			status: "doing",
@@ -37,6 +39,7 @@ const testRoadmap: RoadmapFile = {
 			stories: [
 				{
 					id: "E1.S1",
+					eid: 2,
 					title: "活跃 Story",
 					description: "进行中",
 					status: "doing",
@@ -45,6 +48,7 @@ const testRoadmap: RoadmapFile = {
 					tasks: [
 						{
 							id: "E1.S1.T1",
+							eid: 3,
 							title: "Done Task",
 							status: "done",
 							createdDate: "2026-01-01",
@@ -54,6 +58,7 @@ const testRoadmap: RoadmapFile = {
 						},
 						{
 							id: "E1.S1.T2",
+							eid: 4,
 							title: "Doing Task",
 							status: "doing",
 							createdDate: "2026-01-01",
@@ -63,6 +68,7 @@ const testRoadmap: RoadmapFile = {
 						},
 						{
 							id: "E1.S1.T3",
+							eid: 5,
 							title: "Todo Task",
 							status: "todo",
 							createdDate: "2026-01-01",
@@ -73,6 +79,7 @@ const testRoadmap: RoadmapFile = {
 		},
 		{
 			id: "E2",
+			eid: 6,
 			title: "已完成 Epic",
 			description: "完成了",
 			status: "done",
@@ -83,6 +90,7 @@ const testRoadmap: RoadmapFile = {
 			stories: [
 				{
 					id: "E2.S1",
+					eid: 7,
 					title: "Done Story",
 					description: "",
 					status: "done",
@@ -91,6 +99,7 @@ const testRoadmap: RoadmapFile = {
 					tasks: [
 						{
 							id: "E2.S1.T1",
+							eid: 8,
 							title: "Done Task",
 							status: "done",
 							createdDate: "2026-01-01",
@@ -102,6 +111,7 @@ const testRoadmap: RoadmapFile = {
 		},
 		{
 			id: "E3",
+			eid: 9,
 			title: "已归档 Epic",
 			description: "归档了",
 			status: "done",
@@ -113,6 +123,7 @@ const testRoadmap: RoadmapFile = {
 			stories: [
 				{
 					id: "E3.S1",
+					eid: 10,
 					title: "Archived Story",
 					description: "",
 					status: "done",
@@ -122,6 +133,7 @@ const testRoadmap: RoadmapFile = {
 					tasks: [
 						{
 							id: "E3.S1.T1",
+							eid: 11,
 							title: "Archived Task",
 							status: "done",
 							createdDate: "2026-01-01",

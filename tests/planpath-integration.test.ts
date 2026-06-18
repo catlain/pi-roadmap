@@ -16,7 +16,7 @@ import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
 import { validateRoadmap } from "../lib/validator";
 
 function makeTask(o: Partial<Task> & { id: string }): Task {
-	return { title: `Task ${o.id}`, status: "todo", ...o };
+	return { title: `Task ${o.id}`, status: "todo", eid: 1, ...o };
 }
 function makeStory(
 	o: Partial<Story> & { id: string },
@@ -27,6 +27,7 @@ function makeStory(
 		description: "",
 		status: "todo",
 		tasks,
+		eid: 1,
 		...o,
 	};
 }
@@ -41,6 +42,7 @@ function makeEpic(
 		priority: "medium",
 		project: "/test-project",
 		stories,
+		eid: 1,
 		...o,
 	};
 }
@@ -53,6 +55,7 @@ function makeRoadmap(epics: Epic[] = []): RoadmapFile {
 			created: "2025-01-01",
 			updated: "2025-01-01",
 			tags: [],
+			nextEid: 100,
 		},
 		epics,
 	};
@@ -131,7 +134,14 @@ describe("planPath 端到端：创建 → 查看 → doing", () => {
 
 	it("Epic 不传 planPath 时被拒绝", () => {
 		const rm = makeRoadmap();
-		const { result, epicId } = addEpic(rm, "Epic without planPath", "desc");
+		const { result, epicId } = addEpic(
+			rm,
+			"Epic without planPath",
+			"desc",
+			undefined,
+			"/test",
+			undefined,
+		);
 		expect(result).toContain("必须关联计划文档");
 		expect(epicId).toBeUndefined();
 		expect(rm.epics).toHaveLength(0);

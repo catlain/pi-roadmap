@@ -16,7 +16,7 @@ import {
 import type { Epic, RoadmapFile, Story, Task } from "../lib/types";
 
 function makeTask(overrides: Partial<Task> & { id: string }): Task {
-	return { title: `Task ${overrides.id}`, status: "todo", ...overrides };
+	return { title: `Task ${overrides.id}`, status: "todo", eid: 1, ...overrides };
 }
 
 function makeStory(
@@ -29,6 +29,7 @@ function makeStory(
 		status: "todo",
 		createdDate: "2025-01-01",
 		tasks,
+		eid: 1,
 		...overrides,
 	};
 }
@@ -45,6 +46,7 @@ function makeEpic(
 		project: "/test",
 		createdDate: "2025-01-01",
 		stories,
+		eid: 1,
 		...overrides,
 	};
 }
@@ -58,6 +60,7 @@ function makeRoadmap(epics: Epic[] = []): RoadmapFile {
 			created: "2025-01-01T00:00:00Z",
 			updated: "2025-01-01T00:00:00Z",
 			tags: [],
+			nextEid: 100,
 		},
 		epics,
 	};

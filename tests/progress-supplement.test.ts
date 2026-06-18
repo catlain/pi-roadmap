@@ -49,6 +49,7 @@ function makeRoadmap(epics: any[] = []): RoadmapFile {
 			created: "2026-01-01",
 			updated: "2026-01-01",
 			tags: [],
+			nextEid: 100,
 		},
 		epics,
 	} as RoadmapFile;

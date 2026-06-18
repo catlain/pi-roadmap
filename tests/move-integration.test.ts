@@ -15,10 +15,10 @@ vi.mock("../lib/store", () => ({
 }));
 
 import { Type } from "@sinclair/typebox";
-import type { Roadmap } from "../lib/types";
+import type { RoadmapFile } from "../lib/types.js";
 
 // 构造带 eid 的测试数据
-const baseRm: Roadmap = {
+const baseRm: RoadmapFile = {
 	meta: {
 		id: "test",
 		title: "Test Roadmap",
@@ -49,7 +49,6 @@ const baseRm: Roadmap = {
 							id: "E1.S1.T1",
 							eid: 3,
 							title: "Task A",
-							description: "",
 							status: "todo",
 						},
 					],
@@ -78,7 +77,7 @@ const baseRm: Roadmap = {
 };
 
 /** 从 mockWrite 提取写入的 roadmap */
-function getWrittenRoadmap(): Roadmap {
+function getWrittenRoadmap(): RoadmapFile {
 	return mockWrite.mock.calls[mockWrite.mock.calls.length - 1]?.[1];
 }
 
@@ -104,7 +103,7 @@ describe("roadmap_update move_to 集成", () => {
 		moveItem(rm, "E1.S1.T1", "E1.S2");
 
 		// Task 应在 E1.S2 下
-		const e1s2 = rm.epics[0].stories.find((s) => s.id === "E1.S2");
+		const e1s2 = rm.epics[0].stories.find((s: any) => s.id === "E1.S2");
 		expect(e1s2).toBeDefined();
 		expect(e1s2!.tasks).toHaveLength(1);
 		expect(e1s2!.tasks[0].eid).toBe(3);
@@ -117,8 +116,8 @@ describe("roadmap_update move_to 集成", () => {
 		moveItem(rm, "E1.S1.T1", "E1.S2");
 
 		const task = rm.epics[0].stories
-			.find((s) => s.id === "E1.S2")!
-			.tasks.find((t) => t.eid === 3)!;
+			.find((s: any) => s.id === "E1.S2")!
+			.tasks.find((t: any) => t.eid === 3)!;
 		expect(task).toBeDefined();
 		expect(task.title).toBe("Task A");
 	});

@@ -15,7 +15,7 @@ function makeRm(overrides?: Partial<RoadmapFile>): RoadmapFile {
 	return {
 		meta: {
 			id: "test", title: "Test", status: "active",
-			created: "2025-01-01", updated: "2025-01-01", nextEid: 10,
+			created: "2025-01-01", updated: "2025-01-01", tags: [], nextEid: 10,
 		},
 		epics: [
 			{

@@ -28,10 +28,12 @@ function createTestRoadmap(): RoadmapFile {
 			created: "2026-01-01T00:00:00.000Z",
 			updated: "2026-01-01T00:00:00.000Z",
 			tags: [],
+			nextEid: 10,
 		},
 		epics: [
 			{
 				id: "E1",
+				eid: 1,
 				title: "Epic 1",
 				description: "测试Epic",
 				status: "todo",
@@ -41,6 +43,7 @@ function createTestRoadmap(): RoadmapFile {
 				stories: [
 					{
 						id: "E1.S1",
+						eid: 2,
 						title: "Story 1",
 						description: "测试Story",
 						status: "todo",
@@ -48,12 +51,14 @@ function createTestRoadmap(): RoadmapFile {
 						tasks: [
 							{
 								id: "E1.S1.T1",
+								eid: 3,
 								title: "Task 1",
 								status: "todo",
 								createdDate: "2026-01-01",
 							},
 							{
 								id: "E1.S1.T2",
+								eid: 4,
 								title: "Task 2",
 								status: "done",
 								createdDate: "2026-01-01",
@@ -63,6 +68,7 @@ function createTestRoadmap(): RoadmapFile {
 					},
 					{
 						id: "E1.S2",
+						eid: 5,
 						title: "Story 2",
 						description: "已完成Story",
 						status: "done",
@@ -71,6 +77,7 @@ function createTestRoadmap(): RoadmapFile {
 						tasks: [
 							{
 								id: "E1.S2.T1",
+								eid: 6,
 								title: "Task done",
 								status: "done",
 								createdDate: "2026-01-01",
@@ -82,6 +89,7 @@ function createTestRoadmap(): RoadmapFile {
 			},
 			{
 				id: "E2",
+				eid: 7,
 				title: "Epic 2（归档）",
 				description: "已归档Epic",
 				status: "done",
@@ -93,6 +101,7 @@ function createTestRoadmap(): RoadmapFile {
 				stories: [
 					{
 						id: "E2.S1",
+						eid: 8,
 						title: "Archived Story",
 						description: "",
 						status: "done",
@@ -102,6 +111,7 @@ function createTestRoadmap(): RoadmapFile {
 						tasks: [
 							{
 								id: "E2.S1.T1",
+								eid: 9,
 								title: "Archived Task",
 								status: "done",
 								createdDate: "2026-01-01",

@@ -53,8 +53,24 @@ function handleStatusTransition(
 	},
 	newStatus: ItemStatus,
 	_sessionId: string | undefined,
-	extraDoingFields?: (item: Task) => void,
-	extraDoneFields?: (item: Task) => void,
+	extraDoingFields?: (item: {
+		status: ItemStatus;
+		doingDate?: string;
+		doneDate?: string;
+		eid: number;
+		dependsOn?: number[];
+		doingSessionId?: string;
+		doneBySessionId?: string;
+	}) => void,
+	extraDoneFields?: (item: {
+		status: ItemStatus;
+		doingDate?: string;
+		doneDate?: string;
+		eid: number;
+		dependsOn?: number[];
+		doingSessionId?: string;
+		doneBySessionId?: string;
+	}) => void,
 ): { changed: string; warning: string | null } | null {
 	const oldStatus = item.status;
 	if (oldStatus === newStatus) {
@@ -143,7 +159,13 @@ export function updateItem(
 	if (updates.status !== undefined) {
 		const result = handleStatusTransition(
 			rm,
-			item,
+			item as {
+				status: ItemStatus;
+				doingDate?: string;
+				doneDate?: string;
+				eid: number;
+				dependsOn?: number[];
+			},
 			updates.status as ItemStatus,
 			sessionId,
 		);
@@ -199,7 +221,15 @@ export function updateTask(
 	if (updates.status !== undefined) {
 		const result = handleStatusTransition(
 			rm,
-			task,
+			task as {
+				status: ItemStatus;
+				doingDate?: string;
+				doneDate?: string;
+				eid: number;
+				dependsOn?: number[];
+				doingSessionId?: string;
+				doneBySessionId?: string;
+			},
 			updates.status as ItemStatus,
 			sessionId,
 			// doing 时设置 doingSessionId，非 doing 时清除

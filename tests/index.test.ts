@@ -52,7 +52,7 @@ describe("roadmapExtension", () => {
 
 		const agentEndHandler = vi
 			.mocked(pi.on)
-			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			.mock.calls.find((c) => c[0] as unknown as string === "agent_end")?.[1] as (
 			event: any,
 			ctx: any,
 		) => Promise<void>;
@@ -84,7 +84,7 @@ describe("roadmapExtension", () => {
 
 		const agentEndHandler = vi
 			.mocked(pi.on)
-			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			.mock.calls.find((c) => c[0] as unknown as string === "agent_end")?.[1] as (
 			event: any,
 			ctx: any,
 		) => Promise<void>;
@@ -129,7 +129,7 @@ describe("roadmapExtension", () => {
 
 		const agentEndHandler = vi
 			.mocked(pi.on)
-			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			.mock.calls.find((c) => c[0] as unknown as string === "agent_end")?.[1] as (
 			event: any,
 			ctx: any,
 		) => Promise<void>;
@@ -169,7 +169,7 @@ describe("roadmapExtension", () => {
 
 		const agentEndHandler = vi
 			.mocked(pi.on)
-			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			.mock.calls.find((c) => c[0] as unknown as string === "agent_end")?.[1] as (
 			event: any,
 			ctx: any,
 		) => Promise<void>;
@@ -211,7 +211,7 @@ describe("roadmapExtension", () => {
 
 		const agentEndHandler = vi
 			.mocked(pi.on)
-			.mock.calls.find((c) => c[0] === "agent_end")?.[1] as (
+			.mock.calls.find((c) => c[0] as unknown as string === "agent_end")?.[1] as (
 			event: any,
 			ctx: any,
 		) => Promise<void>;

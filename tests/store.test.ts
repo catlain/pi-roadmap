@@ -8,6 +8,7 @@ import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { filterByProject, readRoadmap, writeRoadmap } from "../lib/store";
 import type { RoadmapFile } from "../lib/types";
+import { makeEpic, makeRoadmapMeta } from "./helpers/test-factories";
 
 // 临时覆盖全局目录
 const TMP_DIR = path.join(os.tmpdir(), `roadmap-test-${process.pid}`);
@@ -16,40 +17,35 @@ const TMP_DIR = path.join(os.tmpdir(), `roadmap-test-${process.pid}`);
 // 需要通过路径间接测试
 
 const SAMPLE_ROADMAP: RoadmapFile = {
-	meta: {
+	meta: makeRoadmapMeta({
 		id: "test",
 		title: "测试路线图",
-		status: "active",
 		created: "2026-05-25",
 		updated: "2026-05-25",
 		tags: ["test"],
-	},
+	}),
 	epics: [
-		{
-			id: "E1",
+		makeEpic({
 			title: "Epic 1",
 			description: "测试",
-			status: "todo",
 			priority: "high",
 			project: "/tmp/project",
-			stories: [],
-		},
+		}),
 	],
 };
 
 /** 多项目 roadmap，用于 filterByProject 测试 */
 const MULTI_PROJECT_ROADMAP: RoadmapFile = {
-	meta: {
+	meta: makeRoadmapMeta({
 		id: "multi",
 		title: "多项目路线图",
-		status: "active",
 		created: "2026-05-25",
 		updated: "2026-05-25",
-		tags: [],
-	},
+	}),
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "项目 A Epic",
 			description: "",
 			status: "todo",
@@ -58,15 +54,17 @@ const MULTI_PROJECT_ROADMAP: RoadmapFile = {
 			stories: [
 				{
 					id: "E1.S1",
+					eid: 2,
 					title: "S1",
 					description: "",
 					status: "todo",
-					tasks: [{ id: "E1.S1.T1", title: "T1", status: "todo" }],
+					tasks: [{ id: "E1.S1.T1", eid: 3, title: "T1", status: "todo" }],
 				},
 			],
 		},
 		{
 			id: "E2",
+			eid: 4,
 			title: "项目 B Epic",
 			description: "",
 			status: "doing",
@@ -75,15 +73,17 @@ const MULTI_PROJECT_ROADMAP: RoadmapFile = {
 			stories: [
 				{
 					id: "E2.S1",
+					eid: 5,
 					title: "S1",
 					description: "",
 					status: "doing",
-					tasks: [{ id: "E2.S1.T1", title: "T1", status: "doing" }],
+					tasks: [{ id: "E2.S1.T1", eid: 6, title: "T1", status: "doing" }],
 				},
 			],
 		},
 		{
 			id: "E3",
+			eid: 7,
 			title: "共享 Epic",
 			description: "",
 			status: "todo",

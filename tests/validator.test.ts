@@ -14,10 +14,12 @@ const VALID_ROADMAP: RoadmapFile = {
 		created: "2026-05-25",
 		updated: "2026-05-25",
 		tags: ["test"],
+		nextEid: 1,
 	},
 	epics: [
 		{
 			id: "E1",
+			eid: 1,
 			title: "Epic 1",
 			description: "测试 Epic",
 			status: "doing",
@@ -26,13 +28,15 @@ const VALID_ROADMAP: RoadmapFile = {
 			stories: [
 				{
 					id: "E1.S1",
+					eid: 2,
 					title: "Story 1",
 					description: "测试 Story",
 					status: "todo",
 					tasks: [
-						{ id: "E1.S1.T1", title: "Task 1", status: "todo" },
+						{ id: "E1.S1.T1", eid: 3, title: "Task 1", status: "todo" },
 						{
 							id: "E1.S1.T2",
+							eid: 4,
 							title: "Task 2",
 							status: "done",
 							doneDate: "2026-05-25",
@@ -132,11 +136,12 @@ describe("validateRoadmap 状态一致性", () => {
 					stories: [
 						{
 							id: "E1.S1",
+							eid: 2,
 							title: "Story done but tasks not",
 							status: "done",
 							tasks: [
-								{ id: "E1.S1.T1", title: "T1", status: "done" },
-								{ id: "E1.S1.T2", title: "T2", status: "todo" },
+								{ id: "E1.S1.T1", eid: 3, title: "T1", status: "done" },
+								{ id: "E1.S1.T2", eid: 4, title: "T2", status: "todo" },
 							],
 						},
 					],
@@ -161,11 +166,12 @@ describe("validateRoadmap 状态一致性", () => {
 					stories: [
 						{
 							id: "E1.S1",
+							eid: 2,
 							title: "All done",
 							status: "done",
 							tasks: [
-								{ id: "E1.S1.T1", title: "T1", status: "done" },
-								{ id: "E1.S1.T2", title: "T2", status: "dropped" },
+								{ id: "E1.S1.T1", eid: 3, title: "T1", status: "done" },
+								{ id: "E1.S1.T2", eid: 4, title: "T2", status: "dropped" },
 							],
 						},
 					],
@@ -186,15 +192,17 @@ describe("validateRoadmap 状态一致性", () => {
 					stories: [
 						{
 							id: "E1.S1",
+							eid: 2,
 							title: "Done story",
 							status: "done",
-							tasks: [{ id: "E1.S1.T1", title: "T1", status: "done" }],
+							tasks: [{ id: "E1.S1.T1", eid: 3, title: "T1", status: "done" }],
 						},
 						{
 							id: "E1.S2",
+							eid: 5,
 							title: "Not done story",
 							status: "todo",
-							tasks: [{ id: "E1.S2.T1", title: "T1", status: "todo" }],
+							tasks: [{ id: "E1.S2.T1", eid: 6, title: "T1", status: "todo" }],
 						},
 					],
 				},
@@ -219,12 +227,14 @@ describe("validateRoadmap 状态一致性", () => {
 					stories: [
 						{
 							id: "E1.S1",
+							eid: 2,
 							title: "Done",
 							status: "done",
-							tasks: [{ id: "E1.S1.T1", title: "T1", status: "done" }],
+							tasks: [{ id: "E1.S1.T1", eid: 3, title: "T1", status: "done" }],
 						},
 						{
 							id: "E1.S2",
+							eid: 5,
 							title: "Dropped",
 							status: "dropped",
 							tasks: [],
@@ -283,7 +293,7 @@ describe("repairRoadmap", () => {
 						{
 							...VALID_ROADMAP.epics[0].stories[0],
 							status: "broken",
-							tasks: [{ id: "E1.S1.T1", title: "T1", status: "broken" }],
+							tasks: [{ id: "E1.S1.T1", eid: 3, title: "T1", status: "broken" }],
 						},
 					],
 				},
@@ -334,6 +344,7 @@ describe("repairRoadmap", () => {
 							tasks: [
 								{
 									id: "E1.S1.T1",
+									eid: 3,
 									title: "T1",
 									status: "todo",
 									planPath: "E1-S1-T1.md",
